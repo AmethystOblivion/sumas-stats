@@ -21,16 +21,16 @@
         /* FPL-style corner patterns */
         body::before, body::after {
             content: '';
-            position: fixed; width: 120px; height: 120px;
+            position: fixed; width: 180px; height: 180px;
             pointer-events: none; z-index: 0;
             background: repeating-linear-gradient(
                 135deg,
-                rgba(255,140,0,0.07) 0px, rgba(255,140,0,0.07) 6px,
-                transparent 6px, transparent 12px
+                rgba(255,140,0,0.2) 0px, rgba(255,140,0,0.2) 8px,
+                transparent 8px, transparent 16px
             );
         }
-        body::before { top: 0; right: 0; border-radius: 0 0 0 60px; }
-        body::after { bottom: 0; left: 0; border-radius: 0 60px 0 0; }
+        body::before { top: 0; right: 0; }
+        body::after { bottom: 0; left: 0; }
         header {
             background: linear-gradient(90deg, #37003c, #5a0050, #37003c);
             padding: 20px 28px;
@@ -90,7 +90,7 @@
 
         /* Manual Override Button */
         .override-btn {
-            position: fixed; top: 12px; left: 12px; z-index: 500;
+            position: fixed; bottom: 12px; left: 12px; z-index: 500;
             padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
             background: rgba(55,0,60,0.9); color: rgba(255,255,255,0.4);
             font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s;

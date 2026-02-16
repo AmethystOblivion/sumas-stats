@@ -1552,15 +1552,27 @@
                 const resultColor = sSumas > sOpp ? '#43e97b' : sSumas < sOpp ? '#f5576c' : '#f9d423';
                 const resultText = sSumas > sOpp ? 'WIN' : sSumas < sOpp ? 'LOSS' : (sSumas === 0 && sOpp === 0) ? '' : 'DRAW';
 
+                // Build scorer list for SUMAS side
+                const goalEvents = m.events.filter(e => e.type === 'goal');
+                let scorerLines = '';
+                if (goalEvents.length) {
+                    scorerLines = goalEvents.map(e => {
+                        const num = jerseyNumbers[e.player.toLowerCase()];
+                        const numStr = num ? `<span style="opacity:0.5">${num}</span> ` : '';
+                        return `<div style="font-size:0.7rem;color:rgba(255,255,255,0.7);margin-top:2px">⚽ ${numStr}${esc(e.player)}${e.count > 1 ? ' x' + e.count : ''}</div>`;
+                    }).join('');
+                }
+
                 html += `<div class="match-score-banner">
                     <div class="match-score-label">Match ${activeMatch + 1} &mdash; Score</div>
-                    <div style="display:flex;align-items:center;justify-content:center;margin:12px 0 6px">
-                        <div style="text-align:center">
+                    <div style="display:flex;align-items:flex-start;justify-content:center;margin:12px 0 6px;gap:0">
+                        <div style="text-align:center;flex:1">
                             <div class="score-input" style="display:inline-block;width:55px;font-size:2.8rem;font-weight:900;color:#ff8c00;text-shadow:0 0 30px rgba(255,140,0,0.5),0 0 60px rgba(255,140,0,0.2)">${sSumas}</div>
                             <div class="score-team-label" style="color:#ff8c00">SUMAS</div>
+                            ${scorerLines ? `<div style="margin-top:6px">${scorerLines}</div>` : ''}
                         </div>
-                        <span class="score-vs">-</span>
-                        <div style="text-align:center">
+                        <span class="score-vs" style="padding-top:12px">-</span>
+                        <div style="text-align:center;flex:1">
                             ${editable
                                 ? `<input type="number" class="score-input opp" value="${sOpp}" min="0"
                                     onchange="setMatchScore(${activeMatch},'opp',this.value)"

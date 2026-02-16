@@ -1730,15 +1730,16 @@
         }
 
         function applyReadOnly() {
-            // Hide add player section and coach-only elements
             const addPlayer = document.querySelector('.add-player');
             if (addPlayer) addPlayer.style.display = isEditable() ? 'flex' : 'none';
+            document.getElementById('overrideBtn').style.display = userRole === 'parent' ? 'none' : 'block';
         }
 
         // Restore session
         if (userRole === 'coach' && sessionStorage.getItem('sumasUnlocked') === 'true') {
             document.getElementById('roleOverlay').classList.add('hidden');
             document.getElementById('pinOverlay').classList.add('hidden');
+            applyReadOnly();
         } else if (userRole === 'parent') {
             document.getElementById('roleOverlay').classList.add('hidden');
             document.getElementById('pinOverlay').classList.add('hidden');

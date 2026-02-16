@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SUMAS Stats Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff8c00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SUMAS Stats">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 28px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+        header h1 {
+            font-size: 2rem; letter-spacing: 3px; color: #ff8c00;
+            text-decoration: underline;
+            text-decoration-thickness: 3px;
+            text-underline-offset: 8px;
+            text-shadow: 0 2px 10px rgba(255, 140, 0, 0.4);
+        }
+        header p { color: rgba(255,255,255,0.8); margin-top: 6px; font-size: 0.95rem; }
+
+        .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+
+        /* Add Player */
+        .add-player {
+            display: flex; gap: 6px; margin-bottom: 20px;
+            background: rgba(255,255,255,0.03); padding: 8px 10px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            max-width: 280px;
+            opacity: 0.6; transition: opacity 0.3s;
+        }
+        .add-player:hover, .add-player:focus-within { opacity: 1; }
+        .add-player input {
+            flex: 1; padding: 7px 10px; border-radius: 7px;
+            border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.25); color: #fff;
+            font-size: 0.8rem; outline: none; transition: border-color 0.3s;
+        }
+        .add-player input:focus { border-color: #667eea; }
+        .add-player input::placeholder { color: rgba(255,255,255,0.3); font-size: 0.75rem; }
+        .add-player button {
+            padding: 7px 14px; border-radius: 7px; border: none;
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5);
+            font-weight: 600; font-size: 0.75rem; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .add-player button:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .match-btn {
+            padding: 12px 28px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
+        }
+        .match-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5); }
+
+        /* Tabs */
+        .tabs {
+            display: flex; gap: 4px; margin-bottom: 24px;
+            background: rgba(255,255,255,0.05); padding: 5px; border-radius: 16px;
+            align-items: center;
+        }
+        .tab {
+            flex: 1; padding: 12px; text-align: center; border-radius: 10px;
+            border: none; background: transparent; color: rgba(255,255,255,0.5);
+            font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .tab.matches-tab {
+            flex: 1.5; position: relative;
+        }
+        .tab.active.matches-tab {
+            background: linear-gradient(135deg, #ff8c00, #e85d04);
+            color: #fff; font-size: 1.1rem; font-weight: 800;
+            letter-spacing: 1.5px; padding: 16px 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(255, 140, 0, 0.4);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,200,100,0.3);
+        }
+        .tab:not(.active):hover { color: #fff; }
+
+        /* Table */
+        .stats-table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            background: rgba(255,255,255,0.05); border-radius: 14px;
+            overflow: hidden; /* backdrop-filter removed */
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .stats-table thead th {
+            padding: 14px 16px; text-align: center; font-size: 0.8rem;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            background: rgba(0,0,0,0.3); color: rgba(255,255,255,0.6);
+            border-bottom: 2px solid rgba(255,255,255,0.08);
+        }
+        .stats-table thead th:first-child { text-align: left; }
+        .stats-table tbody tr { transition: background 0.2s; }
+        .stats-table tbody tr:hover { background: rgba(255,255,255,0.05); }
+        .stats-table tbody tr:not(:last-child) td { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .stats-table td { padding: 12px 16px; text-align: center; vertical-align: middle; }
+        .stats-table td:first-child { text-align: left; }
+
+        .player-name-cell { display: flex; align-items: center; gap: 10px; }
+        .jersey-wrap { flex-shrink: 0; width: 42px; height: 42px; position: relative; }
+        .jersey-wrap svg { width: 42px; height: 42px; }
+        .jersey-num {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -46%);
+            font-weight: 800; font-size: 0.75rem; color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6); pointer-events: none;
+        }
+        .player-name-text {
+            font-weight: 600; font-size: 1rem; background: none; border: none;
+            color: #e0e0e0; outline: none; width: 100%; padding: 4px 6px;
+            border-radius: 6px; transition: background 0.2s;
+        }
+        .player-name-text:hover { background: rgba(255,255,255,0.08); }
+        .player-name-text:focus { background: rgba(255,255,255,0.12); color: #fff; }
+
+        .stat-cell { display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .stat-num { font-size: 1.3rem; font-weight: 700; min-width: 30px; text-align: center; }
+        .stat-num.goals { color: #43e97b; }
+        .stat-num.assists { color: #38f9d7; }
+        .stat-num.motm { color: #f9d423; }
+
+        .btn-group { display: flex; gap: 3px; }
+        .s-btn {
+            width: 26px; height: 26px; border-radius: 6px; border: none;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            transition: transform 0.15s, background 0.2s;
+        }
+        .s-btn:hover { transform: scale(1.1); }
+        .s-btn.plus-g { background: rgba(67, 233, 123, 0.2); color: #43e97b; }
+        .s-btn.plus-g:hover { background: rgba(67, 233, 123, 0.35); }
+        .s-btn.plus-a { background: rgba(56, 249, 215, 0.2); color: #38f9d7; }
+        .s-btn.plus-a:hover { background: rgba(56, 249, 215, 0.35); }
+        .s-btn.plus-m { background: rgba(249, 212, 35, 0.2); color: #f9d423; }
+        .s-btn.plus-m:hover { background: rgba(249, 212, 35, 0.35); }
+        .s-btn.minus { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); }
+        .s-btn.minus:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+
+        .remove-btn {
+            background: none; border: none; color: rgba(255,255,255,0.15); cursor: pointer;
+            font-size: 1.2rem; padding: 4px 8px; transition: color 0.2s;
+        }
+        .remove-btn:hover { color: #f5576c; }
+
+        /* Leaderboard Category Dropdowns */
+        .lb-category { margin-bottom: 16px; }
+        .lb-cat-toggle {
+            width: 100%; padding: 14px 20px; border-radius: 14px; border: none;
+            color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: all 0.3s;
+        }
+        .lb-cat-toggle.goals-toggle {
+            background: linear-gradient(135deg, rgba(67,233,123,0.2), rgba(56,249,215,0.1));
+            border: 1px solid rgba(67,233,123,0.2);
+        }
+        .lb-cat-toggle.goals-toggle:hover { background: linear-gradient(135deg, rgba(67,233,123,0.3), rgba(56,249,215,0.2)); }
+        .lb-cat-toggle.assists-toggle {
+            background: linear-gradient(135deg, rgba(56,249,215,0.2), rgba(102,126,234,0.1));
+            border: 1px solid rgba(56,249,215,0.2);
+        }
+        .lb-cat-toggle.assists-toggle:hover { background: linear-gradient(135deg, rgba(56,249,215,0.3), rgba(102,126,234,0.2)); }
+        .lb-cat-toggle.motm-toggle {
+            background: linear-gradient(135deg, rgba(249,212,35,0.2), rgba(245,87,108,0.1));
+            border: 1px solid rgba(249,212,35,0.2);
+        }
+        .lb-cat-toggle.motm-toggle:hover { background: linear-gradient(135deg, rgba(249,212,35,0.3), rgba(245,87,108,0.2)); }
+        .lb-cat-toggle .cat-arrow { transition: transform 0.3s; font-size: 0.7rem; }
+        .lb-category.open .lb-cat-toggle .cat-arrow { transform: rotate(180deg); }
+        .lb-cat-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+        }
+        .lb-category.open .lb-cat-content { max-height: 800px; }
+
+        /* Leaderboard Layout with Side Speech */
+        .lb-layout { display: flex; gap: 20px; align-items: flex-start; }
+        .lb-main { flex: 1; min-width: 0; }
+        .lb-side { width: 180px; flex-shrink: 0; position: sticky; top: 20px; }
+
+        /* Glowing Speech Bubble - Side */
+        .speech-bubble {
+            padding: 16px 18px; border-radius: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; font-weight: 700; font-size: 1rem; letter-spacing: 1px;
+            text-align: center; line-height: 1.4;
+            box-shadow: 0 0 15px rgba(102,126,234,0.5), 0 0 30px rgba(102,126,234,0.3), 0 0 60px rgba(118,75,162,0.2);
+            /* static glow, no animation */
+            position: relative;
+        }
+        .speech-bubble::after {
+            content: ''; position: absolute; top: 50%; left: -10px; transform: translateY(-50%);
+            width: 0; height: 0;
+            border-top: 10px solid transparent; border-bottom: 10px solid transparent;
+            border-right: 12px solid #667eea;
+        }
+        @keyframes speechGlow {
+            0% { box-shadow: 0 0 15px rgba(102,126,234,0.5), 0 0 30px rgba(102,126,234,0.3), 0 0 60px rgba(118,75,162,0.2); }
+            100% { box-shadow: 0 0 20px rgba(102,126,234,0.8), 0 0 40px rgba(102,126,234,0.5), 0 0 80px rgba(118,75,162,0.4), 0 0 100px rgba(255,140,0,0.15); }
+        }
+        /* ===== SECURITY PIN SCREEN ===== */
+        .pin-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+        .pin-overlay.hidden { display: none; }
+        .pin-box {
+            text-align: center; padding: 40px; border-radius: 20px;
+            background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .pin-box h2 {
+            font-size: 1.8rem; color: #ff8c00; margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(255,140,0,0.4);
+        }
+        .pin-box p { color: rgba(255,255,255,0.5); margin-bottom: 24px; font-size: 0.9rem; }
+        .pin-input {
+            padding: 14px 20px; border-radius: 12px; font-size: 1.4rem; font-weight: 700;
+            text-align: center; letter-spacing: 6px; width: 220px;
+            border: 2px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: #fff;
+            outline: none; transition: border-color 0.3s;
+        }
+        .pin-input:focus { border-color: #667eea; }
+        .pin-input::placeholder { letter-spacing: 2px; font-size: 0.9rem; color: rgba(255,255,255,0.2); }
+        .pin-submit {
+            display: block; margin: 16px auto 0; padding: 12px 36px; border-radius: 10px;
+            border: none; background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+        .pin-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .pin-error {
+            color: #f5576c; font-size: 0.85rem; margin-top: 12px; min-height: 20px;
+            transition: opacity 0.3s;
+        }
+        .pin-lock-icon { font-size: 3rem; margin-bottom: 16px; }
+
+        /* Leaderboard */
+        .view-panel { display: none; }
+        .view-panel.active { display: block; }
+        .lb-section { margin-bottom: 28px; }
+        .lb-header {
+            padding: 12px 20px; border-radius: 14px 14px 0 0; font-weight: 700;
+            font-size: 1rem; display: flex; align-items: center; gap: 8px;
+        }
+        .lb-header.goals-h { background: linear-gradient(135deg, rgba(67,233,123,0.2), rgba(56,249,215,0.1)); color: #43e97b; }
+        .lb-header.assists-h { background: linear-gradient(135deg, rgba(56,249,215,0.2), rgba(102,126,234,0.1)); color: #38f9d7; }
+        .lb-header.motm-h { background: linear-gradient(135deg, rgba(249,212,35,0.2), rgba(245,87,108,0.1)); color: #f9d423; }
+        .lb-table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            background: rgba(255,255,255,0.03); border-radius: 0 0 14px 14px;
+            overflow: hidden; border: 1px solid rgba(255,255,255,0.06); border-top: none;
+        }
+        .lb-table tr:not(:last-child) td { border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .lb-table td { padding: 11px 20px; }
+        .lb-rank {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem;
+        }
+        .lb-rank.gold { background: linear-gradient(135deg, #f9d423, #f83600); color: #fff; box-shadow: 0 2px 10px rgba(249,212,35,0.4); }
+        .lb-rank.silver { background: linear-gradient(135deg, #bdc3c7, #8e9eab); color: #fff; box-shadow: 0 2px 10px rgba(189,195,199,0.3); }
+        .lb-rank.bronze { background: linear-gradient(135deg, #cd7f32, #a0522d); color: #fff; box-shadow: 0 2px 10px rgba(205,127,50,0.3); }
+        .lb-rank.other { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
+        .lb-name { font-weight: 600; padding-left: 14px; }
+        .lb-val { text-align: right; font-weight: 700; font-size: 1.2rem; }
+        .lb-val.goals { color: #43e97b; }
+        .lb-val.assists { color: #38f9d7; }
+        .lb-val.motm { color: #f9d423; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.25); }
+        .empty-state p { font-size: 1.1rem; margin-bottom: 8px; }
+        .empty-state span { font-size: 0.85rem; }
+
+        /* ===== EXPANDABLE PLAYER CARDS ===== */
+        .player-card {
+            background: rgba(255,255,255,0.05); border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08); margin-bottom: 8px;
+            overflow: hidden; transition: border-color 0.2s;
+        }
+        .player-card:hover { border-color: rgba(255,255,255,0.15); }
+        .player-card-header {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            cursor: pointer; user-select: none; transition: background 0.2s;
+        }
+        .player-card-header:hover { background: rgba(255,255,255,0.03); }
+        .player-card-arrow {
+            font-size: 0.7rem; color: rgba(255,255,255,0.3);
+            transition: transform 0.3s; flex-shrink: 0;
+        }
+        .player-card.open .player-card-arrow { transform: rotate(90deg); color: #ff8c00; }
+        .player-card-name { font-weight: 600; font-size: 1rem; flex: 1; }
+        .player-card-name input {
+            font-weight: 600; font-size: 1rem; background: none; border: none;
+            color: #e0e0e0; outline: none; width: 100%; padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .player-card-name input:hover { background: rgba(255,255,255,0.06); }
+        .player-card-name input:focus { background: rgba(255,255,255,0.1); color: #fff; }
+        .player-card-summary {
+            display: flex; gap: 14px; font-size: 0.8rem; color: rgba(255,255,255,0.4);
+        }
+        .player-card-summary span { display: flex; align-items: center; gap: 4px; }
+        .player-card-summary .g-dot { color: #43e97b; font-weight: 700; }
+        .player-card-summary .a-dot { color: #38f9d7; font-weight: 700; }
+        .player-card-summary .m-dot { color: #f9d423; font-weight: 700; }
+
+        .player-card-body {
+            max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.35s ease;
+            padding: 0 16px;
+        }
+        .player-card.open .player-card-body {
+            max-height: 300px; padding: 0 16px 16px;
+        }
+        .player-stats-grid {
+            display: flex; gap: 10px;
+        }
+        .player-stat-box {
+            flex: 1; text-align: center; background: rgba(0,0,0,0.2);
+            border-radius: 10px; padding: 14px 8px;
+        }
+        .player-stat-label {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+            color: rgba(255,255,255,0.4); margin-bottom: 6px;
+        }
+        .player-stat-value { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
+        .player-stat-value.g { color: #43e97b; }
+        .player-stat-value.a { color: #38f9d7; }
+        .player-stat-value.m { color: #f9d423; }
+        .player-stat-btns { display: flex; gap: 6px; justify-content: center; }
+        .player-card-footer {
+            display: flex; justify-content: flex-end; margin-top: 10px;
+        }
+
+        /* Match score inputs */
+        .score-input {
+            width: 55px; text-align: center; font-size: 2.8rem; font-weight: 900;
+            background: transparent; border: none; border-bottom: 3px solid rgba(255,140,0,0.4);
+            color: #ff8c00; outline: none;
+            text-shadow: 0 0 30px rgba(255,140,0,0.5), 0 0 60px rgba(255,140,0,0.2);
+        }
+        .score-input:focus { border-bottom-color: #ff8c00; }
+        .score-input.opp {
+            color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2);
+            text-shadow: none;
+        }
+        .score-input.opp:focus { border-bottom-color: rgba(255,255,255,0.5); }
+        .score-vs {
+            font-size: 1.5rem; font-weight: 700; color: rgba(255,255,255,0.3);
+            margin: 0 8px; align-self: center;
+        }
+        .score-team-label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+            color: rgba(255,255,255,0.35); margin-top: 4px;
+        }
+
+        /* ===== MATCHES TAB ===== */
+        .match-mini-tabs {
+            display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+        }
+        .match-mini-tab {
+            padding: 8px 16px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.5);
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .match-mini-tab.active {
+            border-color: #ff8c00; color: #ff8c00;
+            background: rgba(255,140,0,0.1);
+            box-shadow: 0 2px 10px rgba(255,140,0,0.2);
+        }
+        .match-mini-tab:not(.active):hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+
+        /* Latest match tab stands out */
+        .match-mini-tab.latest {
+            border-color: #ff8c00; color: #ff8c00;
+            background: linear-gradient(135deg, rgba(255,140,0,0.15), rgba(255,140,0,0.05));
+            font-weight: 700; position: relative;
+            box-shadow: 0 0 15px rgba(255,140,0,0.2);
+        }
+        .match-mini-tab.latest::before {
+            content: 'LATEST'; position: absolute; top: -8px; right: -4px;
+            font-size: 0.5rem; font-weight: 800; letter-spacing: 1px;
+            background: linear-gradient(135deg, #ff8c00, #e85d04);
+            color: #fff; padding: 1px 5px; border-radius: 4px;
+        }
+        .match-mini-tab.latest.active {
+            background: linear-gradient(135deg, rgba(255,140,0,0.25), rgba(255,140,0,0.1));
+            box-shadow: 0 0 20px rgba(255,140,0,0.3);
+        }
+
+        /* History match tabs - faded */
+        .match-mini-tab.history {
+            opacity: 0.5; border-color: rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.015); font-size: 0.8rem;
+        }
+        .match-mini-tab.history:hover { opacity: 0.8; border-color: rgba(255,255,255,0.15); }
+        .match-mini-tab.history.active {
+            opacity: 0.85; border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.06);
+            box-shadow: none;
+        }
+
+        /* History label */
+        .match-history-label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+            color: rgba(255,255,255,0.2); margin-right: 4px; align-self: center;
+        }
+
+        /* Table link button on the side */
+        .table-link-btn {
+            display: block; margin-top: 16px; padding: 12px 18px; border-radius: 12px;
+            text-decoration: none; text-align: center; font-weight: 700; font-size: 0.95rem;
+            letter-spacing: 1px; color: #fff;
+            background: linear-gradient(135deg, #ff8c00, #e85d04);
+            box-shadow: 0 4px 15px rgba(255,140,0,0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .table-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,140,0,0.5);
+        }
+
+        .match-add-btn {
+            padding: 8px 14px; border-radius: 8px; border: 2px dashed rgba(255,255,255,0.2);
+            background: transparent; color: rgba(255,255,255,0.4); font-size: 0.85rem;
+            font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .match-add-btn:hover { border-color: #43e97b; color: #43e97b; }
+
+        /* Match Score Banner */
+        .match-score-banner {
+            background: linear-gradient(135deg, rgba(255,140,0,0.12), rgba(26,26,26,0.4), rgba(255,140,0,0.08));
+            border: 2px solid rgba(255,140,0,0.35);
+            border-radius: 18px; padding: 28px 20px; text-align: center; margin-bottom: 24px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 8px 32px rgba(255,140,0,0.15), 0 0 60px rgba(255,140,0,0.05);
+        }
+        .match-score-banner::before { display: none; }
+        .match-score-label {
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px;
+            color: rgba(255,255,255,0.5); margin-bottom: 6px;
+        }
+        .match-score-display {
+            font-size: 3.5rem; font-weight: 900; color: #ff8c00;
+            text-shadow: 0 0 30px rgba(255,140,0,0.5), 0 0 60px rgba(255,140,0,0.2);
+            letter-spacing: 4px; line-height: 1;
+        }
+        .match-score-sub {
+            font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 6px;
+        }
+
+        /* Match Content Layout */
+        .match-layout {
+            display: flex; gap: 20px; align-items: flex-start;
+        }
+        .match-main { flex: 1; min-width: 0; }
+        .match-motm-side {
+            width: 160px; flex-shrink: 0; text-align: center;
+        }
+
+        /* MOTM Trophy Side */
+        .motm-trophy-card {
+            background: rgba(249,212,35,0.05); border: 2px solid rgba(249,212,35,0.2);
+            border-radius: 14px; padding: 20px 12px;
+        }
+        .motm-trophy-icon { font-size: 3rem; margin-bottom: 8px; filter: drop-shadow(0 0 10px rgba(249,212,35,0.5)); }
+        .motm-trophy-label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+            color: #f9d423; margin-bottom: 8px; font-weight: 700;
+        }
+        .motm-trophy-name {
+            font-size: 1rem; font-weight: 700; color: #f9d423;
+            text-shadow: 0 0 10px rgba(249,212,35,0.3);
+        }
+        .motm-trophy-select {
+            width: 100%; padding: 8px; border-radius: 8px; margin-top: 10px;
+            border: 1px solid rgba(249,212,35,0.3); background: rgba(0,0,0,0.4); color: #f9d423;
+            font-size: 0.85rem; outline: none; cursor: pointer;
+        }
+        .motm-trophy-select option { background: #1a1a2e; color: #fff; }
+        .motm-none { color: rgba(255,255,255,0.3); font-style: italic; font-size: 0.85rem; }
+
+        /* Match Stats Form */
+        .match-form-card {
+            background: rgba(255,255,255,0.05); border-radius: 14px; padding: 16px;
+            border: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px;
+        }
+        .match-form-title {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.5); margin-bottom: 12px; font-weight: 600;
+        }
+        .match-form-row {
+            display: flex; gap: 10px; align-items: center; margin-bottom: 10px;
+        }
+        .match-form-row:last-child { margin-bottom: 0; }
+        .match-select {
+            flex: 1; padding: 10px 12px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff;
+            font-size: 0.95rem; outline: none; cursor: pointer;
+        }
+        .match-select option { background: #1a1a2e; color: #fff; }
+        .match-input-num {
+            width: 60px; padding: 10px; border-radius: 8px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff;
+            font-size: 1rem; font-weight: 700; outline: none;
+        }
+        .match-input-num:focus { border-color: #667eea; }
+        .match-add-stat-btn {
+            padding: 10px 18px; border-radius: 8px; border: none;
+            font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+        }
+        .match-add-stat-btn.goal-btn { background: rgba(67,233,123,0.2); color: #43e97b; }
+        .match-add-stat-btn.goal-btn:hover { background: rgba(67,233,123,0.35); }
+        .match-add-stat-btn.assist-btn { background: rgba(56,249,215,0.2); color: #38f9d7; }
+        .match-add-stat-btn.assist-btn:hover { background: rgba(56,249,215,0.35); }
+
+        /* Match Events Log */
+        .match-events { margin-top: 16px; }
+        .match-event-row {
+            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+            background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 4px;
+        }
+        .match-event-icon { font-size: 1.1rem; }
+        .match-event-name { font-weight: 600; flex: 1; }
+        .match-event-count { font-weight: 700; font-size: 1.1rem; }
+        .match-event-count.g { color: #43e97b; }
+        .match-event-count.a { color: #38f9d7; }
+        .match-event-remove {
+            background: none; border: none; color: rgba(255,255,255,0.15);
+            cursor: pointer; font-size: 1rem; padding: 2px 6px;
+        }
+        .match-event-remove:hover { color: #f5576c; }
+        .match-delete-btn {
+            margin-top: 16px; padding: 8px 16px; border-radius: 8px;
+            border: 1px solid rgba(245,87,108,0.3); background: rgba(245,87,108,0.1);
+            color: #f5576c; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        }
+        .match-delete-btn:hover { background: rgba(245,87,108,0.2); }
+
+        /* ===== ANIMATIONS ===== */
+        .goal-overlay, .trophy-overlay, .assist-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 1000; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.15s;
+        }
+        .goal-overlay.active, .trophy-overlay.active, .assist-overlay.active { opacity: 1; }
+        .goal-overlay.fade-out, .trophy-overlay.fade-out, .assist-overlay.fade-out {
+            opacity: 0; transition: opacity 0.4s ease-out;
+        }
+        .goal-net {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 280px; height: 200px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255,255,255,0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            border: 4px solid rgba(255,255,255,0.4); border-radius: 8px; opacity: 0;
+        }
+        .goal-overlay.active .goal-net { animation: netAppear 0.3s ease-out forwards; }
+        @keyframes netAppear {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .goal-overlay.active .goal-net.shake { animation: netShake 0.4s ease-out; }
+        @keyframes netShake {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            20% { transform: translate(-48%, -52%) scale(1.02); }
+            40% { transform: translate(-52%, -49%) scale(1.01); }
+            60% { transform: translate(-49%, -51%) scale(1.005); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        .goal-ball { position: absolute; font-size: 3rem; opacity: 0; z-index: 2; }
+        .goal-overlay.active .goal-ball { animation: ballFly 0.5s cubic-bezier(0.2, 0, 0.3, 1) forwards; }
+        @keyframes ballFly {
+            0% { bottom: -10%; left: 20%; opacity: 1; transform: scale(0.6) rotate(0deg); }
+            100% { bottom: 50%; left: 50%; opacity: 1; transform: scale(1.2) rotate(720deg) translate(-50%, 50%); }
+        }
+        .goal-text {
+            position: absolute; font-size: 4rem; font-weight: 900;
+            color: #ff8c00; z-index: 3;
+            text-shadow: 0 0 20px rgba(255,140,0,0.8), 0 0 40px rgba(255,140,0,0.4),
+                2px 2px 0 #1a1a1a, -2px -2px 0 #1a1a1a;
+            letter-spacing: 8px; opacity: 0;
+        }
+        .goal-overlay.active .goal-text { animation: goalFlash 0.6s 0.4s ease-out forwards; }
+        @keyframes goalFlash {
+            0% { opacity: 0; transform: scale(3); }
+            50% { opacity: 1; transform: scale(0.9); }
+            70% { transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .goal-particle {
+            position: absolute; width: 8px; height: 8px; border-radius: 50%;
+            top: 50%; left: 50%; opacity: 0; z-index: 4;
+        }
+        .goal-overlay.active .goal-particle { animation: particleBurst 0.8s 0.45s ease-out forwards; }
+        @keyframes particleBurst {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0); }
+        }
+
+        /* Trophy */
+        .trophy-icon-anim { position: absolute; font-size: 5rem; opacity: 0; z-index: 2; filter: drop-shadow(0 0 20px rgba(249,212,35,0.6)); }
+        .trophy-overlay.active .trophy-icon-anim { animation: trophyLift 1s cubic-bezier(0.2, 0, 0.3, 1) forwards; }
+        @keyframes trophyLift {
+            0% { opacity: 0; transform: translateY(80px) scale(0.5); }
+            30% { opacity: 1; transform: translateY(0) scale(1.1); }
+            50% { transform: translateY(-30px) scale(1.2); }
+            70% { transform: translateY(-40px) scale(1.15) rotate(-5deg); }
+            85% { transform: translateY(-40px) scale(1.15) rotate(5deg); }
+            100% { opacity: 1; transform: translateY(-40px) scale(1.15) rotate(0deg); }
+        }
+        .trophy-text {
+            position: absolute; font-size: 2.5rem; font-weight: 900;
+            color: #f9d423; z-index: 3;
+            text-shadow: 0 0 20px rgba(249,212,35,0.8), 2px 2px 0 #1a1a1a, -2px -2px 0 #1a1a1a;
+            letter-spacing: 6px; opacity: 0; top: calc(50% + 60px);
+        }
+        .trophy-overlay.active .trophy-text { animation: trophyTextIn 0.5s 0.5s ease-out forwards; }
+        @keyframes trophyTextIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .trophy-sparkle {
+            position: absolute; width: 6px; height: 6px;
+            border-radius: 50%; top: 50%; left: 50%; opacity: 0; z-index: 4;
+        }
+        .trophy-overlay.active .trophy-sparkle { animation: sparkle 1s 0.3s ease-out forwards; }
+        @keyframes sparkle {
+            0% { opacity: 1; transform: translate(0, -40px) scale(1); }
+            100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+        }
+        .trophy-glow {
+            position: absolute; width: 200px; height: 200px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(249,212,35,0.3) 0%, transparent 70%);
+            top: 50%; left: 50%; transform: translate(-50%, -60%); opacity: 0; z-index: 1;
+        }
+        .trophy-overlay.active .trophy-glow { animation: glowPulse 1s 0.3s ease-out forwards; }
+        @keyframes glowPulse {
+            0% { opacity: 0; transform: translate(-50%, -60%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); }
+            100% { opacity: 0.6; transform: translate(-50%, -60%) scale(1); }
+        }
+
+        /* Assist */
+        .assist-boot { position: absolute; font-size: 3.5rem; opacity: 0; z-index: 2; bottom: 30%; left: 25%; }
+        .assist-overlay.active .assist-boot { animation: bootKick 0.6s cubic-bezier(0.2, 0, 0.3, 1) forwards; }
+        @keyframes bootKick {
+            0% { opacity: 1; transform: rotate(-30deg); }
+            40% { transform: rotate(20deg); }
+            100% { opacity: 1; transform: rotate(10deg); }
+        }
+        .assist-ball { position: absolute; font-size: 2.5rem; opacity: 0; z-index: 3; bottom: 35%; left: 30%; }
+        .assist-overlay.active .assist-ball { animation: assistBallFly 0.8s 0.25s cubic-bezier(0.1, 0, 0.2, 1) forwards; }
+        @keyframes assistBallFly {
+            0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+            50% { transform: translate(120px, -80px) rotate(360deg) scale(0.9); }
+            100% { opacity: 0.8; transform: translate(250px, -20px) rotate(720deg) scale(0.7); }
+        }
+        .assist-trail {
+            position: absolute; height: 3px; opacity: 0; z-index: 1; bottom: 38%; left: 32%;
+            background: linear-gradient(90deg, transparent, rgba(56,249,215,0.6), transparent); border-radius: 2px;
+        }
+        .assist-overlay.active .assist-trail { animation: trailDraw 0.6s 0.3s ease-out forwards; }
+        @keyframes trailDraw {
+            0% { opacity: 0; width: 0; }
+            50% { opacity: 1; width: 180px; }
+            100% { opacity: 0; width: 250px; }
+        }
+        .assist-text {
+            position: absolute; font-size: 3rem; font-weight: 900;
+            color: #38f9d7; z-index: 4;
+            text-shadow: 0 0 20px rgba(56,249,215,0.8), 2px 2px 0 #1a1a1a, -2px -2px 0 #1a1a1a;
+            letter-spacing: 6px; opacity: 0;
+        }
+        .assist-overlay.active .assist-text { animation: goalFlash 0.6s 0.5s ease-out forwards; }
+        .assist-particle {
+            position: absolute; width: 6px; height: 6px; border-radius: 50%; opacity: 0; z-index: 4;
+        }
+        .assist-overlay.active .assist-particle { animation: particleBurst 0.7s 0.55s ease-out forwards; }
+
+        /* Tab sweep */
+        .tab-content { transition: opacity 0.3s, transform 0.3s; }
+        .tab-content.sweep-out { opacity: 0; transform: translateX(-40px); }
+        .tab-content.sweep-in { opacity: 0; transform: translateX(40px); }
+
+        /* Side text */
+        .side-text {
+            position: fixed; top: 0; bottom: 0; width: 60px;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; z-index: 10;
+        }
+        .side-text.left { left: 0; }
+        .side-text.right { right: 0; }
+        .side-text span {
+            writing-mode: vertical-lr; font-size: 3rem; font-weight: 900;
+            letter-spacing: 12px; text-transform: uppercase;
+            background: repeating-linear-gradient(180deg,
+                #ff8c00 0%, #ff8c00 20%, #1a1a1a 20%, #1a1a1a 40%,
+                #ff8c00 40%, #ff8c00 60%, #1a1a1a 60%, #1a1a1a 80%,
+                #ff8c00 80%, #ff8c00 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; filter: drop-shadow(0 0 8px rgba(255, 140, 0, 0.3));
+        }
+        .side-text.right span { writing-mode: vertical-rl; }
+
+        @media (max-width: 700px) {
+            .side-text { display: none; }
+            .container { padding: 14px 10px; }
+            header { padding: 18px 12px; }
+            header h1 { font-size: 1.4rem; letter-spacing: 2px; }
+            header p { font-size: 0.8rem; }
+
+            /* Tabs */
+            .tabs { gap: 2px; padding: 4px; border-radius: 12px; }
+            .tab { padding: 10px 6px; font-size: 0.8rem; }
+            .tab.active.matches-tab { font-size: 0.9rem; padding: 12px 6px; letter-spacing: 0.5px; }
+
+            /* Add player */
+            .add-player { max-width: 100%; }
+
+            /* Player cards */
+            .player-card-header { padding: 10px 12px; gap: 8px; }
+            .jersey-wrap { width: 32px; height: 32px; }
+            .jersey-wrap svg { width: 32px; height: 32px; }
+            .jersey-num { font-size: 0.6rem; }
+            .player-card-name { font-size: 0.9rem; }
+            .player-card-summary { gap: 8px; font-size: 0.7rem; }
+            .player-stats-grid { gap: 6px; }
+            .player-stat-box { padding: 10px 6px; }
+            .player-stat-value { font-size: 1.4rem; }
+            .player-stat-label { font-size: 0.6rem; }
+
+            /* Match layout */
+            .match-layout { flex-direction: column-reverse; gap: 14px; }
+            .match-motm-side { width: 100%; }
+            .motm-trophy-card { display: flex; align-items: center; gap: 12px; padding: 14px; text-align: left; }
+            .motm-trophy-icon { font-size: 2rem; margin-bottom: 0; }
+            .motm-trophy-label { margin-bottom: 4px; }
+            .motm-trophy-select { margin-top: 6px; }
+
+            /* Match tabs */
+            .match-mini-tabs { gap: 4px; }
+            .match-mini-tab { padding: 6px 10px; font-size: 0.75rem; }
+            .match-mini-tab.latest::before { font-size: 0.45rem; top: -6px; right: -2px; padding: 1px 3px; }
+            .match-history-label { font-size: 0.55rem; }
+            .match-add-btn { padding: 6px 10px; font-size: 0.75rem; }
+            .table-link-btn { padding: 8px 12px; font-size: 0.8rem; }
+
+            /* Score banner */
+            .match-score-banner { padding: 18px 12px; border-radius: 14px; }
+            .score-input { font-size: 2.2rem !important; width: 45px !important; }
+            .score-team-label { font-size: 0.55rem; }
+
+            /* Match forms */
+            .match-form-card { padding: 12px; }
+            .match-form-row { flex-wrap: wrap; gap: 6px; }
+            .match-select { font-size: 0.85rem; padding: 8px 10px; min-width: 0; }
+            .match-input-num { width: 50px; padding: 8px; font-size: 0.9rem; }
+            .match-add-stat-btn { padding: 8px 14px; font-size: 0.8rem; }
+
+            /* Match events */
+            .match-event-row { padding: 6px 10px; gap: 6px; }
+            .match-event-name { font-size: 0.85rem; }
+
+            /* Stats table */
+            .stats-table thead th, .stats-table td { padding: 10px 8px; font-size: 0.85rem; }
+            .stat-num { font-size: 1.1rem; min-width: 24px; }
+            .s-btn { width: 24px; height: 24px; font-size: 0.8rem; }
+
+            /* Leaderboard */
+            .lb-layout { flex-direction: column-reverse; gap: 14px; }
+            .lb-side { width: 100%; position: static; }
+            .speech-bubble { font-size: 0.9rem; padding: 12px 16px; }
+            .speech-bubble::after {
+                top: auto; left: 50%; bottom: -10px; transform: translateX(-50%);
+                border-left: 10px solid transparent; border-right: 10px solid transparent;
+                border-top: 12px solid #764ba2; border-bottom: none; border-right-color: transparent;
+            }
+            .lb-cat-toggle { padding: 12px 16px; font-size: 0.9rem; }
+            .lb-table td { padding: 9px 12px; }
+            .lb-name { font-size: 0.85rem; }
+            .lb-val { font-size: 1rem; }
+
+            /* PIN screen */
+            .pin-box { padding: 28px 20px; margin: 0 16px; }
+            .pin-box h2 { font-size: 1.4rem; }
+            .pin-input { width: 180px; font-size: 1.2rem; padding: 12px 16px; }
+            .pin-lock-icon { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="pin-overlay" id="pinOverlay">
+        <div class="pin-box">
+            <div class="pin-lock-icon">&#128274;</div>
+            <h2>SUMAS STATS</h2>
+            <p>Enter the security PIN to continue</p>
+            <input type="password" class="pin-input" id="pinInput" placeholder="PIN" maxlength="10" autocomplete="off">
+            <button class="pin-submit" onclick="checkPin()">Unlock</button>
+            <div class="pin-error" id="pinError"></div>
+        </div>
+    </div>
+
+    <div class="side-text left"><span>S U M A S</span></div>
+    <div class="side-text right"><span>S U M A S</span></div>
+    <header>
+        <h1>SUMAS STATS TRACKER</h1>
+        <p>Goals &middot; Assists &middot; Man of the Match</p>
+    </header>
+
+    <div class="container">
+        <div class="add-player">
+            <input type="text" id="playerNameInput" placeholder="Enter player name..." autocomplete="off">
+            <button onclick="addPlayer()">Add Player</button>
+        </div>
+
+        <div class="tabs" id="mainTabs">
+            <button class="tab" onclick="switchTab('players')">Players</button>
+            <button class="tab active matches-tab" onclick="switchTab('matches')">&#9917; Matches</button>
+            <button class="tab" onclick="switchTab('leaderboard')">Leaderboard</button>
+        </div>
+
+        <div id="playersView" class="view-panel">
+            <div id="playersTable"></div>
+            <div class="empty-state" id="emptyState">
+                <p>No players added yet</p>
+                <span>Type a name above and click "Add Player" to get started</span>
+            </div>
+        </div>
+
+        <div id="matchesView" class="view-panel active">
+            <div id="matchContent"></div>
+        </div>
+
+        <div id="leaderboardView" class="view-panel">
+            <div class="lb-layout">
+                <div class="lb-main">
+                    <div class="lb-category" id="lbGoals">
+                        <button class="lb-cat-toggle goals-toggle" onclick="toggleLbCat('lbGoals')">
+                            <span>Goals</span>
+                            <span class="cat-arrow">&#9660;</span>
+                        </button>
+                        <div class="lb-cat-content">
+                            <div class="lb-section" id="goalsLeaderboard" style="margin-top:8px"></div>
+                        </div>
+                    </div>
+                    <div class="lb-category" id="lbAssists">
+                        <button class="lb-cat-toggle assists-toggle" onclick="toggleLbCat('lbAssists')">
+                            <span>Assists</span>
+                            <span class="cat-arrow">&#9660;</span>
+                        </button>
+                        <div class="lb-cat-content">
+                            <div class="lb-section" id="assistsLeaderboard" style="margin-top:8px"></div>
+                        </div>
+                    </div>
+                    <div class="lb-category" id="lbMotm">
+                        <button class="lb-cat-toggle motm-toggle" onclick="toggleLbCat('lbMotm')">
+                            <span>Man of the Match</span>
+                            <span class="cat-arrow">&#9660;</span>
+                        </button>
+                        <div class="lb-cat-content">
+                            <div class="lb-section" id="motmLeaderboard" style="margin-top:8px"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="lb-side">
+                    <div class="speech-bubble">The sky is the limit</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlays -->
+    <div class="goal-overlay" id="goalOverlay">
+        <div class="goal-net" id="goalNet"></div>
+        <div class="goal-ball">&#9917;</div>
+        <div class="goal-text">GOAL!</div>
+    </div>
+    <div class="trophy-overlay" id="trophyOverlay">
+        <div class="trophy-glow"></div>
+        <div class="trophy-icon-anim">&#127942;</div>
+        <div class="trophy-text">MAN OF THE MATCH!</div>
+    </div>
+    <div class="assist-overlay" id="assistOverlay">
+        <div class="assist-boot">&#129406;</div>
+        <div class="assist-ball">&#9917;</div>
+        <div class="assist-trail"></div>
+        <div class="assist-text">ASSIST!</div>
+    </div>
+
+    <script>
+        // ===== DATA =====
+        const defaultPlayers = [
+            { name: 'Sammy', goals: 0, assists: 0, motm: 0 },
+            { name: 'Adam', goals: 0, assists: 0, motm: 0 },
+            { name: 'Jayden', goals: 0, assists: 0, motm: 0 },
+            { name: 'Kian', goals: 0, assists: 0, motm: 0 },
+            { name: 'Isaac', goals: 0, assists: 0, motm: 0 },
+            { name: 'Louie', goals: 0, assists: 0, motm: 0 },
+            { name: 'Blu(Riley)', goals: 0, assists: 0, motm: 0 },
+            { name: 'Will', goals: 0, assists: 0, motm: 0 }
+        ];
+        let players, matches, activeMatch;
+        try {
+            let storedP = localStorage.getItem('footballPlayers');
+            players = storedP ? JSON.parse(storedP) : [...defaultPlayers];
+            if (!storedP) localStorage.setItem('footballPlayers', JSON.stringify(defaultPlayers));
+        } catch(e) {
+            players = [...defaultPlayers];
+            localStorage.setItem('footballPlayers', JSON.stringify(defaultPlayers));
+        }
+        try {
+            matches = JSON.parse(localStorage.getItem('footballMatches') || '[]');
+            if (!Array.isArray(matches)) matches = [];
+        } catch(e) {
+            matches = [];
+            localStorage.setItem('footballMatches', '[]');
+        }
+        activeMatch = matches.length > 0 ? matches.length - 1 : -1;
+
+        function save() { localStorage.setItem('footballPlayers', JSON.stringify(players)); }
+        function saveMatches() { localStorage.setItem('footballMatches', JSON.stringify(matches)); }
+
+        // ===== JERSEY =====
+        const jerseyNumbers = {
+            'sammy': 8, 'adam': 1, 'jayden': 19, 'kian': 10,
+            'isaac': 5, 'louie': 18, 'blu(riley)': 16, 'will': 14
+        };
+        function getJerseyNumber(name) {
+            const key = name.toLowerCase().trim();
+            for (const [k, v] of Object.entries(jerseyNumbers)) {
+                if (key === k || key.startsWith(k)) return v;
+            }
+            return '';
+        }
+        function jerseySVG(number) {
+            return `<div class="jersey-wrap">
+                <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                    <defs><pattern id="checker" width="10" height="10" patternUnits="userSpaceOnUse">
+                        <rect width="5" height="5" fill="#ff8c00"/><rect x="5" width="5" height="5" fill="#1a1a1a"/>
+                        <rect y="5" width="5" height="5" fill="#1a1a1a"/><rect x="5" y="5" width="5" height="5" fill="#ff8c00"/>
+                    </pattern></defs>
+                    <path d="M15 12 L10 18 L4 16 L8 28 L14 24 L14 52 L46 52 L46 24 L52 28 L56 16 L50 18 L45 12 L38 16 C36 18 24 18 22 16 Z"
+                        fill="url(#checker)" stroke="#ff8c00" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M22 16 C24 18 36 18 38 16" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+                </svg>
+                <span class="jersey-num">${number}</span>
+            </div>`;
+        }
+        function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        // ===== PLAYERS =====
+        function addPlayer() {
+            const input = document.getElementById('playerNameInput');
+            const name = input.value.trim();
+            if (!name) return;
+            if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) { alert('Player already exists!'); return; }
+            players.push({ name, goals: 0, assists: 0, motm: 0 });
+            input.value = '';
+            save();
+            render();
+        }
+        document.getElementById('playerNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
+
+        function removePlayer(index) {
+            if (confirm(`Remove ${players[index].name}?`)) { players.splice(index, 1); save(); render(); }
+        }
+        function renamePlayer(index, el) {
+            const newName = el.value.trim();
+            if (!newName) { el.value = players[index].name; return; }
+            if (players.some((p, i) => i !== index && p.name.toLowerCase() === newName.toLowerCase())) {
+                alert('Player already exists!'); el.value = players[index].name; return;
+            }
+            players[index].name = newName; save();
+        }
+
+        // ===== SPAM PROTECTION =====
+        const spamTracker = { goals: [], assists: [], motm: [] };
+        const spamCooldown = { goals: false, assists: false, motm: false };
+        function canAnimate(stat) {
+            if (spamCooldown[stat]) return false;
+            const now = Date.now();
+            spamTracker[stat] = spamTracker[stat].filter(t => now - t < 3000);
+            spamTracker[stat].push(now);
+            if (spamTracker[stat].length > 5) {
+                spamCooldown[stat] = true;
+                setTimeout(() => { spamCooldown[stat] = false; spamTracker[stat] = []; }, 8000);
+                return false;
+            }
+            return true;
+        }
+        let animBusy = { goals: false, assists: false, motm: false };
+
+        function updateStat(index, stat, delta) {
+            players[index][stat] = Math.max(0, players[index][stat] + delta);
+            save(); render();
+            if (delta > 0) {
+                if (stat === 'goals') playGoalAnimation();
+                else if (stat === 'assists') playAssistAnimation();
+                else if (stat === 'motm') playTrophyAnimation();
+            }
+        }
+
+        // ===== ANIMATIONS =====
+        function playGoalAnimation() {
+            if (animBusy.goals || !canAnimate('goals')) return;
+            animBusy.goals = true;
+            const ov = document.getElementById('goalOverlay'), net = document.getElementById('goalNet');
+            const colors = ['#ff8c00', '#f9d423', '#ff6b00', '#fff', '#1a1a1a'], parts = [];
+            for (let i = 0; i < 16; i++) {
+                const p = document.createElement('div'); p.className = 'goal-particle';
+                const a = (i/16)*Math.PI*2, d = 80+Math.random()*100;
+                p.style.setProperty('--px', Math.cos(a)*d+'px'); p.style.setProperty('--py', Math.sin(a)*d+'px');
+                p.style.background = colors[i%5]; p.style.width = (6+Math.random()*6)+'px'; p.style.height = p.style.width;
+                ov.appendChild(p); parts.push(p);
+            }
+            ov.classList.remove('fade-out'); ov.classList.add('active');
+            setTimeout(() => net.classList.add('shake'), 480);
+            setTimeout(() => ov.classList.add('fade-out'), 1300);
+            setTimeout(() => { ov.classList.remove('active','fade-out'); net.classList.remove('shake'); parts.forEach(p=>p.remove()); animBusy.goals=false; }, 1700);
+        }
+        function playTrophyAnimation() {
+            if (animBusy.motm || !canAnimate('motm')) return;
+            animBusy.motm = true;
+            const ov = document.getElementById('trophyOverlay');
+            const cols = ['#f9d423','#fff','#ff8c00','#ffd700','#ffe066'], sp = [];
+            for (let i = 0; i < 20; i++) {
+                const s = document.createElement('div'); s.className = 'trophy-sparkle';
+                const a = (i/20)*Math.PI*2, d = 60+Math.random()*120;
+                s.style.setProperty('--sx', Math.cos(a)*d+'px'); s.style.setProperty('--sy', (Math.sin(a)*d-40)+'px');
+                s.style.background = cols[i%5]; s.style.width = (4+Math.random()*5)+'px'; s.style.height = s.style.width;
+                ov.appendChild(s); sp.push(s);
+            }
+            ov.classList.remove('fade-out'); ov.classList.add('active');
+            setTimeout(() => ov.classList.add('fade-out'), 1600);
+            setTimeout(() => { ov.classList.remove('active','fade-out'); sp.forEach(s=>s.remove()); animBusy.motm=false; }, 2000);
+        }
+        function playAssistAnimation() {
+            if (animBusy.assists || !canAnimate('assists')) return;
+            animBusy.assists = true;
+            const ov = document.getElementById('assistOverlay');
+            const cols = ['#38f9d7','#4facfe','#00f2fe','#fff','#43e97b'], parts = [];
+            for (let i = 0; i < 12; i++) {
+                const p = document.createElement('div'); p.className = 'assist-particle';
+                const a = (i/12)*Math.PI*2, d = 60+Math.random()*80;
+                p.style.setProperty('--px', Math.cos(a)*d+'px'); p.style.setProperty('--py', Math.sin(a)*d+'px');
+                p.style.background = cols[i%5]; p.style.width=(4+Math.random()*5)+'px'; p.style.height=p.style.width;
+                p.style.top='50%'; p.style.left='50%'; ov.appendChild(p); parts.push(p);
+            }
+            ov.classList.remove('fade-out'); ov.classList.add('active');
+            setTimeout(() => ov.classList.add('fade-out'), 1300);
+            setTimeout(() => { ov.classList.remove('active','fade-out'); parts.forEach(p=>p.remove()); animBusy.assists=false; }, 1700);
+        }
+
+        // ===== TAB SWITCHING =====
+        let currentTab = 'matches';
+        const tabMap = { players: 0, matches: 1, leaderboard: 2 };
+        const viewIds = { players: 'playersView', matches: 'matchesView', leaderboard: 'leaderboardView' };
+
+        function switchTab(tab) {
+            if (tab === currentTab) return;
+            const outEl = document.getElementById(viewIds[currentTab]);
+            const inEl = document.getElementById(viewIds[tab]);
+
+            outEl.classList.add('tab-content', 'sweep-out');
+            setTimeout(() => {
+                outEl.classList.remove('active', 'tab-content', 'sweep-out');
+                currentTab = tab;
+                document.querySelectorAll('#mainTabs .tab').forEach((t, i) => {
+                    t.classList.toggle('active', i === tabMap[tab]);
+                    if (i === 1) t.classList.toggle('matches-tab', tab === 'matches');
+                });
+                if (tab === 'leaderboard') renderLeaderboard();
+                if (tab === 'matches') renderMatches();
+                inEl.classList.add('active', 'tab-content', 'sweep-in');
+                requestAnimationFrame(() => requestAnimationFrame(() => inEl.classList.remove('sweep-in')));
+                setTimeout(() => inEl.classList.remove('tab-content'), 350);
+            }, 300);
+        }
+
+        // ===== RENDER PLAYERS =====
+        let openPlayers = new Set();
+        function togglePlayer(i) {
+            if (openPlayers.has(i)) openPlayers.delete(i);
+            else openPlayers.add(i);
+            render();
+        }
+
+        function render() {
+            const container = document.getElementById('playersTable');
+            const empty = document.getElementById('emptyState');
+            if (players.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
+            empty.style.display = 'none';
+            container.innerHTML = players.map((p, i) => {
+                const isOpen = openPlayers.has(i);
+                return `<div class="player-card ${isOpen ? 'open' : ''}">
+                    <div class="player-card-header" onclick="togglePlayer(${i})">
+                        <span class="player-card-arrow">&#9654;</span>
+                        ${jerseySVG(getJerseyNumber(p.name))}
+                        <div class="player-card-name">
+                            <span style="padding:2px 4px">${esc(p.name)}</span>
+                        </div>
+                        <div class="player-card-summary">
+                            <span><span class="g-dot">${p.goals}</span> G</span>
+                            <span><span class="a-dot">${p.assists}</span> A</span>
+                            <span><span class="m-dot">${p.motm}</span> M</span>
+                        </div>
+                    </div>
+                    <div class="player-card-body">
+                        <div class="player-stats-grid">
+                            <div class="player-stat-box">
+                                <div class="player-stat-label">Goals</div>
+                                <div class="player-stat-value g">${p.goals}</div>
+                            </div>
+                            <div class="player-stat-box">
+                                <div class="player-stat-label">Assists</div>
+                                <div class="player-stat-value a">${p.assists}</div>
+                            </div>
+                            <div class="player-stat-box">
+                                <div class="player-stat-label">MOTM</div>
+                                <div class="player-stat-value m">${p.motm}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // ===== RENDER LEADERBOARD =====
+        function renderLeaderboard() {
+            renderLB('goalsLeaderboard', 'Goals', 'goals', 'goals-h');
+            renderLB('assistsLeaderboard', 'Assists', 'assists', 'assists-h');
+            renderLB('motmLeaderboard', 'Man of the Match', 'motm', 'motm-h');
+        }
+        function renderLB(cid, title, stat, hc) {
+            const sorted = [...players].sort((a, b) => b[stat] - a[stat]);
+            const c = document.getElementById(cid);
+            if (!sorted.length) { c.innerHTML = ''; return; }
+            const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
+            c.innerHTML = `<div class="lb-header ${hc}">${title}</div><table class="lb-table">
+                ${sorted.map((p, i) => `<tr>
+                    <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
+                    <td class="lb-name" style="display:flex;align-items:center;gap:8px">${jerseySVG(getJerseyNumber(p.name))} ${esc(p.name)}</td>
+                    <td class="lb-val ${stat}">${p[stat]}</td>
+                </tr>`).join('')}</table>`;
+        }
+
+        // ===== MATCHES =====
+        function setMatchScore(idx, team, val) {
+            const n = parseInt(val) || 0;
+            if (team === 'opp') matches[idx].scoreOpp = Math.max(0, n);
+            saveMatches(); renderMatches();
+        }
+        function addMatch() {
+            matches.push({ events: [], motm: '', opponent: '', scoreSumas: 0, scoreOpp: 0 });
+            activeMatch = matches.length - 1;
+            saveMatches(); renderMatches();
+        }
+        function selectMatch(idx) { activeMatch = idx; renderMatches(); }
+        function deleteMatch(idx) {
+            if (!confirm(`Delete Match ${idx + 1}?`)) return;
+            matches.splice(idx, 1);
+            if (activeMatch >= matches.length) activeMatch = matches.length - 1;
+            saveMatches(); renderMatches();
+        }
+        function setMatchMOTM(idx, name) {
+            const oldMotm = matches[idx].motm;
+            // Remove MOTM from previous player
+            if (oldMotm) updatePlayerFromMatch(oldMotm, 'motm', -1);
+            // Add MOTM to new player
+            if (name) updatePlayerFromMatch(name, 'motm', 1);
+
+            matches[idx].motm = name;
+            saveMatches(); renderMatches(); render();
+
+            if (name) playTrophyAnimation();
+        }
+        function setMatchOpponent(idx, val) {
+            matches[idx].opponent = val; saveMatches(); renderMatches();
+        }
+        function updatePlayerFromMatch(playerName, stat, delta) {
+            const p = players.find(pl => pl.name === playerName);
+            if (!p) return;
+            p[stat] = Math.max(0, p[stat] + delta);
+            save();
+        }
+
+        function addMatchEvent(matchIdx, type) {
+            const sel = document.getElementById(`match-${type}-select-${matchIdx}`);
+            const numEl = document.getElementById(`match-${type}-num-${matchIdx}`);
+            const player = sel.value;
+            const count = parseInt(numEl.value) || 1;
+            if (!player) return;
+            const m = matches[matchIdx];
+            const existing = m.events.find(e => e.player === player && e.type === type);
+            if (existing) existing.count += count;
+            else m.events.push({ player, type, count });
+
+            // Sync to player stats
+            const stat = type === 'goal' ? 'goals' : 'assists';
+            updatePlayerFromMatch(player, stat, count);
+
+            saveMatches(); renderMatches(); render();
+
+            // Play animation
+            if (type === 'goal') playGoalAnimation();
+            else if (type === 'assist') playAssistAnimation();
+        }
+        function removeMatchEvent(matchIdx, eventIdx) {
+            const ev = matches[matchIdx].events[eventIdx];
+            // Subtract from player stats
+            const stat = ev.type === 'goal' ? 'goals' : 'assists';
+            updatePlayerFromMatch(ev.player, stat, -ev.count);
+
+            matches[matchIdx].events.splice(eventIdx, 1);
+            saveMatches(); renderMatches(); render();
+        }
+
+        function getMatchScore(m) {
+            return m.events.filter(e => e.type === 'goal').reduce((s, e) => s + e.count, 0);
+        }
+
+        function renderMatches() {
+            const c = document.getElementById('matchContent');
+            if (matches.length === 0) {
+                activeMatch = -1;
+                c.innerHTML = `<div class="empty-state"><p>No matches yet</p>
+                    <span>Click below to add your first match</span></div>
+                    <div style="text-align:center;margin-top:16px">
+                        <button class="match-btn" onclick="addMatch()">+ New Match</button>
+                    </div>`;
+                return;
+            }
+
+            // Clamp activeMatch to valid range
+            if (activeMatch < 0 || activeMatch >= matches.length) activeMatch = matches.length - 1;
+
+            // Mini tabs - latest match stands out, older ones are history
+            const latestIdx = matches.length - 1;
+            let html = `<div class="match-mini-tabs">`;
+
+            // Show history matches first (older ones)
+            if (matches.length > 1) {
+                html += `<span class="match-history-label">History:</span>`;
+                for (let i = 0; i < latestIdx; i++) {
+                    const m2 = matches[i];
+                    const label = m2.opponent ? `vs ${esc(m2.opponent)}` : `Match ${i + 1}`;
+                    const score2 = getMatchScore(m2);
+                    const sOpp2 = m2.scoreOpp || 0;
+                    const miniScore = `${score2}-${sOpp2}`;
+                    html += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">${label} <span style="opacity:0.6;font-size:0.75rem">(${miniScore})</span></button>`;
+                }
+                html += `<span style="flex-basis:100%;height:8px"></span>`;
+            }
+
+            // Latest match - prominent
+            const latestM = matches[latestIdx];
+            const latestLabel = latestM.opponent ? `vs ${esc(latestM.opponent)}` : `Match ${latestIdx + 1}`;
+            html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}</button>`;
+
+            html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
+            html += `<a href="https://system.gotsport.com/splash/25643/events/50579/schedules?team=3738001" target="_blank" rel="noopener" class="table-link-btn" style="margin-left:auto">Table</a>`;
+            html += `</div>`;
+
+            if (activeMatch >= 0 && activeMatch < matches.length) {
+                const m = matches[activeMatch];
+                const score = getMatchScore(m);
+                const assistCount = m.events.filter(e => e.type === 'assist').reduce((s, e) => s + e.count, 0);
+
+                // Score Banner - SUMAS score auto-calculated from goals
+                const sSumas = score;
+                const sOpp = m.scoreOpp || 0;
+                const resultColor = sSumas > sOpp ? '#43e97b' : sSumas < sOpp ? '#f5576c' : '#f9d423';
+                const resultText = sSumas > sOpp ? 'WIN' : sSumas < sOpp ? 'LOSS' : (sSumas === 0 && sOpp === 0) ? '' : 'DRAW';
+
+                html += `<div class="match-score-banner">
+                    <div class="match-score-label">Match ${activeMatch + 1} &mdash; Score</div>
+                    <div style="display:flex;align-items:center;justify-content:center;margin:12px 0 6px">
+                        <div style="text-align:center">
+                            <div class="score-input" style="display:inline-block;width:55px;font-size:2.8rem;font-weight:900;color:#ff8c00;text-shadow:0 0 30px rgba(255,140,0,0.5),0 0 60px rgba(255,140,0,0.2)">${sSumas}</div>
+                            <div class="score-team-label" style="color:#ff8c00">SUMAS</div>
+                        </div>
+                        <span class="score-vs">-</span>
+                        <div style="text-align:center">
+                            <input type="number" class="score-input opp" value="${sOpp}" min="0"
+                                onchange="setMatchScore(${activeMatch},'opp',this.value)"
+                                onkeydown="if(event.key==='Enter')this.blur()">
+                            <div class="score-team-label">
+                                <input class="player-name-text" value="${esc(m.opponent)}" placeholder="Opponent"
+                                    onchange="setMatchOpponent(${activeMatch}, this.value)"
+                                    onkeydown="if(event.key==='Enter')this.blur()"
+                                    style="width:100px;text-align:center;font-size:0.65rem;color:rgba(255,255,255,0.5);padding:2px;text-transform:uppercase;letter-spacing:2px;font-weight:600">
+                            </div>
+                        </div>
+                    </div>
+                    ${resultText ? `<div style="font-size:0.9rem;font-weight:700;color:${resultColor};letter-spacing:3px;margin-top:4px">${resultText}</div>` : ''}
+                    <div class="match-score-sub">${score} goal${score!==1?'s':''} &middot; ${assistCount} assist${assistCount!==1?'s':''}</div>
+                </div>`;
+
+                // Layout: main + motm side
+                html += `<div class="match-layout">`;
+
+                // Main column
+                html += `<div class="match-main">`;
+
+                // Add Goal form
+                html += `<div class="match-form-card">
+                    <div class="match-form-title" style="color:#43e97b">Add Goals</div>
+                    <div class="match-form-row">
+                        <select class="match-select" id="match-goal-select-${activeMatch}">
+                            <option value="">Select player...</option>
+                            ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                        </select>
+                        <input type="number" class="match-input-num" id="match-goal-num-${activeMatch}" value="1" min="1">
+                        <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
+                    </div>
+                </div>`;
+
+                // Add Assist form
+                html += `<div class="match-form-card">
+                    <div class="match-form-title" style="color:#38f9d7">Add Assists</div>
+                    <div class="match-form-row">
+                        <select class="match-select" id="match-assist-select-${activeMatch}">
+                            <option value="">Select player...</option>
+                            ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                        </select>
+                        <input type="number" class="match-input-num" id="match-assist-num-${activeMatch}" value="1" min="1">
+                        <button class="match-add-stat-btn assist-btn" onclick="addMatchEvent(${activeMatch},'assist')">+ Assist</button>
+                    </div>
+                </div>`;
+
+                // Events log
+                const goals = m.events.filter(e => e.type === 'goal');
+                const assists = m.events.filter(e => e.type === 'assist');
+                if (goals.length || assists.length) {
+                    html += `<div class="match-events">`;
+                    if (goals.length) {
+                        html += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:8px">Goal Scorers</div>`;
+                        goals.forEach((e, ei) => {
+                            const idx = m.events.indexOf(e);
+                            html += `<div class="match-event-row">
+                                <span class="match-event-icon">&#9917;</span>
+                                <span class="match-event-name">${esc(e.player)}</span>
+                                <span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>
+                                <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
+                            </div>`;
+                        });
+                    }
+                    if (assists.length) {
+                        html += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:12px">Assists</div>`;
+                        assists.forEach((e, ei) => {
+                            const idx = m.events.indexOf(e);
+                            html += `<div class="match-event-row">
+                                <span class="match-event-icon">&#129406;</span>
+                                <span class="match-event-name">${esc(e.player)}</span>
+                                <span class="match-event-count a">${e.count > 1 ? 'x' + e.count : ''}</span>
+                                <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
+                            </div>`;
+                        });
+                    }
+                    html += `</div>`;
+                }
+
+                html += `<button class="match-delete-btn" onclick="deleteMatch(${activeMatch})">Delete Match</button>`;
+                html += `</div>`; // end match-main
+
+                // MOTM Trophy Side
+                html += `<div class="match-motm-side">
+                    <div class="motm-trophy-card">
+                        <div class="motm-trophy-icon">&#127942;</div>
+                        <div class="motm-trophy-label">Man of the Match</div>
+                        ${m.motm
+                            ? `<div class="motm-trophy-name">${esc(m.motm)}</div>`
+                            : `<div class="motm-none">Not selected</div>`}
+                        <select class="motm-trophy-select" onchange="setMatchMOTM(${activeMatch}, this.value)">
+                            <option value="">Select MOTM...</option>
+                            ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>`;
+
+                html += `</div>`; // end match-layout
+            }
+
+            c.innerHTML = html;
+        }
+
+        // ===== LEADERBOARD CATEGORY DROPDOWNS =====
+        function toggleLbCat(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('open');
+            if (el.classList.contains('open')) renderLeaderboard();
+        }
+
+        // ===== SECURITY PIN =====
+        const PIN_CODE = 'SUMAS11';
+        function checkPin() {
+            const input = document.getElementById('pinInput');
+            const error = document.getElementById('pinError');
+            if (input.value === PIN_CODE) {
+                document.getElementById('pinOverlay').classList.add('hidden');
+                sessionStorage.setItem('sumasUnlocked', 'true');
+            } else {
+                error.textContent = 'Incorrect PIN. Try again.';
+                input.value = '';
+                input.focus();
+            }
+        }
+        document.getElementById('pinInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') checkPin();
+        });
+        if (sessionStorage.getItem('sumasUnlocked') === 'true') {
+            document.getElementById('pinOverlay').classList.add('hidden');
+        } else {
+            document.getElementById('pinInput').focus();
+        }
+
+        // ===== INIT =====
+        try {
+            render();
+            renderMatches();
+        } catch(e) {
+            // If anything crashes, reset data and retry
+            console.error('Init error, resetting data:', e);
+            localStorage.removeItem('footballMatches');
+            localStorage.removeItem('footballPlayers');
+            matches = [];
+            activeMatch = -1;
+            players = [...defaultPlayers];
+            save();
+            render();
+            renderMatches();
+        }
+        // ===== SERVICE WORKER =====
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>

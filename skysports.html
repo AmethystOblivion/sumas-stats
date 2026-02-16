@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sky Sports | SUMAS FC</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0b0e1a;
+            color: #fff;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: #c8102e;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .sky-logo {
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+        .sky-logo span { color: #ffd700; }
+        .top-nav {
+            display: flex; gap: 20px; font-size: 0.85rem; font-weight: 600;
+            color: rgba(255,255,255,0.85);
+        }
+        .top-nav a { color: rgba(255,255,255,0.85); text-decoration: none; }
+        .top-nav a:hover { color: #fff; }
+
+        /* Breaking Banner */
+        .breaking-banner {
+            background: linear-gradient(90deg, #c8102e, #e8192c, #c8102e);
+            padding: 8px 24px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: breakingPulse 2s ease-in-out infinite;
+        }
+        @keyframes breakingPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .breaking-banner .tag {
+            background: #ffd700;
+            color: #000;
+            padding: 3px 10px;
+            border-radius: 3px;
+            margin-right: 10px;
+            font-size: 0.75rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #0f1428 0%, #1a1f3a 40%, #2a1a3a 100%);
+            padding: 60px 24px;
+            text-align: center;
+            border-bottom: 4px solid #c8102e;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 50% 120%, rgba(200,16,46,0.15), transparent 60%);
+        }
+        .hero-badge {
+            display: inline-block;
+            background: #c8102e;
+            color: #fff;
+            padding: 6px 18px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #ff8c00;
+            text-shadow: 0 0 40px rgba(255,140,0,0.3);
+            position: relative;
+        }
+        .hero h2 {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.7);
+            font-weight: 400;
+            margin-top: 12px;
+            position: relative;
+        }
+        .hero-emoji {
+            font-size: 4rem;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        /* Stats Grid */
+        .section-title {
+            text-align: center;
+            padding: 40px 24px 20px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .section-title .red-line {
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: #c8102e;
+            margin: 10px auto 0;
+            border-radius: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px 40px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #141832, #1c2044);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 100%;
+            background: #c8102e;
+            border-radius: 4px 0 0 4px;
+        }
+        .stat-card h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+        }
+        .stat-card .big-name {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ff8c00;
+        }
+        .stat-card .stat-num {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #fff;
+            float: right;
+            margin-top: -40px;
+            opacity: 0.15;
+        }
+        .stat-card .stat-detail {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 6px;
+        }
+
+        /* Match Ticker */
+        .ticker-section {
+            background: #111528;
+            border-top: 2px solid rgba(255,255,255,0.05);
+            border-bottom: 2px solid rgba(255,255,255,0.05);
+            padding: 30px 24px;
+        }
+        .ticker-title {
+            text-align: center;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 20px;
+        }
+        .match-ticker {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .ticker-match {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 16px 24px;
+            text-align: center;
+            min-width: 200px;
+        }
+        .ticker-match .teams {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+        .ticker-match .score {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #ff8c00;
+        }
+        .ticker-match .score.win { color: #00e676; }
+        .ticker-match .score.loss { color: #f5576c; }
+        .ticker-match .score.draw { color: #ffd700; }
+        .ticker-match .match-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Transfer Style News */
+        .news-section {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+        .news-card {
+            background: linear-gradient(135deg, #141832, #1c2044);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .news-icon {
+            font-size: 2.5rem;
+            min-width: 50px;
+            text-align: center;
+        }
+        .news-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .news-card p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.5;
+        }
+        .news-card .timestamp {
+            font-size: 0.7rem;
+            color: #c8102e;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        /* Footer */
+        .sky-footer {
+            background: #0a0d18;
+            border-top: 2px solid #c8102e;
+            padding: 30px 24px;
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.8rem;
+        }
+        .sky-footer .footer-logo {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+        }
+        .sky-footer .footer-logo span { color: #c8102e; }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 2.2rem; }
+            .hero h2 { font-size: 1.1rem; }
+            .top-nav { display: none; }
+            .stat-card .stat-num { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="sky-logo">SKY <span>SPORTS</span></div>
+        <div class="top-nav">
+            <a href="#">Football</a>
+            <a href="#">Premier League</a>
+            <a href="#">Transfer Centre</a>
+            <a href="#">Live</a>
+        </div>
+    </div>
+
+    <!-- Breaking Banner -->
+    <div class="breaking-banner">
+        <span class="tag">BREAKING</span>
+        SUMAS FC CONTINUE TO DOMINATE &mdash; FULL COVERAGE BELOW
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-badge">EXCLUSIVE COVERAGE</div>
+        <h1>SUMAS FC</h1>
+        <h2>The Rise of a Footballing Dynasty</h2>
+        <div class="hero-emoji">&#9917;&#127942;</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="section-title">
+        Season Standouts
+        <span class="red-line"></span>
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Match Ticker -->
+    <div class="ticker-section">
+        <div class="ticker-title">Latest Results</div>
+        <div class="match-ticker" id="matchTicker"></div>
+    </div>
+
+    <!-- News -->
+    <div class="section-title">
+        Latest News
+        <span class="red-line"></span>
+    </div>
+    <div class="news-section" id="newsSection"></div>
+
+    <!-- Footer -->
+    <div class="sky-footer">
+        <div class="footer-logo">SKY <span>SPORTS</span></div>
+        <p>&copy; 2026 Sky Sports Coverage &mdash; SUMAS FC Special</p>
+        <p style="margin-top: 6px; font-size: 0.7rem; opacity: 0.5;">This is a fan-made page. Not affiliated with Sky Sports.</p>
+    </div>
+
+    <script>
+        // Pull data from localStorage (same keys as main app)
+        let players, matches;
+        try {
+            const storedP = localStorage.getItem('footballPlayers');
+            players = storedP ? JSON.parse(storedP) : [];
+            const storedM = localStorage.getItem('footballMatches');
+            matches = storedM ? JSON.parse(storedM) : [];
+        } catch(e) {
+            players = [];
+            matches = [];
+        }
+
+        // Stat Cards
+        function renderStats() {
+            const grid = document.getElementById('statsGrid');
+            if (!players.length) {
+                grid.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);grid-column:1/-1;padding:30px;">Open the main SUMAS Stats app first to load player data.</div>';
+                return;
+            }
+
+            const topScorer = [...players].sort((a,b) => (b.goals||0) - (a.goals||0))[0];
+            const topAssist = [...players].sort((a,b) => (b.assists||0) - (a.assists||0))[0];
+            const topMotm = [...players].sort((a,b) => (b.motm||0) - (a.motm||0))[0];
+
+            const totalGoals = players.reduce((s,p) => s + (p.goals||0), 0);
+            const totalAssists = players.reduce((s,p) => s + (p.assists||0), 0);
+
+            grid.innerHTML = `
+                <div class="stat-card">
+                    <h3>Top Scorer</h3>
+                    <div class="big-name">${topScorer.name}</div>
+                    <div class="stat-num">${topScorer.goals||0}</div>
+                    <div class="stat-detail">${topScorer.goals||0} goals this season</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Most Assists</h3>
+                    <div class="big-name">${topAssist.name}</div>
+                    <div class="stat-num">${topAssist.assists||0}</div>
+                    <div class="stat-detail">${topAssist.assists||0} assists this season</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Man of the Match</h3>
+                    <div class="big-name">${topMotm.name}</div>
+                    <div class="stat-num">${topMotm.motm||0}</div>
+                    <div class="stat-detail">${topMotm.motm||0} MOTM awards</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Squad Overview</h3>
+                    <div class="big-name">${players.length} Players</div>
+                    <div class="stat-num">${totalGoals}</div>
+                    <div class="stat-detail">${totalGoals} goals &bull; ${totalAssists} assists combined</div>
+                </div>
+            `;
+        }
+
+        // Match Ticker
+        function renderTicker() {
+            const ticker = document.getElementById('matchTicker');
+            if (!matches.length) {
+                ticker.innerHTML = '<div style="color:rgba(255,255,255,0.4);">No match data yet.</div>';
+                return;
+            }
+
+            ticker.innerHTML = matches.slice(-5).reverse().map(m => {
+                const sumasGoals = (m.events || []).filter(e => e.type === 'goal').length;
+                const oppGoals = m.oppGoals || 0;
+                let cls = 'draw';
+                if (sumasGoals > oppGoals) cls = 'win';
+                else if (sumasGoals < oppGoals) cls = 'loss';
+                return `
+                    <div class="ticker-match">
+                        <div class="teams">SUMAS v ${m.opponent || 'TBC'}</div>
+                        <div class="score ${cls}">${sumasGoals} - ${oppGoals}</div>
+                        <div class="match-label">${cls === 'win' ? 'Victory' : cls === 'loss' ? 'Defeat' : 'Draw'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // News
+        function renderNews() {
+            const section = document.getElementById('newsSection');
+            const news = [];
+
+            if (players.length) {
+                const topScorer = [...players].sort((a,b) => (b.goals||0) - (a.goals||0))[0];
+                if (topScorer.goals > 0) {
+                    news.push({
+                        icon: '&#9917;',
+                        time: 'Top Story',
+                        title: `${topScorer.name} leads the golden boot race with ${topScorer.goals} goals`,
+                        desc: `SUMAS FC's star attacker continues to find the net with remarkable consistency this season.`
+                    });
+                }
+
+                const topAssist = [...players].sort((a,b) => (b.assists||0) - (a.assists||0))[0];
+                if (topAssist.assists > 0) {
+                    news.push({
+                        icon: '&#127919;',
+                        time: 'Analysis',
+                        title: `${topAssist.name} pulling the strings with ${topAssist.assists} assists`,
+                        desc: `The creative maestro has been instrumental in SUMAS FC's attacking play this campaign.`
+                    });
+                }
+
+                const topMotm = [...players].sort((a,b) => (b.motm||0) - (a.motm||0))[0];
+                if (topMotm.motm > 0) {
+                    news.push({
+                        icon: '&#127942;',
+                        time: 'Player Watch',
+                        title: `${topMotm.name} named Man of the Match ${topMotm.motm} times`,
+                        desc: `Consistently delivering match-winning performances, ${topMotm.name} has become the heartbeat of this SUMAS FC side.`
+                    });
+                }
+            }
+
+            if (matches.length) {
+                const lastMatch = matches[matches.length - 1];
+                const sumasGoals = (lastMatch.events || []).filter(e => e.type === 'goal').length;
+                const oppGoals = lastMatch.oppGoals || 0;
+                const result = sumasGoals > oppGoals ? 'victory' : sumasGoals < oppGoals ? 'defeat' : 'draw';
+                news.push({
+                    icon: '&#128227;',
+                    time: 'Match Report',
+                    title: `SUMAS ${sumasGoals}-${oppGoals} ${lastMatch.opponent || 'Opposition'}: ${result === 'victory' ? 'Stunning win!' : result === 'defeat' ? 'Tough day at the office' : 'Honours even'}`,
+                    desc: `SUMAS FC ${result === 'victory' ? 'secured all three points in a commanding display' : result === 'defeat' ? 'will look to bounce back after a disappointing result' : 'had to settle for a point despite their efforts'} against ${lastMatch.opponent || 'the opposition'}.`
+                });
+            }
+
+            news.push({
+                icon: '&#128293;',
+                time: 'Opinion',
+                title: 'The sky is the limit for this SUMAS FC squad',
+                desc: 'With a squad full of talent and ambition, pundits are tipping SUMAS FC for big things. This is a team that believes in themselves.'
+            });
+
+            section.innerHTML = news.map(n => `
+                <div class="news-card">
+                    <div class="news-icon">${n.icon}</div>
+                    <div>
+                        <div class="timestamp">${n.time}</div>
+                        <h4>${n.title}</h4>
+                        <p>${n.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        renderStats();
+        renderTicker();
+        renderNews();
+    </script>
+</body>
+</html>

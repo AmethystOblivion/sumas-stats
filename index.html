@@ -101,6 +101,37 @@
             background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
         }
         .override-modal.hidden { display: none; }
+        .custom-modal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000;
+            background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+        }
+        .custom-modal.hidden { display: none; }
+        .custom-modal-box {
+            background: linear-gradient(135deg, #1a535c, #2a7f8a); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px; padding: 30px; text-align: center; min-width: 260px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        }
+        .custom-modal-box h3 { color: #fff; margin-bottom: 12px; font-size: 1.1rem; }
+        .custom-modal-box input {
+            padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(0,0,0,0.25); color: #fff; font-size: 1rem; width: 200px;
+            outline: none; text-align: center;
+        }
+        .custom-modal-box input:focus { border-color: #5ce0d2; }
+        .custom-modal-box input::placeholder { color: rgba(255,255,255,0.4); }
+        .custom-modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+        .custom-modal-btns button {
+            padding: 10px 22px; border-radius: 8px; border: none;
+            font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+        }
+        .custom-modal-confirm {
+            background: #5ce0d2; color: #1a535c;
+        }
+        .custom-modal-confirm:hover { background: #7aeee2; }
+        .custom-modal-cancel {
+            background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.2) !important;
+        }
+        .custom-modal-cancel:hover { background: rgba(255,255,255,0.15); color: #fff; }
         .override-modal-box {
             background: #2d0032; border: 1px solid rgba(255,255,255,0.15); border-radius: 16px;
             padding: 30px; text-align: center;
@@ -1009,6 +1040,28 @@
         </div>
     </div>
 
+    <!-- Custom Modals -->
+    <div class="custom-modal hidden" id="newMatchModal">
+        <div class="custom-modal-box">
+            <h3>New Match</h3>
+            <input type="text" id="newMatchInput" placeholder="Opponent name..." autocomplete="off">
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeNewMatchModal()">Cancel</button>
+                <button class="custom-modal-confirm" onclick="confirmNewMatch()">Create</button>
+            </div>
+        </div>
+    </div>
+    <div class="custom-modal hidden" id="deleteMatchModal">
+        <div class="custom-modal-box">
+            <h3 id="deleteMatchTitle">Delete Match?</h3>
+            <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:4px">This action cannot be undone.</p>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeDeleteMatchModal()">Cancel</button>
+                <button class="custom-modal-confirm" style="background:#f5576c;color:#fff" onclick="confirmDeleteMatch()">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <header style="position:relative">
         <h1>SUMAS STATS TRACKER</h1>
         <p>Goals &middot; Assists &middot; Man of the Match</p>
@@ -1418,17 +1471,35 @@
             saveMatches(); renderMatches();
         }
         function addMatch() {
-            const name = prompt('Enter opponent team name:');
-            if (name === null) return;
-            matches.push({ events: [], motm: '', opponent: name.trim(), scoreSumas: 0, scoreOpp: 0 });
+            document.getElementById('newMatchModal').classList.remove('hidden');
+            const input = document.getElementById('newMatchInput');
+            input.value = '';
+            setTimeout(() => input.focus(), 100);
+        }
+        function closeNewMatchModal() { document.getElementById('newMatchModal').classList.add('hidden'); }
+        function confirmNewMatch() {
+            const name = document.getElementById('newMatchInput').value.trim();
+            closeNewMatchModal();
+            matches.push({ events: [], motm: '', opponent: name, scoreSumas: 0, scoreOpp: 0 });
             activeMatch = matches.length - 1;
             saveMatches(); renderMatches();
         }
+        document.getElementById('newMatchInput').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewMatch(); });
+
         function selectMatch(idx) { activeMatch = idx; renderMatches(); }
+
+        let pendingDeleteIdx = -1;
         function deleteMatch(idx) {
-            if (!confirm(`Delete Match ${idx + 1}?`)) return;
-            matches.splice(idx, 1);
+            pendingDeleteIdx = idx;
+            document.getElementById('deleteMatchTitle').textContent = `Delete Match ${idx + 1}?`;
+            document.getElementById('deleteMatchModal').classList.remove('hidden');
+        }
+        function closeDeleteMatchModal() { document.getElementById('deleteMatchModal').classList.add('hidden'); pendingDeleteIdx = -1; }
+        function confirmDeleteMatch() {
+            if (pendingDeleteIdx < 0) return;
+            matches.splice(pendingDeleteIdx, 1);
             if (activeMatch >= matches.length) activeMatch = matches.length - 1;
+            closeDeleteMatchModal();
             saveMatches(); renderMatches();
         }
         function setMatchMOTM(idx, name) {

@@ -1701,6 +1701,7 @@
                 sessionStorage.setItem('sumasRole', 'coach');
                 sessionStorage.setItem('sumasUnlocked', 'true');
                 document.getElementById('pinOverlay').classList.add('hidden');
+                applyReadOnly();
                 render();
                 renderMatches();
             } else {

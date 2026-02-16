@@ -971,6 +971,7 @@
     <header>
         <h1>SUMAS STATS TRACKER</h1>
         <p>Goals &middot; Assists &middot; Man of the Match</p>
+        <button id="backToRolesBtn" onclick="backToRoles()" style="position:absolute;top:12px;right:12px;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;font-weight:600;cursor:pointer;letter-spacing:0.5px">&#8592; Switch Role</button>
     </header>
 
     <div class="container">
@@ -1727,6 +1728,15 @@
             const s = sec % 60;
             document.getElementById('overrideBtn').innerHTML =
                 `&#128273; ACTIVE <span class="override-timer">${m}:${s.toString().padStart(2,'0')}</span>`;
+        }
+
+        function backToRoles() {
+            sessionStorage.removeItem('sumasRole');
+            sessionStorage.removeItem('sumasUnlocked');
+            userRole = null;
+            if (overrideTimer) { clearInterval(overrideTimer); overrideActive = false; }
+            document.getElementById('roleOverlay').classList.remove('hidden');
+            document.getElementById('pinOverlay').classList.add('hidden');
         }
 
         function applyReadOnly() {

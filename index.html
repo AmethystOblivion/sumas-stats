@@ -1428,7 +1428,9 @@
             saveMatches(); renderMatches();
         }
         function addMatch() {
-            matches.push({ events: [], motm: '', opponent: '', scoreSumas: 0, scoreOpp: 0 });
+            const name = prompt('Enter opponent team name:');
+            if (name === null) return;
+            matches.push({ events: [], motm: '', opponent: name.trim(), scoreSumas: 0, scoreOpp: 0 });
             activeMatch = matches.length - 1;
             saveMatches(); renderMatches();
         }

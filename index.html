@@ -45,11 +45,6 @@
         .role-image {
             flex: 1; min-width: 0;
         }
-        .role-badge-img {
-            width: 70% !important; max-width: 340px; border: none !important;
-            box-shadow: none !important; border-radius: 12px !important;
-            margin-bottom: 12px; display: block;
-        }
         .role-image img {
             width: 100%; border-radius: 16px;
             border: 3px solid rgba(255,140,0,0.4);
@@ -62,7 +57,6 @@
             font-size: 1.8rem; color: #ff8c00; margin-bottom: 6px; letter-spacing: 2px;
         }
         .role-box p { color: rgba(255,255,255,0.5); margin-bottom: 28px; font-size: 0.85rem; }
-        .role-crest { font-size: 2.5rem; margin-bottom: 12px; }
         .role-buttons { display: flex; flex-direction: column; gap: 14px; }
         .role-btn {
             padding: 18px 24px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.1);
@@ -143,6 +137,14 @@
             transition: all 0.2s; white-space: nowrap;
         }
         .add-player button:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .add-player-side-btn {
+            position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,140,0,0.4);
+            background: rgba(255,140,0,0.1); color: #ff8c00;
+            font-size: 0.7rem; font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+        .add-player-side-btn:hover { background: rgba(255,140,0,0.2); }
         .match-btn {
             padding: 12px 28px; border-radius: 10px; border: none;
             background: linear-gradient(135deg, #f093fb, #f5576c);
@@ -950,12 +952,11 @@
     <div class="role-overlay" id="roleOverlay">
         <div class="role-layout">
             <div class="role-image">
-                <img src="https://img-res.pitchero.com/?url=images.pitchero.com%2Fui%2F4930224%2Fimage_682efeacf1032.jpg&h=276&w=491&t=fit&o=jpg" alt="SUMAS FC Badge" class="role-badge-img">
                 <img src="team.jpg" alt="SUMAS FC Team">
             </div>
             <div class="role-box">
-                <div class="role-crest">&#9917;</div>
-                <h2>SUMAS FC</h2>
+                <img src="https://img-res.pitchero.com/?url=images.pitchero.com%2Fui%2F4930224%2Fimage_682efeacf1032.jpg&h=276&w=491&t=fit&o=jpg" alt="SUMAS FC Badge" style="width:120px;border-radius:8px;margin-bottom:10px">
+                <h2>SUMAS</h2>
                 <p>Select your role to continue</p>
                 <div class="role-buttons">
                     <button class="role-btn" onclick="selectRole('coach')">
@@ -1008,15 +1009,17 @@
     <button id="backToRolesBtn" onclick="backToRoles()" style="position:fixed;bottom:16px;right:16px;z-index:500;padding:10px 18px;border-radius:10px;border:2px solid #00ff87;background:rgba(0,255,135,0.12);color:#00ff87;font-size:0.8rem;font-weight:700;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;box-shadow:0 2px 12px rgba(0,255,135,0.2)">&#8592; Switch Role</button>
 
     <div class="container">
-        <div class="add-player">
+        <div class="add-player hidden" id="addPlayerRow" style="display:none">
             <input type="text" id="playerNameInput" placeholder="Enter player name..." autocomplete="off">
-            <button onclick="addPlayer()">Add Player</button>
+            <button onclick="addPlayer()">Add</button>
+            <button onclick="document.getElementById('addPlayerRow').style.display='none'" style="background:none;color:rgba(255,255,255,0.4);font-size:1rem;padding:4px 8px">&times;</button>
         </div>
 
-        <div class="tabs" id="mainTabs">
+        <div class="tabs" id="mainTabs" style="position:relative">
             <button class="tab" onclick="switchTab('players')">Players</button>
             <button class="tab active matches-tab" onclick="switchTab('matches')">&#9917; Matches</button>
             <button class="tab" onclick="switchTab('leaderboard')">Leaderboard</button>
+            <button class="add-player-side-btn" id="addPlayerSideBtn" onclick="document.getElementById('addPlayerRow').style.display='flex'" style="display:none">+ Player</button>
         </div>
 
         <div id="playersView" class="view-panel">
@@ -1319,8 +1322,10 @@
             const container = document.getElementById('playersTable');
             const empty = document.getElementById('emptyState');
             const editable = isEditable();
-            const addPlayer = document.querySelector('.add-player');
-            if (addPlayer) addPlayer.style.display = editable ? 'flex' : 'none';
+            const addPlayerRow = document.getElementById('addPlayerRow');
+            const addPlayerBtn = document.getElementById('addPlayerSideBtn');
+            if (addPlayerRow && !editable) addPlayerRow.style.display = 'none';
+            if (addPlayerBtn) addPlayerBtn.style.display = editable ? 'inline-block' : 'none';
             if (players.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
             empty.style.display = 'none';
             // Sort by jersey number ascending (no number goes last)
@@ -1793,8 +1798,10 @@
         }
 
         function applyReadOnly() {
-            const addPlayer = document.querySelector('.add-player');
-            if (addPlayer) addPlayer.style.display = isEditable() ? 'flex' : 'none';
+            const addPlayerRow = document.getElementById('addPlayerRow');
+            const addPlayerBtn = document.getElementById('addPlayerSideBtn');
+            if (addPlayerRow && !isEditable()) addPlayerRow.style.display = 'none';
+            if (addPlayerBtn) addPlayerBtn.style.display = isEditable() ? 'inline-block' : 'none';
             document.getElementById('overrideBtn').style.display = userRole === 'parent' ? 'none' : 'block';
         }
 

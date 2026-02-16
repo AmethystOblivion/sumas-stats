@@ -75,31 +75,27 @@
         }
 
         /* Manual Override Button */
-        .bottom-bar {
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 16px;
-            background: linear-gradient(180deg, transparent, rgba(26,5,51,0.95) 30%);
-            pointer-events: none;
-        }
-        .bottom-bar button { pointer-events: auto; }
-        .override-btn {
-            padding: 8px 16px; border-radius: 8px; border: 1.5px solid #ff8c00;
-            background: rgba(255,140,0,0.12); color: #ff8c00;
-            font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        .admin-btn {
+            position: absolute; bottom: 10px; right: 16px;
+            padding: 5px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+            font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
             letter-spacing: 1px; text-transform: uppercase;
         }
-        .override-btn:hover { border-color: #00ff87; color: #00ff87; }
-        .override-btn.active {
-            border-color: #00ff87; color: #00ff87; background: rgba(0,255,135,0.1);
+        .admin-btn:hover { border-color: #ff8c00; color: #ff8c00; }
+        .admin-menu {
+            position: absolute; top: 100%; right: 16px; z-index: 600;
+            background: #2a0845; border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px; padding: 8px 0; min-width: 180px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
         }
-        .switch-role-btn {
-            padding: 8px 16px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.25);
-            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6);
-            font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
-            letter-spacing: 1px; text-transform: uppercase;
+        .admin-menu.hidden { display: none; }
+        .admin-menu button {
+            display: block; width: 100%; padding: 10px 18px; border: none;
+            background: none; color: rgba(255,255,255,0.7); font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; text-align: left; transition: all 0.15s;
         }
-        .switch-role-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+        .admin-menu button:hover { background: rgba(255,255,255,0.08); color: #fff; }
         .override-modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000;
             background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
@@ -125,7 +121,7 @@
             font-size: 0.65rem; color: #00ff87; margin-top: 4px; display: block;
         }
 
-        .container { max-width: 960px; margin: 0 auto; padding: 24px; padding-bottom: 60px; }
+        .container { max-width: 960px; margin: 0 auto; padding: 24px; }
 
         /* Add Player */
         .add-player {
@@ -1003,11 +999,6 @@
         </div>
     </div>
 
-    <!-- Bottom Bar -->
-    <div class="bottom-bar" id="bottomBar">
-        <button class="override-btn" id="overrideBtn" onclick="showOverrideModal()">&#128273; Override</button>
-        <button class="switch-role-btn" id="backToRolesBtn" onclick="backToRoles()">Switch Role &#8594;</button>
-    </div>
     <div class="override-modal hidden" id="overrideModal">
         <div class="override-modal-box">
             <h3>Manual Override</h3>
@@ -1018,9 +1009,15 @@
         </div>
     </div>
 
-    <header>
+    <header style="position:relative">
         <h1>SUMAS STATS TRACKER</h1>
         <p>Goals &middot; Assists &middot; Man of the Match</p>
+        <button class="admin-btn" onclick="toggleAdminMenu()">Admin</button>
+        <div class="admin-menu hidden" id="adminMenu">
+            <button id="overrideBtn" onclick="showOverrideModal();toggleAdminMenu()">&#128273; Override</button>
+            <button id="addPlayerBtn" onclick="showAddPlayerPrompt();toggleAdminMenu()">&#10133; Add Player</button>
+            <button id="backToRolesBtn" onclick="backToRoles()">&#8592; Switch Role</button>
+        </div>
     </header>
 
     <div class="container">
@@ -1783,6 +1780,22 @@
                 `&#128273; ACTIVE <span class="override-timer">${m}:${s.toString().padStart(2,'0')}</span>`;
         }
 
+        function toggleAdminMenu() {
+            document.getElementById('adminMenu').classList.toggle('hidden');
+        }
+        document.addEventListener('click', e => {
+            const menu = document.getElementById('adminMenu');
+            const btn = document.querySelector('.admin-btn');
+            if (menu && !menu.contains(e.target) && e.target !== btn) menu.classList.add('hidden');
+        });
+        function showAddPlayerPrompt() {
+            const name = prompt('Enter player name:');
+            if (!name || !name.trim()) return;
+            const trimmed = name.trim();
+            if (players.some(p => p.name.toLowerCase() === trimmed.toLowerCase())) { alert('Player already exists!'); return; }
+            players.push({ name: trimmed, goals: 0, assists: 0, motm: 0 });
+            save(); render();
+        }
         function backToRoles() {
             sessionStorage.removeItem('sumasRole');
             sessionStorage.removeItem('sumasUnlocked');
@@ -1793,7 +1806,8 @@
         }
 
         function applyReadOnly() {
-            document.getElementById('overrideBtn').style.display = userRole === 'parent' ? 'none' : 'block';
+            document.getElementById('overrideBtn').style.display = userRole === 'parent' ? 'none' : '';
+            document.getElementById('addPlayerBtn').style.display = isEditable() ? '' : 'none';
         }
 
         // Restore session

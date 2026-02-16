@@ -35,26 +35,45 @@
         .role-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10000;
             background: linear-gradient(135deg, #37003c, #2d0032, #1a0533);
-            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            display: flex; align-items: center; justify-content: center;
         }
         .role-overlay.hidden { display: none; }
+        .role-layout {
+            display: flex; align-items: center; gap: 40px; max-width: 850px;
+            padding: 30px; width: 100%;
+        }
+        .role-image {
+            flex: 1; min-width: 0;
+        }
+        .role-image img {
+            width: 100%; border-radius: 16px;
+            border: 3px solid rgba(255,140,0,0.4);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        }
         .role-box {
-            text-align: center; max-width: 400px; padding: 40px 30px;
+            flex: 0 0 280px; text-align: center; padding: 30px 20px;
         }
         .role-box h2 {
-            font-size: 2rem; color: #00ff87; margin-bottom: 6px; letter-spacing: 2px;
+            font-size: 1.8rem; color: #ff8c00; margin-bottom: 6px; letter-spacing: 2px;
         }
-        .role-box p { color: rgba(255,255,255,0.5); margin-bottom: 32px; font-size: 0.9rem; }
-        .role-crest { font-size: 3rem; margin-bottom: 16px; }
-        .role-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .role-box p { color: rgba(255,255,255,0.5); margin-bottom: 28px; font-size: 0.85rem; }
+        .role-crest { font-size: 2.5rem; margin-bottom: 12px; }
+        .role-buttons { display: flex; flex-direction: column; gap: 14px; }
         .role-btn {
-            padding: 20px 30px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.1);
+            padding: 18px 24px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.1);
             background: rgba(255,255,255,0.05); color: #fff; font-size: 1rem; font-weight: 700;
-            cursor: pointer; transition: all 0.3s; min-width: 160px;
+            cursor: pointer; transition: all 0.3s; text-align: left;
+            display: flex; align-items: center; gap: 14px;
         }
-        .role-btn:hover { border-color: #00ff87; background: rgba(0,255,135,0.08); }
-        .role-btn .role-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
-        .role-btn .role-label { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 4px; display: block; }
+        .role-btn:hover { border-color: #ff8c00; background: rgba(255,140,0,0.08); }
+        .role-btn .role-icon { font-size: 1.8rem; flex-shrink: 0; }
+        .role-btn .role-label { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+        .role-btn-text { display: flex; flex-direction: column; }
+        @media (max-width: 700px) {
+            .role-layout { flex-direction: column; gap: 20px; padding: 20px 16px; }
+            .role-image { max-width: 100%; }
+            .role-box { flex: none; width: 100%; padding: 20px 10px; }
+        }
 
         /* Manual Override Button */
         .override-btn {
@@ -923,21 +942,30 @@
 <body>
     <!-- Role Selection -->
     <div class="role-overlay" id="roleOverlay">
-        <div class="role-box">
-            <div class="role-crest">&#9917;</div>
-            <h2>SUMAS FC</h2>
-            <p>Select your role to continue</p>
-            <div class="role-buttons">
-                <button class="role-btn" onclick="selectRole('coach')">
-                    <span class="role-icon">&#128203;</span>
-                    Coaches
-                    <span class="role-label">Full access with PIN</span>
-                </button>
-                <button class="role-btn" onclick="selectRole('parent')">
-                    <span class="role-icon">&#128101;</span>
-                    Parents / Players
-                    <span class="role-label">View stats &amp; results</span>
-                </button>
+        <div class="role-layout">
+            <div class="role-image">
+                <img src="team.jpg" alt="SUMAS FC Team">
+            </div>
+            <div class="role-box">
+                <div class="role-crest">&#9917;</div>
+                <h2>SUMAS FC</h2>
+                <p>Select your role to continue</p>
+                <div class="role-buttons">
+                    <button class="role-btn" onclick="selectRole('coach')">
+                        <span class="role-icon">&#128203;</span>
+                        <div class="role-btn-text">
+                            Coaches
+                            <span class="role-label">Full access with PIN</span>
+                        </div>
+                    </button>
+                    <button class="role-btn" onclick="selectRole('parent')">
+                        <span class="role-icon">&#128101;</span>
+                        <div class="role-btn-text">
+                            Parents / Players
+                            <span class="role-label">View stats &amp; results</span>
+                        </div>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

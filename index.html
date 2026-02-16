@@ -962,18 +962,44 @@
         const defaultPlayers = [
             { name: 'Sammy', goals: 0, assists: 0, motm: 0 },
             { name: 'Adam', goals: 0, assists: 0, motm: 0 },
-            { name: 'Jayden', goals: 0, assists: 0, motm: 0 },
-            { name: 'Kian', goals: 0, assists: 0, motm: 0 },
-            { name: 'Isaac', goals: 0, assists: 0, motm: 0 },
-            { name: 'Louie', goals: 0, assists: 0, motm: 0 },
             { name: 'Blu(Riley)', goals: 0, assists: 0, motm: 0 },
-            { name: 'Will', goals: 0, assists: 0, motm: 0 }
+            { name: 'Euan', goals: 0, assists: 0, motm: 0 },
+            { name: 'Isaac', goals: 0, assists: 0, motm: 0 },
+            { name: 'James', goals: 0, assists: 0, motm: 0 },
+            { name: 'Jayden', goals: 0, assists: 0, motm: 0 },
+            { name: 'Jude', goals: 0, assists: 0, motm: 0 },
+            { name: 'Kian', goals: 0, assists: 0, motm: 0 },
+            { name: 'Louie', goals: 0, assists: 0, motm: 0 },
+            { name: 'Luke', goals: 0, assists: 0, motm: 0 },
+            { name: 'Mali', goals: 0, assists: 0, motm: 0 },
+            { name: 'Oscar', goals: 0, assists: 0, motm: 0 },
+            { name: 'Wilbur', goals: 0, assists: 0, motm: 0 }
         ];
         let players, matches, activeMatch;
         try {
             let storedP = localStorage.getItem('footballPlayers');
-            players = storedP ? JSON.parse(storedP) : [...defaultPlayers];
-            if (!storedP) localStorage.setItem('footballPlayers', JSON.stringify(defaultPlayers));
+            if (storedP) {
+                players = JSON.parse(storedP);
+                // Add any new default players that don't exist yet
+                const existingNames = players.map(p => p.name.toLowerCase());
+                for (const dp of defaultPlayers) {
+                    if (!existingNames.includes(dp.name.toLowerCase())) {
+                        players.push({...dp});
+                    }
+                }
+                // Remove Will if present (no longer on squad)
+                players = players.filter(p => p.name.toLowerCase() !== 'will');
+                // Make sure Sammy is first
+                players.sort((a, b) => {
+                    if (a.name.toLowerCase() === 'sammy') return -1;
+                    if (b.name.toLowerCase() === 'sammy') return 1;
+                    return a.name.localeCompare(b.name);
+                });
+                localStorage.setItem('footballPlayers', JSON.stringify(players));
+            } else {
+                players = [...defaultPlayers];
+                localStorage.setItem('footballPlayers', JSON.stringify(defaultPlayers));
+            }
         } catch(e) {
             players = [...defaultPlayers];
             localStorage.setItem('footballPlayers', JSON.stringify(defaultPlayers));
@@ -993,7 +1019,7 @@
         // ===== JERSEY =====
         const jerseyNumbers = {
             'sammy': 8, 'adam': 1, 'jayden': 19, 'kian': 10,
-            'isaac': 5, 'louie': 18, 'blu(riley)': 16, 'will': 14
+            'isaac': 5, 'louie': 18, 'blu(riley)': 16
         };
         function getJerseyNumber(name) {
             const key = name.toLowerCase().trim();

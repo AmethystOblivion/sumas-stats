@@ -1175,17 +1175,6 @@
         function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
         // ===== PLAYERS =====
-        function addPlayer() {
-            const input = document.getElementById('playerNameInput');
-            const name = input.value.trim();
-            if (!name) return;
-            if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) { alert('Player already exists!'); return; }
-            players.push({ name, goals: 0, assists: 0, motm: 0 });
-            input.value = '';
-            save();
-            render();
-        }
-        document.getElementById('playerNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
 
         function removePlayer(index) {
             if (confirm(`Remove ${players[index].name}?`)) { players.splice(index, 1); save(); render(); }
@@ -1315,10 +1304,6 @@
             const container = document.getElementById('playersTable');
             const empty = document.getElementById('emptyState');
             const editable = isEditable();
-            const addPlayerRow = document.getElementById('addPlayerRow');
-            const addPlayerBtn = document.getElementById('addPlayerSideBtn');
-            if (addPlayerRow && !editable) addPlayerRow.style.display = 'none';
-            if (addPlayerBtn) addPlayerBtn.style.display = editable ? 'inline-block' : 'none';
             if (players.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
             empty.style.display = 'none';
             // Sort by jersey number ascending (no number goes last)
@@ -1792,10 +1777,6 @@
         }
 
         function applyReadOnly() {
-            const addPlayerRow = document.getElementById('addPlayerRow');
-            const addPlayerBtn = document.getElementById('addPlayerSideBtn');
-            if (addPlayerRow && !isEditable()) addPlayerRow.style.display = 'none';
-            if (addPlayerBtn) addPlayerBtn.style.display = isEditable() ? 'inline-block' : 'none';
             document.getElementById('overrideBtn').style.display = userRole === 'parent' ? 'none' : 'block';
         }
 

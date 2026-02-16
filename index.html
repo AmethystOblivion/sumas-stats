@@ -1057,7 +1057,7 @@
         const defaultPlayers = [
             { name: 'Sammy', goals: 0, assists: 0, motm: 0 },
             { name: 'Adam', goals: 0, assists: 0, motm: 0 },
-            { name: 'Blu(Riley)', goals: 0, assists: 0, motm: 0 },
+            { name: 'Rylee', goals: 0, assists: 0, motm: 0 },
             { name: 'Euan', goals: 0, assists: 0, motm: 0 },
             { name: 'Isaac', goals: 0, assists: 0, motm: 0 },
             { name: 'James', goals: 0, assists: 0, motm: 0 },
@@ -1077,6 +1077,9 @@
             let storedP = localStorage.getItem('footballPlayers');
             if (storedP) {
                 players = JSON.parse(storedP);
+                // Rename Blu(Riley) to Rylee if present
+                const bluP = players.find(p => p.name === 'Blu(Riley)');
+                if (bluP) bluP.name = 'Rylee';
                 // Add any new default players that don't exist yet
                 const existingNames = players.map(p => p.name.toLowerCase());
                 for (const dp of defaultPlayers) {
@@ -1114,7 +1117,7 @@
         // ===== JERSEY =====
         const jerseyNumbers = {
             'sammy': 8, 'adam': 1, 'jayden': 19, 'kian': 10,
-            'isaac': 5, 'louie': 18, 'blu(riley)': 16, 'will': 14,
+            'isaac': 5, 'louie': 18, 'rylee': 16, 'will': 14,
             'euan': 9, 'james': 17, 'jude': 12, 'luke': 18,
             'noah': 4, 'oscar': 6, 'wilbur': 2
         };

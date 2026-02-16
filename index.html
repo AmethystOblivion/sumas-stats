@@ -1539,6 +1539,7 @@
         });
         if (sessionStorage.getItem('sumasUnlocked') === 'true') {
             document.getElementById('pinOverlay').classList.add('hidden');
+            setTimeout(playCelebration, 300);
         } else {
             document.getElementById('pinInput').focus();
         }

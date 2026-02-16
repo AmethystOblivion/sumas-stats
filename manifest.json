@@ -4,8 +4,8 @@
   "description": "Track goals, assists, and man of the match for SUMAS FC",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0f0c29",
-  "theme_color": "#ff8c00",
+  "background_color": "#1a0533",
+  "theme_color": "#37003c",
   "orientation": "any",
   "icons": [
     {

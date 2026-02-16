@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>SUMAS Stats Tracker</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ff8c00">
+    <meta name="theme-color" content="#37003c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SUMAS Stats">
@@ -14,24 +14,84 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background: #1a0533;
             color: #e0e0e0;
             min-height: 100vh;
         }
         header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            padding: 28px;
+            background: linear-gradient(90deg, #37003c, #5a0050, #37003c);
+            padding: 20px 28px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: relative;
         }
         header h1 {
-            font-size: 2rem; letter-spacing: 3px; color: #ff8c00;
-            text-decoration: underline;
-            text-decoration-thickness: 3px;
-            text-underline-offset: 8px;
-            text-shadow: 0 2px 10px rgba(255, 140, 0, 0.4);
+            font-size: 1.8rem; letter-spacing: 3px; color: #00ff87;
+            text-shadow: 0 1px 6px rgba(0,255,135,0.3);
         }
-        header p { color: rgba(255,255,255,0.8); margin-top: 6px; font-size: 0.95rem; }
+        header p { color: rgba(255,255,255,0.6); margin-top: 4px; font-size: 0.85rem; }
+
+        /* Role Selection Screen */
+        .role-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10000;
+            background: linear-gradient(135deg, #37003c, #2d0032, #1a0533);
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .role-overlay.hidden { display: none; }
+        .role-box {
+            text-align: center; max-width: 400px; padding: 40px 30px;
+        }
+        .role-box h2 {
+            font-size: 2rem; color: #00ff87; margin-bottom: 6px; letter-spacing: 2px;
+        }
+        .role-box p { color: rgba(255,255,255,0.5); margin-bottom: 32px; font-size: 0.9rem; }
+        .role-crest { font-size: 3rem; margin-bottom: 16px; }
+        .role-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .role-btn {
+            padding: 20px 30px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05); color: #fff; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.3s; min-width: 160px;
+        }
+        .role-btn:hover { border-color: #00ff87; background: rgba(0,255,135,0.08); }
+        .role-btn .role-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
+        .role-btn .role-label { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 4px; display: block; }
+
+        /* Manual Override Button */
+        .override-btn {
+            position: fixed; top: 12px; left: 12px; z-index: 500;
+            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(55,0,60,0.9); color: rgba(255,255,255,0.4);
+            font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+        .override-btn:hover { border-color: #00ff87; color: #00ff87; }
+        .override-btn.active {
+            border-color: #00ff87; color: #00ff87; background: rgba(0,255,135,0.1);
+        }
+        .override-modal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000;
+            background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+        }
+        .override-modal.hidden { display: none; }
+        .override-modal-box {
+            background: #2d0032; border: 1px solid rgba(255,255,255,0.15); border-radius: 16px;
+            padding: 30px; text-align: center;
+        }
+        .override-modal-box h3 { color: #00ff87; margin-bottom: 12px; }
+        .override-input {
+            padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.3); color: #fff; font-size: 1.2rem; font-weight: 700;
+            text-align: center; letter-spacing: 4px; width: 150px; outline: none;
+        }
+        .override-input:focus { border-color: #00ff87; }
+        .override-submit {
+            display: block; margin: 12px auto 0; padding: 10px 24px; border-radius: 8px;
+            border: none; background: #00ff87; color: #37003c; font-weight: 700; cursor: pointer;
+        }
+        .override-error { color: #f5576c; font-size: 0.8rem; margin-top: 8px; min-height: 18px; }
+        .override-timer {
+            font-size: 0.65rem; color: #00ff87; margin-top: 4px; display: block;
+        }
 
         .container { max-width: 960px; margin: 0 auto; padding: 24px; }
 
@@ -80,8 +140,8 @@
             font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
         }
         .tab.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #00ff87, #02efb2);
+            color: #37003c; box-shadow: 0 4px 15px rgba(0,255,135,0.3);
         }
         .tab.matches-tab {
             flex: 1.5; position: relative;
@@ -230,7 +290,7 @@
         /* ===== SECURITY PIN SCREEN ===== */
         .pin-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background: linear-gradient(135deg, #37003c, #2d0032, #1a0533);
             display: flex; align-items: center; justify-content: center;
             flex-direction: column;
         }
@@ -241,8 +301,8 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
         .pin-box h2 {
-            font-size: 1.8rem; color: #ff8c00; margin-bottom: 8px;
-            text-shadow: 0 2px 10px rgba(255,140,0,0.4);
+            font-size: 1.8rem; color: #00ff87; margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0,255,135,0.3);
         }
         .pin-box p { color: rgba(255,255,255,0.5); margin-bottom: 24px; font-size: 0.9rem; }
         .pin-input {
@@ -251,16 +311,16 @@
             border: 2px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: #fff;
             outline: none; transition: border-color 0.3s;
         }
-        .pin-input:focus { border-color: #667eea; }
+        .pin-input:focus { border-color: #00ff87; }
         .pin-input::placeholder { letter-spacing: 2px; font-size: 0.9rem; color: rgba(255,255,255,0.2); }
         .pin-submit {
             display: block; margin: 16px auto 0; padding: 12px 36px; border-radius: 10px;
-            border: none; background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer;
+            border: none; background: #00ff87; color: #37003c;
+            font-weight: 700; font-size: 1rem; cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+            box-shadow: 0 4px 15px rgba(0,255,135,0.3);
         }
-        .pin-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .pin-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,255,135,0.4); }
         .pin-error {
             color: #f5576c; font-size: 0.85rem; margin-top: 12px; min-height: 20px;
             transition: opacity 0.3s;
@@ -861,13 +921,29 @@
     </style>
 </head>
 <body>
-    <div class="goal-overlay gone" id="goalOverlay">
-        <div class="goal-ball">&#9917;</div>
-        <div class="goal-text">GOAAAL!</div>
-        <div class="goal-sub">&#127941; SUMAS FC &#127941;</div>
+    <!-- Role Selection -->
+    <div class="role-overlay" id="roleOverlay">
+        <div class="role-box">
+            <div class="role-crest">&#9917;</div>
+            <h2>SUMAS FC</h2>
+            <p>Select your role to continue</p>
+            <div class="role-buttons">
+                <button class="role-btn" onclick="selectRole('coach')">
+                    <span class="role-icon">&#128203;</span>
+                    Coaches
+                    <span class="role-label">Full access with PIN</span>
+                </button>
+                <button class="role-btn" onclick="selectRole('parent')">
+                    <span class="role-icon">&#128101;</span>
+                    Parents / Players
+                    <span class="role-label">View stats &amp; results</span>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="pin-overlay" id="pinOverlay">
+    <!-- PIN (coaches only) -->
+    <div class="pin-overlay hidden" id="pinOverlay">
         <div class="pin-box">
             <div class="pin-lock-icon">&#128274;</div>
             <h2>SUMAS STATS</h2>
@@ -880,6 +956,18 @@
 
     <div class="side-text left"><span>S U M A S</span></div>
     <div class="side-text right"><span>S U M A S</span></div>
+    <!-- Manual Override -->
+    <button class="override-btn" id="overrideBtn" onclick="showOverrideModal()">&#128273; OVERRIDE</button>
+    <div class="override-modal hidden" id="overrideModal">
+        <div class="override-modal-box">
+            <h3>Manual Override</h3>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:12px">Enter override code</p>
+            <input type="password" class="override-input" id="overrideInput" maxlength="10" autocomplete="off">
+            <button class="override-submit" onclick="submitOverride()">Activate</button>
+            <div class="override-error" id="overrideError"></div>
+        </div>
+    </div>
+
     <header>
         <h1>SUMAS STATS TRACKER</h1>
         <p>Goals &middot; Assists &middot; Man of the Match</p>
@@ -1191,10 +1279,31 @@
         function render() {
             const container = document.getElementById('playersTable');
             const empty = document.getElementById('emptyState');
+            const editable = isEditable();
+            const addPlayer = document.querySelector('.add-player');
+            if (addPlayer) addPlayer.style.display = editable ? 'flex' : 'none';
             if (players.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
             empty.style.display = 'none';
             container.innerHTML = players.map((p, i) => {
                 const isOpen = openPlayers.has(i);
+                const btns = editable ? `
+                        <div class="player-stat-btns">
+                            <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'goals',-1)">-</button>
+                            <button class="s-btn plus-g" onclick="event.stopPropagation();updateStat(${i},'goals',1)">+</button>
+                        </div>` : '';
+                const abtns = editable ? `
+                        <div class="player-stat-btns">
+                            <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'assists',-1)">-</button>
+                            <button class="s-btn plus-a" onclick="event.stopPropagation();updateStat(${i},'assists',1)">+</button>
+                        </div>` : '';
+                const mbtns = editable ? `
+                        <div class="player-stat-btns">
+                            <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'motm',-1)">-</button>
+                            <button class="s-btn plus-m" onclick="event.stopPropagation();updateStat(${i},'motm',1)">+</button>
+                        </div>` : '';
+                const removeBtn = editable ? `<div class="player-card-footer">
+                            <button class="remove-btn" onclick="event.stopPropagation();removePlayer(${i})">&times; Remove</button>
+                        </div>` : '';
                 return `<div class="player-card ${isOpen ? 'open' : ''}">
                     <div class="player-card-header" onclick="togglePlayer(${i})">
                         <span class="player-card-arrow">&#9654;</span>
@@ -1213,16 +1322,20 @@
                             <div class="player-stat-box">
                                 <div class="player-stat-label">Goals</div>
                                 <div class="player-stat-value g">${p.goals}</div>
+                                ${btns}
                             </div>
                             <div class="player-stat-box">
                                 <div class="player-stat-label">Assists</div>
                                 <div class="player-stat-value a">${p.assists}</div>
+                                ${abtns}
                             </div>
                             <div class="player-stat-box">
                                 <div class="player-stat-label">MOTM</div>
                                 <div class="player-stat-value m">${p.motm}</div>
+                                ${mbtns}
                             </div>
                         </div>
+                        ${removeBtn}
                     </div>
                 </div>`;
             }).join('');
@@ -1239,12 +1352,22 @@
             const c = document.getElementById(cid);
             if (!sorted.length) { c.innerHTML = ''; return; }
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
+            const editable = isEditable();
+            const btnClass = stat === 'goals' ? 'plus-g' : stat === 'assists' ? 'plus-a' : 'plus-m';
             c.innerHTML = `<div class="lb-header ${hc}">${title}</div><table class="lb-table">
-                ${sorted.map((p, i) => `<tr>
+                ${sorted.map((p, i) => {
+                    const pi = players.indexOf(p);
+                    const editBtns = editable ? `<td style="width:70px;text-align:center">
+                        <button class="s-btn minus" onclick="updateStat(${pi},'${stat}',-1);renderLeaderboard()">-</button>
+                        <button class="s-btn ${btnClass}" onclick="updateStat(${pi},'${stat}',1);renderLeaderboard()">+</button>
+                    </td>` : '';
+                    return `<tr>
                     <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
                     <td class="lb-name" style="display:flex;align-items:center;gap:8px">${jerseySVG(getJerseyNumber(p.name))} ${esc(p.name)}</td>
                     <td class="lb-val ${stat}">${p[stat]}</td>
-                </tr>`).join('')}</table>`;
+                    ${editBtns}
+                </tr>`;
+                }).join('')}</table>`;
         }
 
         // ===== MATCHES =====
@@ -1324,13 +1447,14 @@
 
         function renderMatches() {
             const c = document.getElementById('matchContent');
+            const editable = isEditable();
             if (matches.length === 0) {
                 activeMatch = -1;
                 c.innerHTML = `<div class="empty-state"><p>No matches yet</p>
-                    <span>Click below to add your first match</span></div>
+                    ${editable ? `<span>Click below to add your first match</span></div>
                     <div style="text-align:center;margin-top:16px">
                         <button class="match-btn" onclick="addMatch()">+ New Match</button>
-                    </div>`;
+                    </div>` : `<span>No matches recorded yet</span></div>`}`;
                 return;
             }
 
@@ -1360,7 +1484,7 @@
             const latestLabel = latestM.opponent ? `vs ${esc(latestM.opponent)}` : `Match ${latestIdx + 1}`;
             html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}</button>`;
 
-            html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
+            if (editable) html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
             html += `<a href="https://system.gotsport.com/splash/25643/events/50579/schedules?team=3738001" target="_blank" rel="noopener" class="table-link-btn" style="margin-left:auto">Table</a>`;
             html += `</div>`;
 
@@ -1384,14 +1508,18 @@
                         </div>
                         <span class="score-vs">-</span>
                         <div style="text-align:center">
-                            <input type="number" class="score-input opp" value="${sOpp}" min="0"
-                                onchange="setMatchScore(${activeMatch},'opp',this.value)"
-                                onkeydown="if(event.key==='Enter')this.blur()">
+                            ${editable
+                                ? `<input type="number" class="score-input opp" value="${sOpp}" min="0"
+                                    onchange="setMatchScore(${activeMatch},'opp',this.value)"
+                                    onkeydown="if(event.key==='Enter')this.blur()">`
+                                : `<div class="score-input opp" style="display:inline-block">${sOpp}</div>`}
                             <div class="score-team-label">
-                                <input class="player-name-text" value="${esc(m.opponent)}" placeholder="Opponent"
-                                    onchange="setMatchOpponent(${activeMatch}, this.value)"
-                                    onkeydown="if(event.key==='Enter')this.blur()"
-                                    style="width:100px;text-align:center;font-size:0.65rem;color:rgba(255,255,255,0.5);padding:2px;text-transform:uppercase;letter-spacing:2px;font-weight:600">
+                                ${editable
+                                    ? `<input class="player-name-text" value="${esc(m.opponent)}" placeholder="Opponent"
+                                        onchange="setMatchOpponent(${activeMatch}, this.value)"
+                                        onkeydown="if(event.key==='Enter')this.blur()"
+                                        style="width:100px;text-align:center;font-size:0.65rem;color:rgba(255,255,255,0.5);padding:2px;text-transform:uppercase;letter-spacing:2px;font-weight:600">`
+                                    : `<span style="font-size:0.65rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;font-weight:600">${esc(m.opponent) || 'TBC'}</span>`}
                             </div>
                         </div>
                     </div>
@@ -1405,6 +1533,7 @@
                 // Main column
                 html += `<div class="match-main">`;
 
+                if (editable) {
                 // Add Goal form
                 html += `<div class="match-form-card">
                     <div class="match-form-title" style="color:#43e97b">Add Goals</div>
@@ -1430,6 +1559,7 @@
                         <button class="match-add-stat-btn assist-btn" onclick="addMatchEvent(${activeMatch},'assist')">+ Assist</button>
                     </div>
                 </div>`;
+                } // end editable forms
 
                 // Events log
                 const goals = m.events.filter(e => e.type === 'goal');
@@ -1444,7 +1574,7 @@
                                 <span class="match-event-icon">&#9917;</span>
                                 <span class="match-event-name">${esc(e.player)}</span>
                                 <span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>
-                                <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
+                                ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
                             </div>`;
                         });
                     }
@@ -1456,14 +1586,14 @@
                                 <span class="match-event-icon">&#129406;</span>
                                 <span class="match-event-name">${esc(e.player)}</span>
                                 <span class="match-event-count a">${e.count > 1 ? 'x' + e.count : ''}</span>
-                                <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
+                                ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
                             </div>`;
                         });
                     }
                     html += `</div>`;
                 }
 
-                html += `<button class="match-delete-btn" onclick="deleteMatch(${activeMatch})">Delete Match</button>`;
+                if (editable) html += `<button class="match-delete-btn" onclick="deleteMatch(${activeMatch})">Delete Match</button>`;
                 html += `</div>`; // end match-main
 
                 // MOTM Trophy Side
@@ -1474,10 +1604,10 @@
                         ${m.motm
                             ? `<div class="motm-trophy-name">${esc(m.motm)}</div>`
                             : `<div class="motm-none">Not selected</div>`}
-                        <select class="motm-trophy-select" onchange="setMatchMOTM(${activeMatch}, this.value)">
+                        ${editable ? `<select class="motm-trophy-select" onchange="setMatchMOTM(${activeMatch}, this.value)">
                             <option value="">Select MOTM...</option>
                             ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-                        </select>
+                        </select>` : ''}
                     </div>
                 </div>`;
 
@@ -1494,62 +1624,28 @@
             if (el.classList.contains('open')) renderLeaderboard();
         }
 
-        // ===== GOAL CELEBRATION =====
-        function launchConfetti() {
-            const colors = ['#ff8c00', '#667eea', '#764ba2', '#f5576c', '#fff', '#00e676', '#ffeb3b'];
-            for (let i = 0; i < 60; i++) {
-                const piece = document.createElement('div');
-                piece.className = 'confetti-piece';
-                piece.style.left = Math.random() * 100 + 'vw';
-                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-                piece.style.width = (Math.random() * 8 + 5) + 'px';
-                piece.style.height = (Math.random() * 8 + 5) + 'px';
-                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-                piece.style.opacity = '1';
-                document.body.appendChild(piece);
-                const duration = Math.random() * 1500 + 1500;
-                const drift = (Math.random() - 0.5) * 200;
-                piece.animate([
-                    { top: '-10px', transform: 'rotate(0deg)', opacity: 1 },
-                    { top: '110vh', transform: 'rotate(' + (Math.random()*720-360) + 'deg) translateX(' + drift + 'px)', opacity: 0 }
-                ], { duration: duration, easing: 'ease-out' });
-                setTimeout(() => piece.remove(), duration);
-            }
+        // ===== ROLE SELECTION =====
+        let userRole = sessionStorage.getItem('sumasRole') || null; // 'coach' or 'parent'
+        let overrideActive = false;
+        let overrideTimer = null;
+
+        function isEditable() {
+            return userRole === 'coach' || overrideActive;
         }
-        function playCelebration() {
-            const overlay = document.getElementById('goalOverlay');
-            overlay.classList.remove('gone');
-            overlay.classList.remove('hidden');
-            launchConfetti();
-            // Crowd cheer sound
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const duration = 1.5;
-                const sampleRate = ctx.sampleRate;
-                const buffer = ctx.createBuffer(1, sampleRate * duration, sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < data.length; i++) {
-                    const t = i / sampleRate;
-                    const envelope = Math.min(t * 4, 1) * Math.max(0, 1 - t / duration);
-                    data[i] = (Math.random() * 2 - 1) * 0.3 * envelope;
-                    // Add some tonal quality like a roar
-                    data[i] += Math.sin(t * 200) * 0.05 * envelope;
-                    data[i] += Math.sin(t * 350) * 0.03 * envelope;
-                }
-                const source = ctx.createBufferSource();
-                source.buffer = buffer;
-                const filter = ctx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.value = 800;
-                filter.Q.value = 0.5;
-                source.connect(filter);
-                filter.connect(ctx.destination);
-                source.start();
-            } catch(e) {}
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-                setTimeout(() => overlay.classList.add('gone'), 600);
-            }, 2800);
+
+        function selectRole(role) {
+            if (role === 'coach') {
+                document.getElementById('roleOverlay').classList.add('hidden');
+                document.getElementById('pinOverlay').classList.remove('hidden');
+                document.getElementById('pinInput').focus();
+            } else {
+                userRole = 'parent';
+                sessionStorage.setItem('sumasRole', 'parent');
+                document.getElementById('roleOverlay').classList.add('hidden');
+                applyReadOnly();
+                render();
+                renderMatches();
+            }
         }
 
         // ===== SECURITY PIN =====
@@ -1558,9 +1654,12 @@
             const input = document.getElementById('pinInput');
             const error = document.getElementById('pinError');
             if (input.value === PIN_CODE) {
-                document.getElementById('pinOverlay').classList.add('hidden');
+                userRole = 'coach';
+                sessionStorage.setItem('sumasRole', 'coach');
                 sessionStorage.setItem('sumasUnlocked', 'true');
-                setTimeout(playCelebration, 400);
+                document.getElementById('pinOverlay').classList.add('hidden');
+                render();
+                renderMatches();
             } else {
                 error.textContent = 'Incorrect PIN. Try again.';
                 input.value = '';
@@ -1570,11 +1669,78 @@
         document.getElementById('pinInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') checkPin();
         });
-        if (sessionStorage.getItem('sumasUnlocked') === 'true') {
+
+        // ===== MANUAL OVERRIDE =====
+        const OVERRIDE_CODE = 'WT11';
+        function showOverrideModal() {
+            if (overrideActive) return;
+            document.getElementById('overrideModal').classList.remove('hidden');
+            document.getElementById('overrideInput').value = '';
+            document.getElementById('overrideError').textContent = '';
+            document.getElementById('overrideInput').focus();
+        }
+        document.getElementById('overrideInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') submitOverride();
+        });
+        document.getElementById('overrideModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('overrideModal'))
+                document.getElementById('overrideModal').classList.add('hidden');
+        });
+        function submitOverride() {
+            const input = document.getElementById('overrideInput');
+            if (input.value === OVERRIDE_CODE) {
+                overrideActive = true;
+                document.getElementById('overrideModal').classList.add('hidden');
+                document.getElementById('overrideBtn').classList.add('active');
+                // 5 minute timer
+                let remaining = 300;
+                updateOverrideTimer(remaining);
+                overrideTimer = setInterval(() => {
+                    remaining--;
+                    updateOverrideTimer(remaining);
+                    if (remaining <= 0) {
+                        clearInterval(overrideTimer);
+                        overrideActive = false;
+                        document.getElementById('overrideBtn').classList.remove('active');
+                        document.getElementById('overrideBtn').innerHTML = '&#128273; OVERRIDE';
+                        render();
+                        renderMatches();
+                        if (currentTab === 'leaderboard') renderLeaderboard();
+                    }
+                }, 1000);
+                render();
+                renderMatches();
+                if (currentTab === 'leaderboard') renderLeaderboard();
+            } else {
+                document.getElementById('overrideError').textContent = 'Wrong code';
+                input.value = '';
+                input.focus();
+            }
+        }
+        function updateOverrideTimer(sec) {
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            document.getElementById('overrideBtn').innerHTML =
+                `&#128273; ACTIVE <span class="override-timer">${m}:${s.toString().padStart(2,'0')}</span>`;
+        }
+
+        function applyReadOnly() {
+            // Hide add player section and coach-only elements
+            const addPlayer = document.querySelector('.add-player');
+            if (addPlayer) addPlayer.style.display = isEditable() ? 'flex' : 'none';
+        }
+
+        // Restore session
+        if (userRole === 'coach' && sessionStorage.getItem('sumasUnlocked') === 'true') {
+            document.getElementById('roleOverlay').classList.add('hidden');
             document.getElementById('pinOverlay').classList.add('hidden');
-            setTimeout(playCelebration, 300);
+        } else if (userRole === 'parent') {
+            document.getElementById('roleOverlay').classList.add('hidden');
+            document.getElementById('pinOverlay').classList.add('hidden');
+            applyReadOnly();
         } else {
-            document.getElementById('pinInput').focus();
+            // Show role selection
+            document.getElementById('pinOverlay').classList.add('hidden');
         }
 
         // ===== INIT =====

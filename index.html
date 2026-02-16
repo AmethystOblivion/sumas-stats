@@ -18,19 +18,6 @@
             color: #e0e0e0;
             min-height: 100vh;
         }
-        /* FPL-style corner patterns */
-        body::before, body::after {
-            content: '';
-            position: fixed; width: 180px; height: 180px;
-            pointer-events: none; z-index: 0;
-            background: repeating-linear-gradient(
-                135deg,
-                rgba(255,140,0,0.2) 0px, rgba(255,140,0,0.2) 8px,
-                transparent 8px, transparent 16px
-            );
-        }
-        body::before { top: 0; right: 0; }
-        body::after { bottom: 0; left: 0; }
         header {
             background: linear-gradient(90deg, #37003c, #5a0050, #37003c);
             padding: 20px 28px;
@@ -95,13 +82,14 @@
 
         /* Manual Override Button */
         .override-btn {
-            position: fixed; bottom: 12px; left: 12px; z-index: 500;
-            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(55,0,60,0.9); color: rgba(255,255,255,0.4);
-            font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-            letter-spacing: 1px;
+            position: fixed; bottom: 16px; left: 16px; z-index: 500;
+            padding: 10px 18px; border-radius: 10px; border: 2px solid #ff8c00;
+            background: rgba(255,140,0,0.15); color: #ff8c00;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            box-shadow: 0 2px 12px rgba(255,140,0,0.2);
         }
-        .override-btn:hover { border-color: #00ff87; color: #00ff87; }
+        .override-btn:hover { border-color: #00ff87; color: #00ff87; box-shadow: 0 2px 16px rgba(0,255,135,0.3); }
         .override-btn.active {
             border-color: #00ff87; color: #00ff87; background: rgba(0,255,135,0.1);
         }
@@ -1016,8 +1004,8 @@
     <header>
         <h1>SUMAS STATS TRACKER</h1>
         <p>Goals &middot; Assists &middot; Man of the Match</p>
-        <button id="backToRolesBtn" onclick="backToRoles()" style="position:absolute;top:12px;right:12px;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;font-weight:600;cursor:pointer;letter-spacing:0.5px">&#8592; Switch Role</button>
     </header>
+    <button id="backToRolesBtn" onclick="backToRoles()" style="position:fixed;bottom:16px;right:16px;z-index:500;padding:10px 18px;border-radius:10px;border:2px solid #00ff87;background:rgba(0,255,135,0.12);color:#00ff87;font-size:0.8rem;font-weight:700;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;box-shadow:0 2px 12px rgba(0,255,135,0.2)">&#8592; Switch Role</button>
 
     <div class="container">
         <div class="add-player">

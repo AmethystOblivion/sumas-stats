@@ -429,6 +429,22 @@
             background: rgba(255,255,255,0.05); border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.08); margin-bottom: 8px;
             overflow: hidden; transition: border-color 0.2s;
+            position: relative;
+        }
+        .player-card::before {
+            content: '';
+            position: absolute; top: 0; right: 0; width: 40px; height: 40px;
+            background: linear-gradient(135deg,
+                transparent 30%,
+                rgba(255,140,0,0.08) 30%, rgba(255,140,0,0.08) 40%,
+                transparent 40%, transparent 50%,
+                rgba(255,140,0,0.06) 50%, rgba(255,140,0,0.06) 60%,
+                transparent 60%, transparent 70%,
+                rgba(255,140,0,0.04) 70%, rgba(255,140,0,0.04) 80%,
+                transparent 80%
+            );
+            pointer-events: none; z-index: 1;
+            border-radius: 0 12px 0 0;
         }
         .player-card:hover { border-color: rgba(255,255,255,0.15); }
         .player-card-header {
@@ -1316,7 +1332,13 @@
             if (addPlayer) addPlayer.style.display = editable ? 'flex' : 'none';
             if (players.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
             empty.style.display = 'none';
-            container.innerHTML = players.map((p, i) => {
+            // Sort by jersey number ascending (no number goes last)
+            const sorted = players.map((p, i) => ({ p, i })).sort((a, b) => {
+                const na = getJerseyNumber(a.p.name) || 999;
+                const nb = getJerseyNumber(b.p.name) || 999;
+                return na - nb;
+            });
+            container.innerHTML = sorted.map(({ p, i }) => {
                 const isOpen = openPlayers.has(i);
                 const btns = editable ? `
                         <div class="player-stat-btns">

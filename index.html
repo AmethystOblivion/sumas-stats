@@ -972,8 +972,10 @@
             { name: 'Louie', goals: 0, assists: 0, motm: 0 },
             { name: 'Luke', goals: 0, assists: 0, motm: 0 },
             { name: 'Mali', goals: 0, assists: 0, motm: 0 },
+            { name: 'Noah', goals: 0, assists: 0, motm: 0 },
             { name: 'Oscar', goals: 0, assists: 0, motm: 0 },
-            { name: 'Wilbur', goals: 0, assists: 0, motm: 0 }
+            { name: 'Wilbur', goals: 0, assists: 0, motm: 0 },
+            { name: 'Will', goals: 0, assists: 0, motm: 0 }
         ];
         let players, matches, activeMatch;
         try {
@@ -987,8 +989,6 @@
                         players.push({...dp});
                     }
                 }
-                // Remove Will if present (no longer on squad)
-                players = players.filter(p => p.name.toLowerCase() !== 'will');
                 // Make sure Sammy is first
                 players.sort((a, b) => {
                     if (a.name.toLowerCase() === 'sammy') return -1;
@@ -1019,7 +1019,7 @@
         // ===== JERSEY =====
         const jerseyNumbers = {
             'sammy': 8, 'adam': 1, 'jayden': 19, 'kian': 10,
-            'isaac': 5, 'louie': 18, 'blu(riley)': 16
+            'isaac': 5, 'louie': 18, 'blu(riley)': 16, 'will': 14
         };
         function getJerseyNumber(name) {
             const key = name.toLowerCase().trim();

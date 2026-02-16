@@ -75,18 +75,31 @@
         }
 
         /* Manual Override Button */
-        .override-btn {
-            position: fixed; bottom: 16px; left: 16px; z-index: 500;
-            padding: 10px 18px; border-radius: 10px; border: 2px solid #ff8c00;
-            background: rgba(255,140,0,0.15); color: #ff8c00;
-            font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
-            letter-spacing: 1.5px; text-transform: uppercase;
-            box-shadow: 0 2px 12px rgba(255,140,0,0.2);
+        .bottom-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 16px;
+            background: linear-gradient(180deg, transparent, rgba(26,5,51,0.95) 30%);
+            pointer-events: none;
         }
-        .override-btn:hover { border-color: #00ff87; color: #00ff87; box-shadow: 0 2px 16px rgba(0,255,135,0.3); }
+        .bottom-bar button { pointer-events: auto; }
+        .override-btn {
+            padding: 8px 16px; border-radius: 8px; border: 1.5px solid #ff8c00;
+            background: rgba(255,140,0,0.12); color: #ff8c00;
+            font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        .override-btn:hover { border-color: #00ff87; color: #00ff87; }
         .override-btn.active {
             border-color: #00ff87; color: #00ff87; background: rgba(0,255,135,0.1);
         }
+        .switch-role-btn {
+            padding: 8px 16px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6);
+            font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        .switch-role-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
         .override-modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000;
             background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
@@ -112,7 +125,7 @@
             font-size: 0.65rem; color: #00ff87; margin-top: 4px; display: block;
         }
 
-        .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+        .container { max-width: 960px; margin: 0 auto; padding: 24px; padding-bottom: 60px; }
 
         /* Add Player */
         .add-player {
@@ -990,8 +1003,11 @@
         </div>
     </div>
 
-    <!-- Manual Override -->
-    <button class="override-btn" id="overrideBtn" onclick="showOverrideModal()">&#128273; OVERRIDE</button>
+    <!-- Bottom Bar -->
+    <div class="bottom-bar" id="bottomBar">
+        <button class="override-btn" id="overrideBtn" onclick="showOverrideModal()">&#128273; Override</button>
+        <button class="switch-role-btn" id="backToRolesBtn" onclick="backToRoles()">Switch Role &#8594;</button>
+    </div>
     <div class="override-modal hidden" id="overrideModal">
         <div class="override-modal-box">
             <h3>Manual Override</h3>
@@ -1006,7 +1022,6 @@
         <h1>SUMAS STATS TRACKER</h1>
         <p>Goals &middot; Assists &middot; Man of the Match</p>
     </header>
-    <button id="backToRolesBtn" onclick="backToRoles()" style="position:fixed;bottom:16px;right:16px;z-index:500;padding:10px 18px;border-radius:10px;border:2px solid #00ff87;background:rgba(0,255,135,0.12);color:#00ff87;font-size:0.8rem;font-weight:700;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;box-shadow:0 2px 12px rgba(0,255,135,0.2)">&#8592; Switch Role</button>
 
     <div class="container">
         <div class="tabs" id="mainTabs">

@@ -8,6 +8,8 @@
     <meta name="theme-color" content="#37003c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <meta name="apple-mobile-web-app-title" content="SUMAS Stats">
     <link rel="apple-touch-icon" href="icon-192.png">
     <style>
@@ -1167,47 +1169,55 @@
             { name: 'Wilbur', goals: 0, assists: 0, motm: 0 },
             { name: 'Will', goals: 0, assists: 0, motm: 0 }
         ];
-        let players, matches, activeMatch;
-        try {
-            let storedP = localStorage.getItem('footballPlayers');
-            if (storedP) {
-                players = JSON.parse(storedP);
-                // Rename Blu(Riley) to Rylee if present
-                const bluP = players.find(p => p.name === 'Blu(Riley)');
-                if (bluP) bluP.name = 'Rylee';
-                // Add any new default players that don't exist yet
-                const existingNames = players.map(p => p.name.toLowerCase());
-                for (const dp of defaultPlayers) {
-                    if (!existingNames.includes(dp.name.toLowerCase())) {
-                        players.push({...dp});
-                    }
-                }
-                // Make sure Sammy is first
-                players.sort((a, b) => {
-                    if (a.name.toLowerCase() === 'sammy') return -1;
-                    if (b.name.toLowerCase() === 'sammy') return 1;
-                    return a.name.localeCompare(b.name);
-                });
-                localStorage.setItem('footballPlayers', JSON.stringify(players));
-            } else {
-                players = [...defaultPlayers];
-                localStorage.setItem('footballPlayers', JSON.stringify(defaultPlayers));
-            }
-        } catch(e) {
-            players = [...defaultPlayers];
-            localStorage.setItem('footballPlayers', JSON.stringify(defaultPlayers));
-        }
-        try {
-            matches = JSON.parse(localStorage.getItem('footballMatches') || '[]');
-            if (!Array.isArray(matches)) matches = [];
-        } catch(e) {
-            matches = [];
-            localStorage.setItem('footballMatches', '[]');
-        }
-        activeMatch = matches.length > 0 ? matches.length - 1 : -1;
+        // ===== FIREBASE =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDjGHtBN-7dkrkIUjaPJPsTFnuUKaK4kY",
+            authDomain: "sumas-stats.firebaseapp.com",
+            projectId: "sumas-stats",
+            storageBucket: "sumas-stats.firebasestorage.app",
+            messagingSenderId: "649621677833",
+            appId: "1:649621677833:web:88a2e51b0bee1b3b0255d8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        function save() { localStorage.setItem('footballPlayers', JSON.stringify(players)); }
-        function saveMatches() { localStorage.setItem('footballMatches', JSON.stringify(matches)); }
+        let players = [...defaultPlayers];
+        let matches = [];
+        let activeMatch = -1;
+        let firebaseReady = false;
+
+        function save() {
+            db.collection('data').doc('players').set({ list: JSON.stringify(players) });
+        }
+        function saveMatches() {
+            db.collection('data').doc('matches').set({ list: JSON.stringify(matches) });
+        }
+
+        // Real-time listener for players
+        db.collection('data').doc('players').onSnapshot(doc => {
+            if (doc.exists) {
+                try {
+                    players = JSON.parse(doc.data().list);
+                } catch(e) { players = [...defaultPlayers]; }
+            } else if (!firebaseReady) {
+                players = [...defaultPlayers];
+                save();
+            }
+            firebaseReady = true;
+            try { render(); renderLeaderboard(); } catch(e) {}
+        });
+
+        // Real-time listener for matches
+        db.collection('data').doc('matches').onSnapshot(doc => {
+            if (doc.exists) {
+                try {
+                    matches = JSON.parse(doc.data().list);
+                    if (!Array.isArray(matches)) matches = [];
+                } catch(e) { matches = []; }
+            }
+            if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
+            try { renderMatches(); } catch(e) {}
+        });
 
         // ===== JERSEY =====
         const jerseyNumbers = {
@@ -1900,16 +1910,7 @@
             render();
             renderMatches();
         } catch(e) {
-            // If anything crashes, reset data and retry
-            console.error('Init error, resetting data:', e);
-            localStorage.removeItem('footballMatches');
-            localStorage.removeItem('footballPlayers');
-            matches = [];
-            activeMatch = -1;
-            players = [...defaultPlayers];
-            save();
-            render();
-            renderMatches();
+            console.error('Init error:', e);
         }
         // ===== SERVICE WORKER =====
         if ('serviceWorker' in navigator) {

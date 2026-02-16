@@ -1336,17 +1336,18 @@
             });
             container.innerHTML = sorted.map(({ p, i }) => {
                 const isOpen = openPlayers.has(i);
-                const btns = editable ? `
+                const showStatBtns = overrideActive;
+                const btns = showStatBtns ? `
                         <div class="player-stat-btns">
                             <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'goals',-1)">-</button>
                             <button class="s-btn plus-g" onclick="event.stopPropagation();updateStat(${i},'goals',1)">+</button>
                         </div>` : '';
-                const abtns = editable ? `
+                const abtns = showStatBtns ? `
                         <div class="player-stat-btns">
                             <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'assists',-1)">-</button>
                             <button class="s-btn plus-a" onclick="event.stopPropagation();updateStat(${i},'assists',1)">+</button>
                         </div>` : '';
-                const mbtns = editable ? `
+                const mbtns = showStatBtns ? `
                         <div class="player-stat-btns">
                             <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'motm',-1)">-</button>
                             <button class="s-btn plus-m" onclick="event.stopPropagation();updateStat(${i},'motm',1)">+</button>
@@ -1407,7 +1408,7 @@
             c.innerHTML = `<div class="lb-header ${hc}">${title}</div><table class="lb-table">
                 ${sorted.map((p, i) => {
                     const pi = players.indexOf(p);
-                    const editBtns = editable ? `<td style="width:70px;text-align:center">
+                    const editBtns = overrideActive ? `<td style="width:70px;text-align:center">
                         <button class="s-btn minus" onclick="updateStat(${pi},'${stat}',-1);renderLeaderboard()">-</button>
                         <button class="s-btn ${btnClass}" onclick="updateStat(${pi},'${stat}',1);renderLeaderboard()">+</button>
                     </td>` : '';

@@ -1029,6 +1029,7 @@
             <input type="password" class="pin-input" id="pinInput" placeholder="PIN" maxlength="10" autocomplete="off">
             <button class="pin-submit" onclick="checkPin()">Unlock</button>
             <div class="pin-error" id="pinError"></div>
+            <button onclick="pinGoBack()" style="margin-top:16px;padding:8px 18px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:none;color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:600;cursor:pointer">&#8592; Back</button>
         </div>
     </div>
 
@@ -1786,6 +1787,12 @@
 
         // ===== SECURITY PIN =====
         const PIN_CODE = 'SUMAS11';
+        function pinGoBack() {
+            document.getElementById('pinOverlay').classList.add('hidden');
+            document.getElementById('roleOverlay').classList.remove('hidden');
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinError').textContent = '';
+        }
         function checkPin() {
             const input = document.getElementById('pinInput');
             const error = document.getElementById('pinError');

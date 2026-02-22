@@ -674,6 +674,41 @@
             font-size: 1rem; font-weight: 700; color: #f9d423;
             text-shadow: 0 0 10px rgba(249,212,35,0.3);
         }
+        .parents-poll-card {
+            background: rgba(0,255,135,0.05); border: 2px solid rgba(0,255,135,0.2);
+            border-radius: 14px; padding: 16px 12px; margin-top: 12px;
+        }
+        .poll-label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+            color: #00ff87; margin-bottom: 8px; font-weight: 700;
+        }
+        .poll-timer {
+            font-size: 0.6rem; color: rgba(255,255,255,0.4); margin-bottom: 8px;
+        }
+        .poll-select {
+            width: 100%; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px;
+            border: 1px solid rgba(0,255,135,0.2); background: rgba(0,0,0,0.3);
+            color: #fff; font-size: 0.8rem; outline: none;
+        }
+        .poll-vote-btn {
+            padding: 6px 16px; border-radius: 8px; border: none;
+            background: #00ff87; color: #1a0533; font-weight: 700;
+            font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+        }
+        .poll-vote-btn:hover { background: #33ffaa; }
+        .poll-voted { color: #00ff87; font-size: 0.75rem; font-weight: 600; }
+        .poll-result {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 4px 0; font-size: 0.75rem; color: rgba(255,255,255,0.6);
+        }
+        .poll-result.winner { color: #00ff87; font-weight: 700; }
+        .poll-bar {
+            height: 4px; border-radius: 2px; background: rgba(0,255,135,0.15);
+            margin-top: 2px; overflow: hidden;
+        }
+        .poll-bar-fill {
+            height: 100%; border-radius: 2px; background: #00ff87; transition: width 0.3s;
+        }
         .motm-trophy-select {
             width: 100%; padding: 8px; border-radius: 8px; margin-top: 10px;
             border: 1px solid rgba(249,212,35,0.3); background: rgba(0,0,0,0.4); color: #f9d423;
@@ -937,6 +972,7 @@
             .match-layout { flex-direction: column-reverse; gap: 14px; }
             .match-motm-side { width: 100%; }
             .motm-trophy-card { display: flex; align-items: center; gap: 12px; padding: 14px; text-align: left; }
+            .parents-poll-card { padding: 14px; }
             .motm-trophy-icon { font-size: 2rem; margin-bottom: 0; }
             .motm-trophy-label { margin-bottom: 4px; }
             .motm-trophy-select { margin-top: 6px; }
@@ -1528,6 +1564,86 @@
         function setMatchOpponent(idx, val) {
             matches[idx].opponent = val; saveMatches(); renderMatches();
         }
+
+        // ===== PARENTS MOTM POLL =====
+        const POLL_DURATION = 2 * 24 * 60 * 60 * 1000; // 2 days
+        function getVoterId() {
+            let id = localStorage.getItem('sumasVoterId');
+            if (!id) { id = 'v_' + Math.random().toString(36).substr(2, 12); localStorage.setItem('sumasVoterId', id); }
+            return id;
+        }
+        function renderParentsPoll(idx, m) {
+            if (!m.poll) m.poll = { startTime: 0, votes: {}, voters: [] };
+            const poll = m.poll;
+            const voterId = getVoterId();
+            const hasVoted = poll.voters && poll.voters.includes(voterId);
+            const pollStarted = poll.startTime > 0;
+            const timeLeft = pollStarted ? Math.max(0, (poll.startTime + POLL_DURATION) - Date.now()) : POLL_DURATION;
+            const pollClosed = pollStarted && timeLeft <= 0;
+
+            let timerText = '';
+            if (pollStarted && !pollClosed) {
+                const h = Math.floor(timeLeft / 3600000);
+                const d = Math.floor(h / 24);
+                const rh = h % 24;
+                timerText = d > 0 ? `${d}d ${rh}h left` : `${rh}h left`;
+            } else if (pollClosed) {
+                timerText = 'Voting closed';
+            } else {
+                timerText = 'Vote to start the 2-day timer';
+            }
+
+            let content = '';
+            const totalVotes = Object.values(poll.votes || {}).reduce((s, v) => s + v, 0);
+
+            if (pollClosed || (hasVoted && pollStarted)) {
+                // Show results
+                const sorted = Object.entries(poll.votes || {}).sort((a, b) => b[1] - a[1]);
+                const topVotes = sorted.length > 0 ? sorted[0][1] : 0;
+                if (sorted.length === 0) {
+                    content = `<div class="motm-none">No votes cast</div>`;
+                } else {
+                    content = sorted.map(([name, count]) => {
+                        const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                        const isWinner = pollClosed && count === topVotes;
+                        return `<div class="poll-result ${isWinner ? 'winner' : ''}">
+                            <span>${esc(name)}</span><span>${count} vote${count!==1?'s':''} (${pct}%)</span>
+                        </div>
+                        <div class="poll-bar"><div class="poll-bar-fill" style="width:${pct}%"></div></div>`;
+                    }).join('');
+                    if (hasVoted && !pollClosed) content += `<div class="poll-voted" style="margin-top:8px">You voted!</div>`;
+                }
+            } else {
+                // Show voting form
+                content = `<select class="poll-select" id="pollSelect-${idx}">
+                    <option value="">Select player...</option>
+                    ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                </select>
+                <button class="poll-vote-btn" onclick="castPollVote(${idx})">Vote</button>`;
+            }
+
+            return `<div class="parents-poll-card">
+                <div class="poll-label">Parents MOTM</div>
+                <div class="poll-timer">${timerText}${totalVotes > 0 ? ` &middot; ${totalVotes} vote${totalVotes!==1?'s':''}` : ''}</div>
+                ${content}
+            </div>`;
+        }
+        function castPollVote(idx) {
+            const sel = document.getElementById('pollSelect-' + idx);
+            if (!sel || !sel.value) return;
+            const m = matches[idx];
+            if (!m.poll) m.poll = { startTime: 0, votes: {}, voters: [] };
+            const voterId = getVoterId();
+            if (m.poll.voters && m.poll.voters.includes(voterId)) return;
+            if (!m.poll.startTime) m.poll.startTime = Date.now();
+            if (!m.poll.votes) m.poll.votes = {};
+            if (!m.poll.voters) m.poll.voters = [];
+            m.poll.votes[sel.value] = (m.poll.votes[sel.value] || 0) + 1;
+            m.poll.voters.push(voterId);
+            saveMatches(); renderMatches();
+        }
+        // Update poll timers every minute
+        setInterval(() => { try { renderMatches(); } catch(e) {} }, 60000);
         function updatePlayerFromMatch(playerName, stat, delta) {
             const p = players.find(pl => pl.name === playerName);
             if (!p) return;
@@ -1737,7 +1853,7 @@
                 html += `<div class="match-motm-side">
                     <div class="motm-trophy-card">
                         <div class="motm-trophy-icon">&#127942;</div>
-                        <div class="motm-trophy-label">Man of the Match</div>
+                        <div class="motm-trophy-label">Coaches MOTM</div>
                         ${m.motm
                             ? `<div class="motm-trophy-name">${esc(m.motm)}</div>`
                             : `<div class="motm-none">Not selected</div>`}
@@ -1746,6 +1862,7 @@
                             ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
                         </select>` : ''}
                     </div>
+                    ${renderParentsPoll(activeMatch, m)}
                 </div>`;
 
                 html += `</div>`; // end match-layout

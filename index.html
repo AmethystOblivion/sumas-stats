@@ -1101,6 +1101,19 @@
         </div>
     </div>
 
+    <div class="custom-modal hidden" id="voteConfirmModal">
+        <div class="custom-modal-box">
+            <h3>Confirm Your Vote</h3>
+            <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:4px">You are voting for:</p>
+            <p id="voteConfirmName" style="color:#00ff87;font-size:1.1rem;font-weight:700;margin-bottom:8px"></p>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.75rem;margin-bottom:4px">You can only vote once per match.</p>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeVoteConfirm()">Cancel</button>
+                <button class="custom-modal-confirm" onclick="confirmVote()">Vote</button>
+            </div>
+        </div>
+    </div>
+
     <header style="position:relative">
         <h1>SUMAS LIVE</h1>
         <p>Goals &middot; Assists &middot; Man of the Match</p>
@@ -1628,18 +1641,32 @@
                 ${content}
             </div>`;
         }
+        let pendingVoteIdx = -1;
+        let pendingVotePlayer = '';
         function castPollVote(idx) {
             const sel = document.getElementById('pollSelect-' + idx);
             if (!sel || !sel.value) return;
-            const m = matches[idx];
+            pendingVoteIdx = idx;
+            pendingVotePlayer = sel.value;
+            document.getElementById('voteConfirmName').textContent = sel.value;
+            document.getElementById('voteConfirmModal').classList.remove('hidden');
+        }
+        function closeVoteConfirm() {
+            document.getElementById('voteConfirmModal').classList.add('hidden');
+            pendingVoteIdx = -1; pendingVotePlayer = '';
+        }
+        function confirmVote() {
+            if (pendingVoteIdx < 0 || !pendingVotePlayer) return;
+            const m = matches[pendingVoteIdx];
             if (!m.poll) m.poll = { startTime: 0, votes: {}, voters: [] };
             const voterId = getVoterId();
-            if (m.poll.voters && m.poll.voters.includes(voterId)) return;
+            if (m.poll.voters && m.poll.voters.includes(voterId)) { closeVoteConfirm(); return; }
             if (!m.poll.startTime) m.poll.startTime = Date.now();
             if (!m.poll.votes) m.poll.votes = {};
             if (!m.poll.voters) m.poll.voters = [];
-            m.poll.votes[sel.value] = (m.poll.votes[sel.value] || 0) + 1;
+            m.poll.votes[pendingVotePlayer] = (m.poll.votes[pendingVotePlayer] || 0) + 1;
             m.poll.voters.push(voterId);
+            closeVoteConfirm();
             saveMatches(); renderMatches();
         }
         // Update poll timers every minute

@@ -1106,6 +1106,7 @@
             <h3>Confirm Your Vote</h3>
             <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:4px">You are voting for:</p>
             <p id="voteConfirmName" style="color:#00ff87;font-size:1.1rem;font-weight:700;margin-bottom:8px"></p>
+            <input type="text" id="voterNameInput" placeholder="Enter your name..." autocomplete="off" style="margin-bottom:8px">
             <p style="color:rgba(255,255,255,0.5);font-size:0.75rem;margin-bottom:4px">You can only vote once per match.</p>
             <div class="custom-modal-btns">
                 <button class="custom-modal-cancel" onclick="closeVoteConfirm()">Cancel</button>
@@ -1649,7 +1650,10 @@
             pendingVoteIdx = idx;
             pendingVotePlayer = sel.value;
             document.getElementById('voteConfirmName').textContent = sel.value;
+            const nameInput = document.getElementById('voterNameInput');
+            nameInput.value = ''; nameInput.style.borderColor = ''; nameInput.placeholder = 'Enter your name...';
             document.getElementById('voteConfirmModal').classList.remove('hidden');
+            setTimeout(() => nameInput.focus(), 100);
         }
         function closeVoteConfirm() {
             document.getElementById('voteConfirmModal').classList.add('hidden');
@@ -1657,15 +1661,20 @@
         }
         function confirmVote() {
             if (pendingVoteIdx < 0 || !pendingVotePlayer) return;
+            const nameInput = document.getElementById('voterNameInput');
+            const voterName = nameInput.value.trim();
+            if (!voterName) { nameInput.style.borderColor = '#f5576c'; nameInput.placeholder = 'Please enter your name!'; return; }
             const m = matches[pendingVoteIdx];
-            if (!m.poll) m.poll = { startTime: 0, votes: {}, voters: [] };
+            if (!m.poll) m.poll = { startTime: 0, votes: {}, voters: [], voterNames: [] };
             const voterId = getVoterId();
             if (m.poll.voters && m.poll.voters.includes(voterId)) { closeVoteConfirm(); return; }
             if (!m.poll.startTime) m.poll.startTime = Date.now();
             if (!m.poll.votes) m.poll.votes = {};
             if (!m.poll.voters) m.poll.voters = [];
+            if (!m.poll.voterNames) m.poll.voterNames = [];
             m.poll.votes[pendingVotePlayer] = (m.poll.votes[pendingVotePlayer] || 0) + 1;
             m.poll.voters.push(voterId);
+            m.poll.voterNames.push(voterName);
             closeVoteConfirm();
             saveMatches(); renderMatches();
         }

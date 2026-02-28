@@ -1925,7 +1925,8 @@
             if (type === 'goal') {
                 const assistSel = document.getElementById(`match-goal-assist-${matchIdx}`);
                 const assistBy = assistSel ? assistSel.value : '';
-                const time = formatMatchTime(m);
+                const timeEl = document.getElementById(`match-goal-time-${matchIdx}`);
+                const time = (timeEl && timeEl.value.trim()) ? timeEl.value.trim() : formatMatchTime(m);
                 const penalty = goalIsPenalty;
                 goalIsPenalty = false;
                 m.events.push({ player, type: 'goal', count: 1, assistBy: assistBy || null, time, penalty });
@@ -2087,6 +2088,10 @@
                             <option value="">No assist</option>
                             ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
                         </select>
+                        <input type="text" class="match-input-num" id="match-goal-time-${activeMatch}"
+                            value="${formatMatchTime(m)}" placeholder="mm:ss"
+                            style="width:72px;text-align:center;font-variant-numeric:tabular-nums"
+                            title="Goal time (editable)">
                         <button onclick="togglePenalty(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Penalty</button>
                         <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
                     </div>

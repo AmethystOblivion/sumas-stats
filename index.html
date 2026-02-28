@@ -1729,6 +1729,10 @@
         function setMatchOpponent(idx, val) {
             matches[idx].opponent = val; saveMatches(); renderMatches();
         }
+        function addOppGoal(idx) {
+            matches[idx].scoreOpp = (matches[idx].scoreOpp || 0) + 1;
+            saveMatches(); renderMatches();
+        }
 
         // ===== MATCH TIMER =====
         let matchTimerInterval = null;
@@ -2051,6 +2055,7 @@
                                         style="width:100px;text-align:center;font-size:0.65rem;color:rgba(255,255,255,0.5);padding:2px;text-transform:uppercase;letter-spacing:2px;font-weight:600">`
                                     : `<span style="font-size:0.65rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;font-weight:600">${esc(m.opponent) || 'TBC'}</span>`}
                             </div>
+                            ${userRole === 'coach' && m.status === 'live' ? `<button onclick="addOppGoal(${activeMatch})" style="margin-top:6px;padding:4px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:0.75rem;cursor:pointer">+ Goal</button>` : ''}
                         </div>
                     </div>
                     ${resultText ? `<div style="font-size:0.9rem;font-weight:700;color:${resultColor};letter-spacing:3px;margin-top:4px">${resultText}</div>` : ''}

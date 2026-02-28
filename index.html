@@ -1934,31 +1934,37 @@
 
         function addMatchEvent(matchIdx, type) {
             const sel = document.getElementById(`match-${type}-select-${matchIdx}`);
-            const numEl = document.getElementById(`match-${type}-num-${matchIdx}`);
             const player = sel.value;
-            const count = parseInt(numEl.value) || 1;
             if (!player) return;
             const m = matches[matchIdx];
-            const existing = m.events.find(e => e.player === player && e.type === type);
-            if (existing) existing.count += count;
-            else m.events.push({ player, type, count });
 
-            // Sync to player stats
-            const stat = type === 'goal' ? 'goals' : 'assists';
-            updatePlayerFromMatch(player, stat, count);
+            if (type === 'goal') {
+                const assistSel = document.getElementById(`match-goal-assist-${matchIdx}`);
+                const assistBy = assistSel ? assistSel.value : '';
+                const time = formatMatchTime(m);
+                m.events.push({ player, type: 'goal', count: 1, assistBy: assistBy || null, time });
+                updatePlayerFromMatch(player, 'goals', 1);
+                if (assistBy) updatePlayerFromMatch(assistBy, 'assists', 1);
+                playGoalAnimation();
+            } else {
+                const numEl = document.getElementById(`match-${type}-num-${matchIdx}`);
+                const count = parseInt(numEl.value) || 1;
+                const existing = m.events.find(e => e.player === player && e.type === type);
+                if (existing) existing.count += count;
+                else m.events.push({ player, type, count });
+                updatePlayerFromMatch(player, 'assists', count);
+                playAssistAnimation();
+            }
 
             saveMatches(); renderMatches(); render();
-
-            // Play animation
-            if (type === 'goal') playGoalAnimation();
-            else if (type === 'assist') playAssistAnimation();
         }
         function removeMatchEvent(matchIdx, eventIdx) {
             const ev = matches[matchIdx].events[eventIdx];
-            // Subtract from player stats
             const stat = ev.type === 'goal' ? 'goals' : 'assists';
-            updatePlayerFromMatch(ev.player, stat, -ev.count);
-
+            updatePlayerFromMatch(ev.player, stat, -(ev.count || 1));
+            if (ev.type === 'goal' && ev.assistBy) {
+                updatePlayerFromMatch(ev.assistBy, 'assists', -1);
+            }
             matches[matchIdx].events.splice(eventIdx, 1);
             saveMatches(); renderMatches(); render();
         }
@@ -2028,7 +2034,9 @@
                     scorerLines = goalEvents.map(e => {
                         const num = jerseyNumbers[e.player.toLowerCase()];
                         const numStr = num ? `<span style="opacity:0.5">${num}</span> ` : '';
-                        return `<div style="font-size:1.4rem;color:rgba(255,255,255,0.7);margin-top:2px">⚽ ${numStr}${esc(e.player)}${e.count > 1 ? ' x' + e.count : ''}</div>`;
+                        const timeStr = e.time ? ` <span style="opacity:0.5;font-size:0.85em">${e.time}'</span>` : (e.count > 1 ? ` x${e.count}` : '');
+                        const assistStr = e.assistBy ? ` <span style="opacity:0.6;font-size:0.85em">(&#9889;${esc(e.assistBy)})</span>` : '';
+                        return `<div style="font-size:1.4rem;color:rgba(255,255,255,0.7);margin-top:2px">⚽ ${numStr}${esc(e.player)}${timeStr}${assistStr}</div>`;
                     }).join('');
                 }
 
@@ -2083,51 +2091,42 @@
                 if (editable && activeMatch === latestIdx) {
                 // Add Goal form
                 html += `<div class="match-form-card">
-                    <div class="match-form-title" style="color:#43e97b">Add Goals</div>
+                    <div class="match-form-title" style="color:#43e97b">Add Goal</div>
                     <div class="match-form-row">
                         <select class="match-select" id="match-goal-select-${activeMatch}">
-                            <option value="">Select player...</option>
+                            <option value="">Scorer...</option>
                             ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
                         </select>
-                        <input type="number" class="match-input-num" id="match-goal-num-${activeMatch}" value="1" min="1">
+                        <select class="match-select" id="match-goal-assist-${activeMatch}" style="color:rgba(255,255,255,0.5)">
+                            <option value="">No assist</option>
+                            ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                        </select>
                         <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
-                    </div>
-                </div>`;
-
-                // Add Assist form
-                html += `<div class="match-form-card">
-                    <div class="match-form-title" style="color:#38f9d7">Add Assists</div>
-                    <div class="match-form-row">
-                        <select class="match-select" id="match-assist-select-${activeMatch}">
-                            <option value="">Select player...</option>
-                            ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
-                        </select>
-                        <input type="number" class="match-input-num" id="match-assist-num-${activeMatch}" value="1" min="1">
-                        <button class="match-add-stat-btn assist-btn" onclick="addMatchEvent(${activeMatch},'assist')">+ Assist</button>
                     </div>
                 </div>`;
                 } // end editable forms
 
                 // Events log
                 const goals = m.events.filter(e => e.type === 'goal');
-                const assists = m.events.filter(e => e.type === 'assist');
-                if (goals.length || assists.length) {
+                const standaloneAssists = m.events.filter(e => e.type === 'assist');
+                if (goals.length || standaloneAssists.length) {
                     html += `<div class="match-events">`;
                     if (goals.length) {
                         html += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:8px">Goal Scorers</div>`;
-                        goals.forEach((e, ei) => {
+                        goals.forEach((e) => {
                             const idx = m.events.indexOf(e);
                             html += `<div class="match-event-row">
                                 <span class="match-event-icon">&#9917;</span>
                                 <span class="match-event-name">${esc(e.player)}</span>
-                                <span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>
+                                ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : `<span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>`}
+                                ${e.assistBy ? `<span style="font-size:0.75rem;color:#38f9d7;margin-left:4px">&#9889; ${esc(e.assistBy)}</span>` : ''}
                                 ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
                             </div>`;
                         });
                     }
-                    if (assists.length) {
+                    if (standaloneAssists.length) {
                         html += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:12px">Assists</div>`;
-                        assists.forEach((e, ei) => {
+                        standaloneAssists.forEach((e) => {
                             const idx = m.events.indexOf(e);
                             html += `<div class="match-event-row">
                                 <span class="match-event-icon">&#129406;</span>

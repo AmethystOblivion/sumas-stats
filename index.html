@@ -474,65 +474,34 @@
         .empty-state p { font-size: 1.1rem; margin-bottom: 8px; }
         .empty-state span { font-size: 0.85rem; }
 
-        /* ===== EXPANDABLE PLAYER CARDS ===== */
-        .player-card {
-            background: rgba(255,255,255,0.05); border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.08); margin-bottom: 8px;
-            overflow: hidden; transition: border-color 0.2s;
+        /* ===== PLAYER TILES ===== */
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px; padding: 4px 0;
         }
-        .player-card:hover { border-color: rgba(255,255,255,0.15); }
-        .player-card-header {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            cursor: pointer; user-select: none; transition: background 0.2s;
+        .player-tile {
+            background: rgba(255,255,255,0.05); border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 18px 8px 14px; text-align: center;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
         }
-        .player-card-header:hover { background: rgba(255,255,255,0.03); }
-        .player-card-arrow {
-            font-size: 0.7rem; color: rgba(255,255,255,0.3);
-            transition: transform 0.3s; flex-shrink: 0;
+        .player-tile:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); }
+        .player-tile .jersey-wrap { width: 56px; height: 56px; margin: 0 auto 10px; }
+        .player-tile .jersey-wrap svg { width: 56px; height: 56px; }
+        .player-tile .jersey-num { font-size: 0.9rem; }
+        .player-tile-name {
+            font-size: 0.85rem; font-weight: 700; color: #e0e0e0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .player-card.open .player-card-arrow { transform: rotate(90deg); color: #ff8c00; }
-        .player-card-name { font-weight: 600; font-size: 1rem; flex: 1; }
-        .player-card-name input {
-            font-weight: 600; font-size: 1rem; background: none; border: none;
-            color: #e0e0e0; outline: none; width: 100%; padding: 2px 4px;
-            border-radius: 4px;
+        .player-tile-remove {
+            position: absolute; top: 6px; right: 8px;
+            background: none; border: none; color: rgba(255,255,255,0.2);
+            font-size: 1rem; cursor: pointer; padding: 0; line-height: 1;
+            transition: color 0.2s;
         }
-        .player-card-name input:hover { background: rgba(255,255,255,0.06); }
-        .player-card-name input:focus { background: rgba(255,255,255,0.1); color: #fff; }
-        .player-card-summary {
-            display: flex; gap: 14px; font-size: 0.8rem; color: rgba(255,255,255,0.4);
-        }
-        .player-card-summary span { display: flex; align-items: center; gap: 4px; }
-        .player-card-summary .g-dot { color: #43e97b; font-weight: 700; }
-        .player-card-summary .a-dot { color: #38f9d7; font-weight: 700; }
-        .player-card-summary .m-dot { color: #f9d423; font-weight: 700; }
-
-        .player-card-body {
-            max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.35s ease;
-            padding: 0 16px;
-        }
-        .player-card.open .player-card-body {
-            max-height: 300px; padding: 0 16px 16px;
-        }
-        .player-stats-grid {
-            display: flex; gap: 10px;
-        }
-        .player-stat-box {
-            flex: 1; text-align: center; background: rgba(0,0,0,0.2);
-            border-radius: 10px; padding: 14px 8px;
-        }
-        .player-stat-label {
-            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
-            color: rgba(255,255,255,0.4); margin-bottom: 6px;
-        }
-        .player-stat-value { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
-        .player-stat-value.g { color: #43e97b; }
-        .player-stat-value.a { color: #38f9d7; }
-        .player-stat-value.m { color: #f9d423; }
-        .player-stat-btns { display: flex; gap: 6px; justify-content: center; }
-        .player-card-footer {
-            display: flex; justify-content: flex-end; margin-top: 10px;
-        }
+        .player-tile-remove:hover { color: #f5576c; }
 
         /* Match score inputs */
         .score-input {
@@ -1050,16 +1019,13 @@
             /* Add player */
             .add-player { max-width: 100%; }
 
-            /* Player cards */
-            .player-card-header { padding: 10px 12px; gap: 8px; }
-            .jersey-wrap { width: 32px; height: 32px; }
-            .jersey-wrap svg { width: 32px; height: 32px; }
-            .jersey-num { font-size: 0.6rem; }
-            .player-card-name { font-size: 0.9rem; }
-            .player-card-summary { gap: 8px; font-size: 0.7rem; }
-            .player-stats-grid { gap: 6px; }
-            .player-stat-box { padding: 10px 6px; }
-            .player-stat-value { font-size: 1.4rem; }
+            /* Player tiles */
+            .player-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+            .player-tile { padding: 14px 6px 10px; }
+            .player-tile .jersey-wrap { width: 44px; height: 44px; }
+            .player-tile .jersey-wrap svg { width: 44px; height: 44px; }
+            .player-tile .jersey-num { font-size: 0.7rem; }
+            .player-tile-name { font-size: 0.75rem; }
             .player-stat-label { font-size: 0.6rem; }
 
             /* Match layout */
@@ -1570,81 +1536,23 @@
         }
 
         // ===== RENDER PLAYERS =====
-        let openPlayers = new Set();
-        function togglePlayer(i) {
-            if (openPlayers.has(i)) openPlayers.delete(i);
-            else openPlayers.add(i);
-            render();
-        }
-
         function render() {
             const container = document.getElementById('playersTable');
             const empty = document.getElementById('emptyState');
             const editable = isEditable();
             if (players.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
             empty.style.display = 'none';
-            // Sort by jersey number ascending (no number goes last)
             const sorted = players.map((p, i) => ({ p, i })).sort((a, b) => {
                 const na = getJerseyNumber(a.p.name) || 999;
                 const nb = getJerseyNumber(b.p.name) || 999;
                 return na - nb;
             });
-            container.innerHTML = sorted.map(({ p, i }) => {
-                const isOpen = openPlayers.has(i);
-                const showStatBtns = overrideActive;
-                const btns = showStatBtns ? `
-                        <div class="player-stat-btns">
-                            <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'goals',-1)">-</button>
-                            <button class="s-btn plus-g" onclick="event.stopPropagation();updateStat(${i},'goals',1)">+</button>
-                        </div>` : '';
-                const abtns = showStatBtns ? `
-                        <div class="player-stat-btns">
-                            <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'assists',-1)">-</button>
-                            <button class="s-btn plus-a" onclick="event.stopPropagation();updateStat(${i},'assists',1)">+</button>
-                        </div>` : '';
-                const mbtns = showStatBtns ? `
-                        <div class="player-stat-btns">
-                            <button class="s-btn minus" onclick="event.stopPropagation();updateStat(${i},'motm',-1)">-</button>
-                            <button class="s-btn plus-m" onclick="event.stopPropagation();updateStat(${i},'motm',1)">+</button>
-                        </div>` : '';
-                const removeBtn = editable ? `<div class="player-card-footer">
-                            <button class="remove-btn" onclick="event.stopPropagation();removePlayer(${i})">&times; Remove</button>
-                        </div>` : '';
-                return `<div class="player-card ${isOpen ? 'open' : ''}">
-                    <div class="player-card-header" onclick="togglePlayer(${i})">
-                        <span class="player-card-arrow">&#9654;</span>
-                        ${jerseySVG(getJerseyNumber(p.name))}
-                        <div class="player-card-name">
-                            <span style="padding:2px 4px">${esc(p.name)}</span>
-                        </div>
-                        <div class="player-card-summary">
-                            <span><span class="g-dot">${p.goals}</span> G</span>
-                            <span><span class="a-dot">${p.assists}</span> A</span>
-                            <span><span class="m-dot">${p.motm}</span> M</span>
-                        </div>
-                    </div>
-                    <div class="player-card-body">
-                        <div class="player-stats-grid">
-                            <div class="player-stat-box">
-                                <div class="player-stat-label">Goals</div>
-                                <div class="player-stat-value g">${p.goals}</div>
-                                ${btns}
-                            </div>
-                            <div class="player-stat-box">
-                                <div class="player-stat-label">Assists</div>
-                                <div class="player-stat-value a">${p.assists}</div>
-                                ${abtns}
-                            </div>
-                            <div class="player-stat-box">
-                                <div class="player-stat-label">MOTM</div>
-                                <div class="player-stat-value m">${p.motm}</div>
-                                ${mbtns}
-                            </div>
-                        </div>
-                        ${removeBtn}
-                    </div>
-                </div>`;
-            }).join('');
+            container.innerHTML = `<div class="player-grid">${sorted.map(({ p, i }) => `
+                <div class="player-tile">
+                    ${editable ? `<button class="player-tile-remove" onclick="removePlayer(${i})">&times;</button>` : ''}
+                    ${jerseySVG(getJerseyNumber(p.name))}
+                    <div class="player-tile-name">${esc(p.name)}</div>
+                </div>`).join('')}</div>`;
         }
 
         // ===== RENDER LEADERBOARD =====

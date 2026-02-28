@@ -536,7 +536,7 @@
 
         /* Match score inputs */
         .score-input {
-            width: 55px; text-align: center; font-size: 2.8rem; font-weight: 900;
+            width: 110px; text-align: center; font-size: 5.6rem; font-weight: 900;
             background: transparent; border: none; border-bottom: 3px solid rgba(255,140,0,0.4);
             color: #ff8c00; outline: none;
             text-shadow: 0 0 30px rgba(255,140,0,0.5), 0 0 60px rgba(255,140,0,0.2);
@@ -548,11 +548,11 @@
         }
         .score-input.opp:focus { border-bottom-color: rgba(255,255,255,0.5); }
         .score-vs {
-            font-size: 1.5rem; font-weight: 700; color: rgba(255,255,255,0.3);
+            font-size: 3rem; font-weight: 700; color: rgba(255,255,255,0.3);
             margin: 0 8px; align-self: center;
         }
         .score-team-label {
-            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+            font-size: 1.3rem; text-transform: uppercase; letter-spacing: 2px;
             color: rgba(255,255,255,0.35); margin-top: 4px;
         }
 
@@ -639,7 +639,7 @@
         }
         .match-score-banner::before { display: none; }
         .match-score-label {
-            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px;
+            font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px;
             color: rgba(255,255,255,0.5); margin-bottom: 6px;
         }
         .match-score-display {
@@ -648,7 +648,7 @@
             letter-spacing: 4px; line-height: 1;
         }
         .match-score-sub {
-            font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 6px;
+            font-size: 1.6rem; color: rgba(255,255,255,0.4); margin-top: 6px;
         }
         .match-status-bar {
             display: flex; gap: 10px; justify-content: center;
@@ -656,13 +656,13 @@
         }
         .match-live-badge {
             display: inline-block; background: #f5576c; color: #fff;
-            font-size: 0.65rem; font-weight: 800; letter-spacing: 2px;
+            font-size: 1.3rem; font-weight: 800; letter-spacing: 2px;
             padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
             animation: livePulse 1.4s ease-in-out infinite;
         }
         .match-ended-badge {
             display: inline-block; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.5);
-            font-size: 0.65rem; font-weight: 700; letter-spacing: 2px;
+            font-size: 1.3rem; font-weight: 700; letter-spacing: 2px;
             padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
         }
         @keyframes livePulse {
@@ -670,12 +670,12 @@
             50% { opacity: 0.5; }
         }
         .match-timer-display {
-            font-size: 1.6rem; font-weight: 900; color: #fff;
+            font-size: 3.2rem; font-weight: 900; color: #fff;
             letter-spacing: 3px; font-variant-numeric: tabular-nums;
         }
         .match-ctrl-btn {
             padding: 7px 20px; border-radius: 10px; border: none;
-            font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            font-size: 1.6rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
         }
         .match-ctrl-btn.start { background: #43e97b; color: #0a2e1a; }
         .match-ctrl-btn.start:hover { background: #5ffb91; }
@@ -1081,8 +1081,8 @@
 
             /* Score banner */
             .match-score-banner { padding: 18px 12px; border-radius: 14px; }
-            .score-input { font-size: 2.2rem !important; width: 45px !important; }
-            .score-team-label { font-size: 0.55rem; }
+            .score-input { font-size: 4.4rem !important; width: 90px !important; }
+            .score-team-label { font-size: 1.1rem; }
 
             /* Match forms */
             .match-form-card { padding: 12px; }
@@ -2028,7 +2028,7 @@
                     scorerLines = goalEvents.map(e => {
                         const num = jerseyNumbers[e.player.toLowerCase()];
                         const numStr = num ? `<span style="opacity:0.5">${num}</span> ` : '';
-                        return `<div style="font-size:0.7rem;color:rgba(255,255,255,0.7);margin-top:2px">⚽ ${numStr}${esc(e.player)}${e.count > 1 ? ' x' + e.count : ''}</div>`;
+                        return `<div style="font-size:1.4rem;color:rgba(255,255,255,0.7);margin-top:2px">⚽ ${numStr}${esc(e.player)}${e.count > 1 ? ' x' + e.count : ''}</div>`;
                     }).join('');
                 }
 
@@ -2036,7 +2036,7 @@
                     <div class="match-score-label">Match ${activeMatch + 1} &mdash; Score</div>
                     <div style="display:flex;align-items:flex-start;justify-content:center;margin:12px 0 6px;gap:0">
                         <div style="text-align:center;flex:1">
-                            <div class="score-input" style="display:inline-block;width:55px;font-size:2.8rem;font-weight:900;color:#ff8c00;text-shadow:0 0 30px rgba(255,140,0,0.5),0 0 60px rgba(255,140,0,0.2)">${sSumas}</div>
+                            <div class="score-input" style="display:inline-block;width:110px;font-size:5.6rem;font-weight:900;color:#ff8c00;text-shadow:0 0 30px rgba(255,140,0,0.5),0 0 60px rgba(255,140,0,0.2)">${sSumas}</div>
                             <div class="score-team-label" style="color:#ff8c00">SUMAS</div>
                             ${scorerLines ? `<div style="margin-top:6px">${scorerLines}</div>` : ''}
                         </div>
@@ -2058,7 +2058,7 @@
                             ${userRole === 'coach' && m.status === 'live' ? `<button onclick="addOppGoal(${activeMatch})" style="margin-top:6px;padding:4px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:0.75rem;cursor:pointer">+ Goal</button>` : ''}
                         </div>
                     </div>
-                    ${resultText ? `<div style="font-size:0.9rem;font-weight:700;color:${resultColor};letter-spacing:3px;margin-top:4px">${resultText}</div>` : ''}
+                    ${resultText ? `<div style="font-size:1.8rem;font-weight:700;color:${resultColor};letter-spacing:3px;margin-top:4px">${resultText}</div>` : ''}
                     <div class="match-score-sub">${score} goal${score!==1?'s':''} &middot; ${assistCount} assist${assistCount!==1?'s':''}</div>
                     <div class="match-status-bar">
                         ${m.status === 'live' ? `<span class="match-live-badge">&#9679; Live</span>` : ''}

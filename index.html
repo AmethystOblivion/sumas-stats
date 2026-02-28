@@ -2121,7 +2121,7 @@
 
                 // MOTM Trophy Side
                 html += `<div class="match-motm-side">
-                    <div class="motm-trophy-card">
+                    ${userRole === 'coach' || m.status === 'ended' ? `<div class="motm-trophy-card">
                         <div class="motm-trophy-icon">&#127942;</div>
                         <div class="motm-trophy-label">Coaches MOTM</div>
                         ${m.motm
@@ -2131,7 +2131,7 @@
                             <option value="">Select MOTM...</option>
                             ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
                         </select>` : ''}
-                    </div>
+                    </div>` : ''}
                     ${renderParentsPoll(activeMatch, m)}
                 </div>`;
 

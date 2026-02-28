@@ -2085,7 +2085,7 @@
                     ${(m.status === 'live' || m.status === 'ht') ? `<div style="margin:6px 0 4px"><span class="match-timer-display" id="matchTimerDisplay">${formatMatchTime(m)}</span></div>` : ''}
                     <div class="match-status-bar" style="margin-top:8px">
                         ${userRole === 'coach' && activeMatch === latestIdx && (!m.status || m.status === 'pending') ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; Kick-off</button>` : ''}
-                        ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'live' ? `<button class="match-ctrl-btn ht" onclick="setMatchStatus(${activeMatch},'ht')">HT</button>` : ''}
+                        ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'live' && !m.htReached ? `<button class="match-ctrl-btn ht" onclick="setMatchStatus(${activeMatch},'ht')">HT</button>` : ''}
                         ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'ht' ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; 2nd Half</button>` : ''}
                         ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'live' && m.htReached ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; FT</button>` : ''}
                     </div>

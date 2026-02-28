@@ -1835,6 +1835,7 @@
                 // Parent has voted — confirm only, no breakdown
                 const myChoice = poll.voterChoices && poll.voterChoices[getVoterId()];
                 content = `<div class="poll-voted" style="margin-top:4px">You voted${myChoice ? ` for <strong>${esc(myChoice)}</strong>` : ''}!</div>
+                <button onclick="removePollVote(${idx})" class="poll-vote-btn" style="margin-top:8px;width:100%">Change vote</button>
                 <button onclick="removePollVote(${idx})" class="poll-remove-btn">Remove my vote</button>`;
             } else {
                 // Parent hasn't voted — show voting form

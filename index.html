@@ -1418,10 +1418,10 @@
 
         // ===== JERSEY =====
         const jerseyNumbers = {
-            'sammy': 8, 'adam': 1, 'jayden': 19, 'kian': 10,
+            'sammy': 8, 'adam': 1, 'jayden': 26, 'kian': 10,
             'isaac': 5, 'louie': 18, 'rylee': 16, 'will': 14,
             'euan': 9, 'james': 17, 'jude': 12, 'luke': 18,
-            'noah': 4, 'oscar': 6, 'wilbur': 2
+            'noah': 4, 'oscar': 6, 'wilbur': 2, 'mali': 3
         };
         function getJerseyNumber(name) {
             const key = name.toLowerCase().trim();
@@ -1588,40 +1588,44 @@
         }
 
         // ===== RENDER LEADERBOARD =====
-        function getPPOTMTotals() {
-            const ppotm = {};
+        function getPPOTMWins() {
+            // Count poll wins (most votes in a closed poll) per player
+            const wins = {};
             matches.forEach(m => {
-                if (!m.poll || !m.poll.votes) return;
-                Object.entries(m.poll.votes).forEach(([player, count]) => {
-                    ppotm[player] = (ppotm[player] || 0) + count;
+                if (!m.poll || !m.poll.closed || !m.poll.votes) return;
+                const votes = m.poll.votes;
+                const max = Math.max(...Object.values(votes));
+                if (max === 0) return;
+                Object.entries(votes).forEach(([player, count]) => {
+                    if (count === max) wins[player] = (wins[player] || 0) + 1;
                 });
             });
-            return ppotm;
+            return wins;
         }
         function renderLeaderboard() {
-            const ppotm = getPPOTMTotals();
-            renderLB('goalsLeaderboard',   'Goals',   'goals',   'goals-h', ppotm);
-            renderLB('assistsLeaderboard', 'Assists', 'assists', 'assists-h', ppotm);
-            renderLB('motmLeaderboard',    'C-POTM',  'motm',    'motm-h', ppotm);
-            renderPPOTM(ppotm);
+            renderLB('goalsLeaderboard',   'Goals',   'goals',   'goals-h');
+            renderLB('assistsLeaderboard', 'Assists', 'assists', 'assists-h');
+            renderLB('motmLeaderboard',    'C-POTM',  'motm',    'motm-h');
+            renderPPOTM();
         }
-        function renderPPOTM(ppotm) {
+        function renderPPOTM() {
             const c = document.getElementById('ppotmLeaderboard');
             if (!c) return;
-            const sorted = [...players].sort((a, b) => (ppotm[b.name]||0) - (ppotm[a.name]||0));
-            if (!sorted.length) { c.innerHTML = '<div class="lb-header motm-h">P-POTM</div><div style="color:rgba(255,255,255,0.3);font-size:0.85rem;padding:12px">No votes yet</div>'; return; }
+            const wins = getPPOTMWins();
+            const sorted = [...players].sort((a, b) => (wins[b.name]||0) - (wins[a.name]||0));
+            if (!sorted.length) { c.innerHTML = '<div class="lb-header motm-h">P-POTM</div><div style="color:rgba(255,255,255,0.3);font-size:0.85rem;padding:12px">No closed polls yet</div>'; return; }
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
             c.innerHTML = `<div class="lb-header motm-h">P-POTM</div><table class="lb-table">
                 ${sorted.map((p, i) => `<tr>
                     <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
                     <td class="lb-name" style="display:flex;align-items:center;gap:8px">
                         ${jerseySVG(getJerseyNumber(p.name))}
-                        <span>${esc(p.name)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-weight:400">(${ppotm[p.name]||0})</span></span>
+                        <span>${esc(p.name)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-weight:400">(${wins[p.name]||0})</span></span>
                     </td>
-                    <td class="lb-val motm">${ppotm[p.name]||0}</td>
+                    <td class="lb-val motm">${wins[p.name]||0}</td>
                 </tr>`).join('')}</table>`;
         }
-        function renderLB(cid, title, stat, hc, ppotm) {
+        function renderLB(cid, title, stat, hc) {
             const sorted = [...players].sort((a, b) => b[stat] - a[stat]);
             const c = document.getElementById(cid);
             if (!sorted.length) { c.innerHTML = ''; return; }

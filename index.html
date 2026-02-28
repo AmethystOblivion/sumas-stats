@@ -1664,6 +1664,12 @@
             matches[idx].report = val;
             saveMatches();
         }
+        function publishMatchReport(idx) {
+            const ta = document.getElementById(`match-report-ta-${idx}`);
+            if (ta) matches[idx].report = ta.value;
+            matches[idx].reportPublished = true;
+            saveMatches(); renderMatches();
+        }
         function addOppGoal(idx) {
             matches[idx].scoreOpp = (matches[idx].scoreOpp || 0) + 1;
             saveMatches(); renderMatches();
@@ -2089,15 +2095,21 @@
 
                 // Match Report
                 const reportText = m.report || '';
+                const reportPublished = !!m.reportPublished;
                 if (userRole === 'coach') {
                     html += `<div class="match-report-section">
-                        <div class="match-report-title">Match Report</div>
-                        <textarea class="match-report-textarea"
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                            <div class="match-report-title" style="margin-bottom:0">Match Report</div>
+                            ${reportPublished
+                                ? `<span style="font-size:0.7rem;font-weight:700;color:#43e97b;letter-spacing:1px;text-transform:uppercase">&#10003; Published</span>`
+                                : `<button onclick="publishMatchReport(${activeMatch})" style="padding:5px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.75rem;font-weight:700;cursor:pointer">Publish</button>`}
+                        </div>
+                        <textarea id="match-report-ta-${activeMatch}" class="match-report-textarea"
                             placeholder="Write your match report here..."
                             onblur="saveMatchReport(${activeMatch}, this.value)"
                         >${esc(reportText)}</textarea>
                     </div>`;
-                } else if (reportText) {
+                } else if (reportPublished && reportText) {
                     html += `<div class="match-report-section">
                         <div class="match-report-title">Match Report</div>
                         <div class="match-report-text">${esc(reportText)}</div>

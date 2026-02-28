@@ -837,6 +837,29 @@
         }
         .match-delete-btn:hover { background: rgba(245,87,108,0.2); }
 
+        /* Match Report */
+        .match-report-section {
+            margin-top: 20px; padding: 16px; border-radius: 12px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+        }
+        .match-report-title {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
+            color: rgba(255,255,255,0.4); margin-bottom: 10px;
+        }
+        .match-report-textarea {
+            width: 100%; min-height: 120px; background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            color: #e0e0e0; font-size: 0.9rem; line-height: 1.6;
+            padding: 10px 12px; resize: vertical; outline: none;
+            font-family: inherit; box-sizing: border-box;
+        }
+        .match-report-textarea:focus { border-color: rgba(255,140,0,0.4); }
+        .match-report-textarea::placeholder { color: rgba(255,255,255,0.2); }
+        .match-report-text {
+            font-size: 0.9rem; line-height: 1.7; color: rgba(255,255,255,0.7);
+            white-space: pre-wrap;
+        }
+
         /* ===== ANIMATIONS ===== */
         .goal-overlay, .trophy-overlay, .assist-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -1637,6 +1660,10 @@
         function setMatchOpponent(idx, val) {
             matches[idx].opponent = val; saveMatches(); renderMatches();
         }
+        function saveMatchReport(idx, val) {
+            matches[idx].report = val;
+            saveMatches();
+        }
         function addOppGoal(idx) {
             matches[idx].scoreOpp = (matches[idx].scoreOpp || 0) + 1;
             saveMatches(); renderMatches();
@@ -2058,6 +2085,23 @@
                         });
                     }
                     html += `</div>`;
+                }
+
+                // Match Report
+                const reportText = m.report || '';
+                if (userRole === 'coach') {
+                    html += `<div class="match-report-section">
+                        <div class="match-report-title">Match Report</div>
+                        <textarea class="match-report-textarea"
+                            placeholder="Write your match report here..."
+                            onblur="saveMatchReport(${activeMatch}, this.value)"
+                        >${esc(reportText)}</textarea>
+                    </div>`;
+                } else if (reportText) {
+                    html += `<div class="match-report-section">
+                        <div class="match-report-title">Match Report</div>
+                        <div class="match-report-text">${esc(reportText)}</div>
+                    </div>`;
                 }
 
                 if (editable) html += `<button class="match-delete-btn" onclick="deleteMatch(${activeMatch})">Delete Match</button>`;

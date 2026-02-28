@@ -1279,7 +1279,48 @@
         <div id="votesView" class="view-panel"></div>
 
         <div id="leaderboardView" class="view-panel">
-            <div id="playerStatsLeaderboard"></div>
+            <div class="lb-layout">
+                <div class="lb-main">
+                    <div class="lb-categories-row">
+                        <div class="lb-category" id="lbGoals">
+                            <button class="lb-cat-toggle" onclick="toggleLbCat('lbGoals')">
+                                <span>&#9917; Goals</span>
+                                <span class="cat-arrow">&#9660;</span>
+                            </button>
+                            <div class="lb-cat-content">
+                                <div class="lb-section" id="goalsLeaderboard" style="margin-top:0"></div>
+                            </div>
+                        </div>
+                        <div class="lb-category" id="lbAssists">
+                            <button class="lb-cat-toggle" onclick="toggleLbCat('lbAssists')">
+                                <span>&#127919; Assists</span>
+                                <span class="cat-arrow">&#9660;</span>
+                            </button>
+                            <div class="lb-cat-content">
+                                <div class="lb-section" id="assistsLeaderboard" style="margin-top:0"></div>
+                            </div>
+                        </div>
+                        <div class="lb-category" id="lbMotm">
+                            <button class="lb-cat-toggle" onclick="toggleLbCat('lbMotm')">
+                                <span>&#127942; C-POTM</span>
+                                <span class="cat-arrow">&#9660;</span>
+                            </button>
+                            <div class="lb-cat-content">
+                                <div class="lb-section" id="motmLeaderboard" style="margin-top:0"></div>
+                            </div>
+                        </div>
+                        <div class="lb-category" id="lbPpotm">
+                            <button class="lb-cat-toggle" onclick="toggleLbCat('lbPpotm')">
+                                <span>&#11088; P-POTM</span>
+                                <span class="cat-arrow">&#9660;</span>
+                            </button>
+                            <div class="lb-cat-content">
+                                <div class="lb-section" id="ppotmLeaderboard" style="margin-top:0"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1547,11 +1588,7 @@
         }
 
         // ===== RENDER LEADERBOARD =====
-        function renderLeaderboard() {
-            const c = document.getElementById('playerStatsLeaderboard');
-            if (!c) return;
-
-            // Aggregate P-POTM poll votes across all matches
+        function getPPOTMTotals() {
             const ppotm = {};
             matches.forEach(m => {
                 if (!m.poll || !m.poll.votes) return;
@@ -1559,40 +1596,53 @@
                     ppotm[player] = (ppotm[player] || 0) + count;
                 });
             });
-
-            // Sort: goals desc, then assists, then ppotm, then cpotm
-            const sorted = [...players].sort((a, b) => {
-                if (b.goals !== a.goals) return b.goals - a.goals;
-                if (b.assists !== a.assists) return b.assists - a.assists;
-                if ((ppotm[b.name]||0) !== (ppotm[a.name]||0)) return (ppotm[b.name]||0) - (ppotm[a.name]||0);
-                return b.motm - a.motm;
-            });
-
+            return ppotm;
+        }
+        function renderLeaderboard() {
+            const ppotm = getPPOTMTotals();
+            renderLB('goalsLeaderboard',   'Goals',   'goals',   'goals-h', ppotm);
+            renderLB('assistsLeaderboard', 'Assists', 'assists', 'assists-h', ppotm);
+            renderLB('motmLeaderboard',    'C-POTM',  'motm',    'motm-h', ppotm);
+            renderPPOTM(ppotm);
+        }
+        function statBadges(p, ppotm) {
+            return `<span style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin-left:6px;font-weight:400">`
+                + `(<span style="color:#43e97b">&#9917;${p.goals}</span>`
+                + ` <span style="color:#38f9d7">&#127919;${p.assists}</span>`
+                + ` <span style="color:#f9d423">&#127942;${p.motm}</span>`
+                + ` <span style="color:#f9d423">&#11088;${ppotm[p.name]||0}</span>)`
+                + `</span>`;
+        }
+        function renderPPOTM(ppotm) {
+            const c = document.getElementById('ppotmLeaderboard');
+            if (!c) return;
+            const sorted = [...players].sort((a, b) => (ppotm[b.name]||0) - (ppotm[a.name]||0));
+            if (!sorted.length) { c.innerHTML = '<div class="lb-header motm-h">P-POTM</div><div style="color:rgba(255,255,255,0.3);font-size:0.85rem;padding:12px">No votes yet</div>'; return; }
+            const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
+            c.innerHTML = `<div class="lb-header motm-h">P-POTM</div><table class="lb-table">
+                ${sorted.map((p, i) => `<tr>
+                    <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
+                    <td class="lb-name" style="display:flex;align-items:center;gap:8px">
+                        ${jerseySVG(getJerseyNumber(p.name))}
+                        <span>${esc(p.name)}${statBadges(p, ppotm)}</span>
+                    </td>
+                    <td class="lb-val motm">${ppotm[p.name]||0}</td>
+                </tr>`).join('')}</table>`;
+        }
+        function renderLB(cid, title, stat, hc, ppotm) {
+            const sorted = [...players].sort((a, b) => b[stat] - a[stat]);
+            const c = document.getElementById(cid);
             if (!sorted.length) { c.innerHTML = ''; return; }
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
-
-            c.innerHTML = `<table class="lb-table" style="width:100%;border-collapse:collapse">
-                <thead>
-                    <tr style="border-bottom:2px solid rgba(255,255,255,0.08)">
-                        <th style="width:44px"></th>
-                        <th style="text-align:left;padding:10px 12px;color:rgba(255,255,255,0.35);font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px">Player</th>
-                        <th style="text-align:center;padding:10px 8px;color:#43e97b;font-size:1rem" title="Goals">&#9917;</th>
-                        <th style="text-align:center;padding:10px 8px;color:#38f9d7;font-size:1rem" title="Assists">&#127919;</th>
-                        <th style="text-align:center;padding:10px 8px;color:#f9d423;font-size:1rem" title="C-POTM">&#127942;</th>
-                        <th style="text-align:center;padding:10px 8px;color:#f9d423;font-size:1rem" title="P-POTM">&#11088;</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sorted.map((p, i) => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
-                        <td style="padding:10px 6px;text-align:center"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
-                        <td style="padding:10px 12px"><div style="display:flex;align-items:center;gap:8px">${jerseySVG(getJerseyNumber(p.name))}<span style="font-size:0.95rem;font-weight:600;color:#e0e0e0">${esc(p.name)}</span></div></td>
-                        <td style="text-align:center;padding:10px 8px"><span class="lb-val goals">${p.goals}</span></td>
-                        <td style="text-align:center;padding:10px 8px"><span class="lb-val assists">${p.assists}</span></td>
-                        <td style="text-align:center;padding:10px 8px"><span class="lb-val motm">${p.motm}</span></td>
-                        <td style="text-align:center;padding:10px 8px"><span class="lb-val motm">${ppotm[p.name] || 0}</span></td>
-                    </tr>`).join('')}
-                </tbody>
-            </table>`;
+            c.innerHTML = `<div class="lb-header ${hc}">${title}</div><table class="lb-table">
+                ${sorted.map((p, i) => `<tr>
+                    <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
+                    <td class="lb-name" style="display:flex;align-items:center;gap:8px">
+                        ${jerseySVG(getJerseyNumber(p.name))}
+                        <span>${esc(p.name)}${statBadges(p, ppotm)}</span>
+                    </td>
+                    <td class="lb-val ${stat}">${p[stat]}</td>
+                </tr>`).join('')}</table>`;
         }
 
         // ===== MATCHES =====

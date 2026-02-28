@@ -1735,7 +1735,13 @@
             if (!el) { clearInterval(matchTimerInterval); matchTimerInterval = null; return; }
             const m = matches[activeMatch];
             if (!m || m.status !== 'live') { clearInterval(matchTimerInterval); matchTimerInterval = null; return; }
-            el.textContent = formatMatchTime(m);
+            const t = formatMatchTime(m);
+            el.textContent = t;
+            // Keep goal time input live — skip update only if coach is actively typing in it
+            const goalTimeEl = document.getElementById(`match-goal-time-${activeMatch}`);
+            if (goalTimeEl && document.activeElement !== goalTimeEl) {
+                goalTimeEl.value = t;
+            }
         }
 
         function startMatchTimerInterval() {

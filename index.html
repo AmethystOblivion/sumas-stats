@@ -2079,6 +2079,7 @@
                     ${m.status === 'ended' && resultText ? `<div style="font-size:1.8rem;font-weight:700;color:${resultColor};letter-spacing:3px;margin-top:4px">${resultText}</div>` : ''}
                     <div class="match-status-bar">
                         ${m.status === 'live' ? `<span class="match-live-badge">&#9679; Live</span>` : ''}
+                        ${m.status === 'live' && m.htReached ? `<span class="match-ended-badge">2nd Half</span>` : ''}
                         ${m.status === 'ht' ? `<span class="match-ended-badge">Half Time</span>` : ''}
                         ${m.status === 'ended' ? `<span class="match-ended-badge">Full Time</span>` : ''}
                     </div>

@@ -1588,30 +1588,44 @@
         }
 
         // ===== RENDER LEADERBOARD =====
-        function getPPOTMWins() {
-            // Count poll wins (most votes in a closed poll) per player
-            const wins = {};
+        function computeStatsFromMatches() {
+            const goals = {}, assists = {}, cpotm = {}, ppotm = {};
             matches.forEach(m => {
-                if (!m.poll || !m.poll.closed || !m.poll.votes) return;
-                const votes = m.poll.votes;
-                const max = Math.max(...Object.values(votes));
-                if (max === 0) return;
-                Object.entries(votes).forEach(([player, count]) => {
-                    if (count === max) wins[player] = (wins[player] || 0) + 1;
+                // Goals and assists derived from match events
+                (m.events || []).forEach(e => {
+                    if (e.type === 'goal') {
+                        goals[e.player] = (goals[e.player] || 0) + (e.count || 1);
+                        if (e.assistBy) assists[e.assistBy] = (assists[e.assistBy] || 0) + 1;
+                    }
+                    if (e.type === 'assist') {
+                        assists[e.player] = (assists[e.player] || 0) + (e.count || 1);
+                    }
                 });
+                // C-POTM from coach MOTM selection
+                if (m.motm) cpotm[m.motm] = (cpotm[m.motm] || 0) + 1;
+                // P-POTM wins from closed polls
+                if (m.poll && m.poll.closed && m.poll.votes) {
+                    const vals = Object.values(m.poll.votes);
+                    const max = vals.length ? Math.max(...vals) : 0;
+                    if (max > 0) {
+                        Object.entries(m.poll.votes).forEach(([player, count]) => {
+                            if (count === max) ppotm[player] = (ppotm[player] || 0) + 1;
+                        });
+                    }
+                }
             });
-            return wins;
+            return { goals, assists, cpotm, ppotm };
         }
         function renderLeaderboard() {
-            renderLB('goalsLeaderboard',   'Goals',   'goals',   'goals-h');
-            renderLB('assistsLeaderboard', 'Assists', 'assists', 'assists-h');
-            renderLB('motmLeaderboard',    'C-POTM',  'motm',    'motm-h');
-            renderPPOTM();
+            const { goals, assists, cpotm, ppotm } = computeStatsFromMatches();
+            renderLB('goalsLeaderboard',   'Goals',   'goals-h',   goals);
+            renderLB('assistsLeaderboard', 'Assists', 'assists-h', assists);
+            renderLB('motmLeaderboard',    'C-POTM',  'motm-h',    cpotm);
+            renderPPOTM(ppotm);
         }
-        function renderPPOTM() {
+        function renderPPOTM(wins) {
             const c = document.getElementById('ppotmLeaderboard');
             if (!c) return;
-            const wins = getPPOTMWins();
             const sorted = [...players].sort((a, b) => (wins[b.name]||0) - (wins[a.name]||0));
             if (!sorted.length) { c.innerHTML = '<div class="lb-header motm-h">P-POTM</div><div style="color:rgba(255,255,255,0.3);font-size:0.85rem;padding:12px">No closed polls yet</div>'; return; }
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
@@ -1625,19 +1639,20 @@
                     <td class="lb-val motm">${wins[p.name]||0}</td>
                 </tr>`).join('')}</table>`;
         }
-        function renderLB(cid, title, stat, hc) {
-            const sorted = [...players].sort((a, b) => b[stat] - a[stat]);
+        function renderLB(cid, title, hc, statsMap) {
+            const sorted = [...players].sort((a, b) => (statsMap[b.name]||0) - (statsMap[a.name]||0));
             const c = document.getElementById(cid);
             if (!sorted.length) { c.innerHTML = ''; return; }
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
+            const valClass = hc.replace('-h','');
             c.innerHTML = `<div class="lb-header ${hc}">${title}</div><table class="lb-table">
                 ${sorted.map((p, i) => `<tr>
                     <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
                     <td class="lb-name" style="display:flex;align-items:center;gap:8px">
                         ${jerseySVG(getJerseyNumber(p.name))}
-                        <span>${esc(p.name)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-weight:400">(${p[stat]})</span></span>
+                        <span>${esc(p.name)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-weight:400">(${statsMap[p.name]||0})</span></span>
                     </td>
-                    <td class="lb-val ${stat}">${p[stat]}</td>
+                    <td class="lb-val ${valClass}">${statsMap[p.name]||0}</td>
                 </tr>`).join('')}</table>`;
         }
 

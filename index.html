@@ -1734,6 +1734,15 @@
             saveMatches(); renderMatches();
         }
 
+        // ===== PENALTY TOGGLE =====
+        let goalIsPenalty = false;
+        function togglePenalty(btn) {
+            goalIsPenalty = !goalIsPenalty;
+            btn.style.background = goalIsPenalty ? 'rgba(245,87,108,0.25)' : 'transparent';
+            btn.style.color = goalIsPenalty ? '#f5576c' : 'rgba(255,255,255,0.4)';
+            btn.style.borderColor = goalIsPenalty ? '#f5576c' : 'rgba(255,255,255,0.2)';
+        }
+
         // ===== MATCH TIMER =====
         let matchTimerInterval = null;
 
@@ -1942,7 +1951,9 @@
                 const assistSel = document.getElementById(`match-goal-assist-${matchIdx}`);
                 const assistBy = assistSel ? assistSel.value : '';
                 const time = formatMatchTime(m);
-                m.events.push({ player, type: 'goal', count: 1, assistBy: assistBy || null, time });
+                const penalty = goalIsPenalty;
+                goalIsPenalty = false;
+                m.events.push({ player, type: 'goal', count: 1, assistBy: assistBy || null, time, penalty });
                 updatePlayerFromMatch(player, 'goals', 1);
                 if (assistBy) updatePlayerFromMatch(assistBy, 'assists', 1);
                 playGoalAnimation();
@@ -2034,9 +2045,10 @@
                     scorerLines = goalEvents.map(e => {
                         const num = jerseyNumbers[e.player.toLowerCase()];
                         const numStr = num ? `<span style="opacity:0.5">${num}</span> ` : '';
+                        const penStr = e.penalty ? ` <span style="color:#f5576c;font-size:0.85em">(P)</span>` : '';
                         const timeStr = e.time ? ` <span style="opacity:0.5;font-size:0.85em">${e.time}'</span>` : (e.count > 1 ? ` x${e.count}` : '');
                         const assistStr = e.assistBy ? ` <span style="opacity:0.6;font-size:0.85em">(&#9889;${esc(e.assistBy)})</span>` : '';
-                        return `<div style="font-size:1.4rem;color:rgba(255,255,255,0.7);margin-top:2px">⚽ ${numStr}${esc(e.player)}${timeStr}${assistStr}</div>`;
+                        return `<div style="font-size:1.4rem;color:rgba(255,255,255,0.7);margin-top:2px">⚽ ${numStr}${esc(e.player)}${penStr}${timeStr}${assistStr}</div>`;
                     }).join('');
                 }
 
@@ -2046,6 +2058,7 @@
                         <div style="text-align:center;flex:1">
                             <div class="score-input" style="display:inline-block;width:110px;font-size:5.6rem;font-weight:900;color:#ff8c00;text-shadow:0 0 30px rgba(255,140,0,0.5),0 0 60px rgba(255,140,0,0.2)">${sSumas}</div>
                             <div class="score-team-label" style="color:#ff8c00">SUMAS</div>
+                            ${scorerLines ? `<div style="margin-top:6px;text-align:left;display:inline-block">${scorerLines}</div>` : ''}
                         </div>
                         <span class="score-vs" style="padding-top:12px">-</span>
                         <div style="text-align:center;flex:1">
@@ -2099,6 +2112,7 @@
                             <option value="">No assist</option>
                             ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
                         </select>
+                        <button onclick="togglePenalty(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Penalty</button>
                         <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
                     </div>
                 </div>`;
@@ -2116,6 +2130,7 @@
                             html += `<div class="match-event-row">
                                 <span class="match-event-icon">&#9917;</span>
                                 <span class="match-event-name">${esc(e.player)}</span>
+                                ${e.penalty ? `<span style="font-size:0.7rem;color:#f5576c;margin-left:2px">(P)</span>` : ''}
                                 ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : `<span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>`}
                                 ${e.assistBy ? `<span style="font-size:0.75rem;color:#38f9d7;margin-left:4px">&#9889; ${esc(e.assistBy)}</span>` : ''}
                                 ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}

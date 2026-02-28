@@ -650,6 +650,39 @@
         .match-score-sub {
             font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 6px;
         }
+        .match-status-bar {
+            display: flex; gap: 10px; justify-content: center;
+            margin: 12px 0 4px;
+        }
+        .match-live-badge {
+            display: inline-block; background: #f5576c; color: #fff;
+            font-size: 0.65rem; font-weight: 800; letter-spacing: 2px;
+            padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
+            animation: livePulse 1.4s ease-in-out infinite;
+        }
+        .match-ended-badge {
+            display: inline-block; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.5);
+            font-size: 0.65rem; font-weight: 700; letter-spacing: 2px;
+            padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
+        }
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .match-timer-display {
+            font-size: 1.6rem; font-weight: 900; color: #fff;
+            letter-spacing: 3px; font-variant-numeric: tabular-nums;
+        }
+        .match-ctrl-btn {
+            padding: 7px 20px; border-radius: 10px; border: none;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .match-ctrl-btn.start { background: #43e97b; color: #0a2e1a; }
+        .match-ctrl-btn.start:hover { background: #5ffb91; }
+        .match-ctrl-btn.end { background: #f5576c; color: #fff; }
+        .match-ctrl-btn.end:hover { background: #ff7087; }
+        .match-ctrl-btn.ht { background: #f9d423; color: #2a1a00; }
+        .match-ctrl-btn.ht:hover { background: #ffe04a; }
 
         /* Match Content Layout */
         .match-layout {
@@ -697,6 +730,31 @@
         }
         .poll-vote-btn:hover { background: #33ffaa; }
         .poll-voted { color: #00ff87; font-size: 0.75rem; font-weight: 600; }
+        .poll-remove-btn {
+            margin-top: 8px; width: 100%; padding: 6px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.15); background: none;
+            color: rgba(255,255,255,0.4); font-size: 0.72rem; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .poll-remove-btn:hover { border-color: #f5576c; color: #f5576c; }
+        .poll-closed-badge {
+            background: #f5576c; color: #fff; border-radius: 4px;
+            padding: 1px 6px; font-size: 0.55rem; letter-spacing: 1px;
+            vertical-align: middle; margin-left: 6px;
+        }
+        .poll-closed-msg {
+            color: rgba(255,255,255,0.35); font-style: italic;
+            font-size: 0.78rem; margin-top: 6px;
+        }
+        .poll-close-btn {
+            margin-top: 10px; width: 100%; padding: 6px; border-radius: 8px;
+            border: 1px solid rgba(245,87,108,0.4); background: none;
+            color: rgba(245,87,108,0.8); font-size: 0.72rem; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .poll-close-btn:hover { border-color: #f5576c; color: #f5576c; background: rgba(245,87,108,0.08); }
+        .poll-close-btn.reopen { border-color: rgba(0,255,135,0.4); color: rgba(0,255,135,0.8); }
+        .poll-close-btn.reopen:hover { border-color: #00ff87; color: #00ff87; background: rgba(0,255,135,0.08); }
         .poll-result {
             display: flex; justify-content: space-between; align-items: center;
             padding: 4px 0; font-size: 0.75rem; color: rgba(255,255,255,0.6);
@@ -716,6 +774,42 @@
         }
         .motm-trophy-select option { background: #1a1a2e; color: #fff; }
         .motm-none { color: rgba(255,255,255,0.3); font-style: italic; font-size: 0.85rem; }
+
+        /* Coaches Votes Tab */
+        #votesTab { display: none; }
+        .votes-list { display: flex; flex-direction: column; gap: 16px; padding: 4px 0; }
+        .votes-match-card {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(0,255,135,0.15);
+            border-radius: 14px; padding: 16px 18px;
+        }
+        .votes-match-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .votes-match-title { font-weight: 700; font-size: 0.95rem; color: #fff; }
+        .votes-total { font-size: 0.75rem; color: #00ff87; font-weight: 600; }
+        .votes-results { margin-bottom: 10px; }
+        .votes-voters-label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.4); margin-bottom: 6px; font-weight: 600;
+        }
+        .votes-voters-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .voter-tag {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: rgba(0,255,135,0.1); border: 1px solid rgba(0,255,135,0.25);
+            color: #00ff87; border-radius: 20px; padding: 3px 8px 3px 10px;
+            font-size: 0.72rem; font-weight: 600;
+        }
+        .voter-remove-btn {
+            background: none; border: none; color: rgba(0,255,135,0.5);
+            cursor: pointer; font-size: 0.85rem; line-height: 1; padding: 0;
+            transition: color 0.15s;
+        }
+        .voter-remove-btn:hover { color: #f5576c; }
+        .votes-empty {
+            text-align: center; color: rgba(255,255,255,0.3);
+            font-style: italic; padding: 40px 0; font-size: 0.9rem;
+        }
 
         /* Match Stats Form */
         .match-form-card {
@@ -1101,6 +1195,50 @@
         </div>
     </div>
 
+    <div class="custom-modal hidden" id="resetAllDataModal">
+        <div class="custom-modal-box">
+            <h3 style="color:#f5576c">&#9888; Reset All Data?</h3>
+            <p style="color:rgba(255,255,255,0.8);font-size:0.85rem;margin-bottom:6px">This will permanently delete <strong>all players, all matches, and all votes</strong> from the database.</p>
+            <p style="color:#f5576c;font-size:0.8rem;margin-bottom:16px">This cannot be undone.</p>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeResetAllDataModal()">Cancel</button>
+                <button class="custom-modal-confirm" style="background:#f5576c;color:#fff" onclick="confirmResetAllData()">Delete Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-modal hidden" id="resetVotesModal">
+        <div class="custom-modal-box">
+            <h3>Reset Votes</h3>
+            <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:10px">Choose which match to reset, or reset all.</p>
+            <select id="resetVoteMatchSel" class="poll-select" style="margin-bottom:10px">
+                <option value="all">All matches</option>
+            </select>
+            <p style="color:#f5576c;font-size:0.8rem;margin-bottom:4px">This cannot be undone.</p>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeResetVotesModal()">Cancel</button>
+                <button class="custom-modal-confirm" style="background:#f5576c;color:#fff" onclick="confirmResetVotes()">Reset Votes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-modal hidden" id="removeVoteModal">
+        <div class="custom-modal-box">
+            <h3>Remove a Vote</h3>
+            <p style="color:rgba(255,255,255,0.6);font-size:0.8rem;margin-bottom:12px">Select the match and the voter to remove.</p>
+            <select id="removeVoteMatchSel" class="poll-select" onchange="populateRemoveVoters()" style="margin-bottom:8px">
+                <option value="">Select match...</option>
+            </select>
+            <select id="removeVoteVoterSel" class="poll-select" style="margin-bottom:4px">
+                <option value="">Select voter...</option>
+            </select>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeRemoveVoteModal()">Cancel</button>
+                <button class="custom-modal-confirm" style="background:#f5576c;color:#fff" onclick="confirmRemoveVote()">Remove Vote</button>
+            </div>
+        </div>
+    </div>
+
     <div class="custom-modal hidden" id="voteConfirmModal">
         <div class="custom-modal-box">
             <h3>Confirm Your Vote</h3>
@@ -1122,6 +1260,9 @@
         <div class="admin-menu hidden" id="adminMenu">
             <button id="overrideBtn" onclick="showOverrideModal();toggleAdminMenu()">&#128273; Override</button>
             <button id="addPlayerBtn" onclick="showAddPlayerPrompt();toggleAdminMenu()">&#10133; Add Player</button>
+            <button id="removeVoteBtn" onclick="showRemoveVoteModal()">&#10060; Remove Vote</button>
+            <button id="resetVotesBtn" onclick="showResetVotesModal()">&#128260; Reset Votes</button>
+            <button id="resetAllDataBtn" onclick="showResetAllDataModal()" style="color:#f5576c;border-color:rgba(245,87,108,0.4)">&#128465; Reset All Data</button>
             <button id="backToRolesBtn" onclick="backToRoles()">&#8592; Switch Role</button>
         </div>
     </header>
@@ -1131,6 +1272,7 @@
             <button class="tab" onclick="switchTab('players')">Players</button>
             <button class="tab active matches-tab" onclick="switchTab('matches')">&#9917; Matches</button>
             <button class="tab" onclick="switchTab('leaderboard')">Leaderboard</button>
+            <button class="tab" id="votesTab" onclick="switchTab('votes')">&#128202; Votes</button>
         </div>
 
         <div id="playersView" class="view-panel">
@@ -1144,6 +1286,8 @@
         <div id="matchesView" class="view-panel active">
             <div id="matchContent"></div>
         </div>
+
+        <div id="votesView" class="view-panel"></div>
 
         <div id="leaderboardView" class="view-panel">
             <div class="lb-layout">
@@ -1268,6 +1412,10 @@
             }
             if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
             try { renderMatches(); } catch(e) {}
+            try { if (currentTab === 'votes') renderVotes(); } catch(e) {}
+            // Resume live timer if match is ongoing
+            const liveM = activeMatch >= 0 ? matches[activeMatch] : null;
+            if (liveM && liveM.status === 'live' && !matchTimerInterval) startMatchTimerInterval();
         });
 
         // ===== JERSEY =====
@@ -1394,11 +1542,13 @@
 
         // ===== TAB SWITCHING =====
         let currentTab = 'matches';
-        const tabMap = { players: 0, matches: 1, leaderboard: 2 };
-        const viewIds = { players: 'playersView', matches: 'matchesView', leaderboard: 'leaderboardView' };
+        const tabMap = { players: 0, matches: 1, leaderboard: 2, votes: 3 };
+        const viewIds = { players: 'playersView', matches: 'matchesView', leaderboard: 'leaderboardView', votes: 'votesView' };
 
         function switchTab(tab) {
             if (tab === currentTab) return;
+            // Block non-coaches from the votes tab
+            if (tab === 'votes' && userRole !== 'coach') return;
             const outEl = document.getElementById(viewIds[currentTab]);
             const inEl = document.getElementById(viewIds[tab]);
 
@@ -1412,6 +1562,7 @@
                 });
                 if (tab === 'leaderboard') renderLeaderboard();
                 if (tab === 'matches') renderMatches();
+                if (tab === 'votes') renderVotes();
                 inEl.classList.add('active', 'tab-content', 'sweep-in');
                 requestAnimationFrame(() => requestAnimationFrame(() => inEl.classList.remove('sweep-in')));
                 setTimeout(() => inEl.classList.remove('tab-content'), 350);
@@ -1541,7 +1692,7 @@
         function confirmNewMatch() {
             const name = document.getElementById('newMatchInput').value.trim();
             closeNewMatchModal();
-            matches.push({ events: [], motm: '', opponent: name, scoreSumas: 0, scoreOpp: 0 });
+            matches.push({ events: [], motm: '', opponent: name, scoreSumas: 0, scoreOpp: 0, status: 'pending', poll: { opened: false, closed: false, votes: {}, voters: [], voterNames: [], voterChoices: {} } });
             activeMatch = matches.length - 1;
             saveMatches(); renderMatches();
         }
@@ -1579,56 +1730,114 @@
             matches[idx].opponent = val; saveMatches(); renderMatches();
         }
 
+        // ===== MATCH TIMER =====
+        let matchTimerInterval = null;
+
+        function formatMatchTime(m) {
+            let ms = m.elapsedMs || 0;
+            if (m.status === 'live' && m.liveStart) ms += Date.now() - m.liveStart;
+            const totalSec = Math.floor(ms / 1000);
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        }
+
+        function tickMatchTimer() {
+            const el = document.getElementById('matchTimerDisplay');
+            if (!el) { clearInterval(matchTimerInterval); matchTimerInterval = null; return; }
+            const m = matches[activeMatch];
+            if (!m || m.status !== 'live') { clearInterval(matchTimerInterval); matchTimerInterval = null; return; }
+            el.textContent = formatMatchTime(m);
+        }
+
+        function startMatchTimerInterval() {
+            if (matchTimerInterval) clearInterval(matchTimerInterval);
+            matchTimerInterval = setInterval(tickMatchTimer, 1000);
+        }
+
+        function setMatchStatus(idx, status) {
+            const m = matches[idx];
+            const now = Date.now();
+            if (status === 'live') {
+                if (!m.elapsedMs) m.elapsedMs = 0;
+                m.liveStart = now;
+            } else if (status === 'ht' || status === 'ended') {
+                if (m.liveStart) {
+                    m.elapsedMs = (m.elapsedMs || 0) + (now - m.liveStart);
+                    m.liveStart = null;
+                }
+                if (matchTimerInterval) { clearInterval(matchTimerInterval); matchTimerInterval = null; }
+                if (status === 'ended') {
+                    // Automatically open the parents poll when match ends
+                    if (!m.poll) m.poll = { votes: {}, voters: [], voterNames: [], voterChoices: {} };
+                    m.poll.opened = true;
+                    m.poll.closed = false;
+                }
+            }
+            m.status = status;
+            saveMatches();
+            renderMatches();
+            if (status === 'live') startMatchTimerInterval();
+        }
+
         // ===== PARENTS MOTM POLL =====
-        const POLL_DURATION = 2 * 24 * 60 * 60 * 1000; // 2 days
         function getVoterId() {
             let id = localStorage.getItem('sumasVoterId');
             if (!id) { id = 'v_' + Math.random().toString(36).substr(2, 12); localStorage.setItem('sumasVoterId', id); }
             return id;
+        }
+        function openPoll(idx) {
+            const m = matches[idx];
+            if (!m.poll) m.poll = { opened: false, closed: false, votes: {}, voters: [], voterNames: [], voterChoices: {} };
+            m.poll.opened = true;
+            m.poll.closed = false;
+            saveMatches(); renderMatches();
         }
         function renderParentsPoll(idx, m) {
             if (!m.poll) m.poll = { startTime: 0, votes: {}, voters: [] };
             const poll = m.poll;
             const voterId = getVoterId();
             const hasVoted = poll.voters && poll.voters.includes(voterId);
-            const pollStarted = poll.startTime > 0;
-            const timeLeft = pollStarted ? Math.max(0, (poll.startTime + POLL_DURATION) - Date.now()) : POLL_DURATION;
-            const pollClosed = pollStarted && timeLeft <= 0;
+            const isClosed = !!poll.closed;
+            const coach = userRole === 'coach';
+            // Treat as opened if explicitly opened, OR if existing data already has votes (backward compat)
+            const isOpened = poll.opened === true || (poll.voters && poll.voters.length > 0);
 
-            let timerText = '';
-            if (pollStarted && !pollClosed) {
-                const h = Math.floor(timeLeft / 3600000);
-                const d = Math.floor(h / 24);
-                const rh = h % 24;
-                timerText = d > 0 ? `${d}d ${rh}h left` : `${rh}h left`;
-            } else if (pollClosed) {
-                timerText = 'Voting closed';
-            } else {
-                timerText = 'Vote to start the 2-day timer';
+            const totalVotes = Object.values(poll.votes || {}).reduce((s, v) => s + v, 0);
+            let content = '';
+
+            if (!isOpened) {
+                // Poll not started — neither coaches nor parents see it yet
+                return '';
             }
 
-            let content = '';
-            const totalVotes = Object.values(poll.votes || {}).reduce((s, v) => s + v, 0);
-
-            if (pollClosed || (hasVoted && pollStarted)) {
-                // Show results
+            if (coach) {
+                // Coaches see full results at all times
                 const sorted = Object.entries(poll.votes || {}).sort((a, b) => b[1] - a[1]);
                 const topVotes = sorted.length > 0 ? sorted[0][1] : 0;
                 if (sorted.length === 0) {
-                    content = `<div class="motm-none">No votes cast</div>`;
+                    content = `<div class="motm-none">No votes cast yet</div>`;
                 } else {
                     content = sorted.map(([name, count]) => {
                         const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                        const isWinner = pollClosed && count === topVotes;
+                        const isWinner = isClosed && count === topVotes;
                         return `<div class="poll-result ${isWinner ? 'winner' : ''}">
                             <span>${esc(name)}</span><span>${count} vote${count!==1?'s':''} (${pct}%)</span>
                         </div>
                         <div class="poll-bar"><div class="poll-bar-fill" style="width:${pct}%"></div></div>`;
                     }).join('');
-                    if (hasVoted && !pollClosed) content += `<div class="poll-voted" style="margin-top:8px">You voted!</div>`;
                 }
+                if (isClosed) content += `<div class="poll-closed-msg">Voting is closed.</div>`;
+            } else if (isClosed) {
+                // Poll closed — parents just see a closed message
+                content = `<div class="poll-closed-msg">Voting is now closed. Results will be announced by the coaches.</div>`;
+            } else if (hasVoted) {
+                // Parent has voted — confirm only, no breakdown
+                const myChoice = poll.voterChoices && poll.voterChoices[getVoterId()];
+                content = `<div class="poll-voted" style="margin-top:4px">You voted${myChoice ? ` for <strong>${esc(myChoice)}</strong>` : ''}!</div>
+                <button onclick="removePollVote(${idx})" class="poll-remove-btn">Remove my vote</button>`;
             } else {
-                // Show voting form
+                // Parent hasn't voted — show voting form
                 content = `<select class="poll-select" id="pollSelect-${idx}">
                     <option value="">Select player...</option>
                     ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
@@ -1636,15 +1845,21 @@
                 <button class="poll-vote-btn" onclick="castPollVote(${idx})">Vote</button>`;
             }
 
+            const coachBtn = coach
+                ? `<button class="poll-close-btn ${isClosed ? 'reopen' : ''}" onclick="togglePollClosed(${idx})">${isClosed ? '&#128275; Reopen Poll' : '&#128274; Close Poll'}</button>`
+                : '';
+
             return `<div class="parents-poll-card">
-                <div class="poll-label">Parents MOTM</div>
-                <div class="poll-timer">${timerText}${totalVotes > 0 ? ` &middot; ${totalVotes} vote${totalVotes!==1?'s':''}` : ''}</div>
+                <div class="poll-label">Parents MOTM${isClosed ? ' <span class="poll-closed-badge">CLOSED</span>' : ''}</div>
+                ${coach && totalVotes > 0 ? `<div class="poll-timer">${totalVotes} vote${totalVotes!==1?'s':''}</div>` : ''}
                 ${content}
+                ${coachBtn}
             </div>`;
         }
         let pendingVoteIdx = -1;
         let pendingVotePlayer = '';
         function castPollVote(idx) {
+            if (matches[idx] && matches[idx].poll && matches[idx].poll.closed) return;
             const sel = document.getElementById('pollSelect-' + idx);
             if (!sel || !sel.value) return;
             pendingVoteIdx = idx;
@@ -1667,19 +1882,44 @@
             const m = matches[pendingVoteIdx];
             if (!m.poll) m.poll = { startTime: 0, votes: {}, voters: [], voterNames: [] };
             const voterId = getVoterId();
+            if (m.poll.closed) { closeVoteConfirm(); return; }
             if (m.poll.voters && m.poll.voters.includes(voterId)) { closeVoteConfirm(); return; }
             if (!m.poll.startTime) m.poll.startTime = Date.now();
             if (!m.poll.votes) m.poll.votes = {};
             if (!m.poll.voters) m.poll.voters = [];
             if (!m.poll.voterNames) m.poll.voterNames = [];
+            if (!m.poll.voterChoices) m.poll.voterChoices = {};
             m.poll.votes[pendingVotePlayer] = (m.poll.votes[pendingVotePlayer] || 0) + 1;
             m.poll.voters.push(voterId);
             m.poll.voterNames.push(voterName);
+            m.poll.voterChoices[voterId] = pendingVotePlayer;
             closeVoteConfirm();
             saveMatches(); renderMatches();
         }
-        // Update poll timers every minute
-        setInterval(() => { try { renderMatches(); } catch(e) {} }, 60000);
+        function togglePollClosed(idx) {
+            const m = matches[idx];
+            if (!m.poll) m.poll = { startTime: 0, votes: {}, voters: [], voterNames: [], voterChoices: {} };
+            m.poll.closed = !m.poll.closed;
+            if (!m.poll.closed) m.poll.opened = true; // reopening also marks as opened
+            saveMatches(); renderMatches();
+        }
+        function removePollVote(idx) {
+            const m = matches[idx];
+            if (!m || !m.poll) return;
+            const voterId = getVoterId();
+            const voterIdx = m.poll.voters ? m.poll.voters.indexOf(voterId) : -1;
+            if (voterIdx === -1) return;
+            const chosenPlayer = m.poll.voterChoices && m.poll.voterChoices[voterId];
+            if (chosenPlayer && m.poll.votes[chosenPlayer]) {
+                m.poll.votes[chosenPlayer]--;
+                if (m.poll.votes[chosenPlayer] <= 0) delete m.poll.votes[chosenPlayer];
+            }
+            m.poll.voters.splice(voterIdx, 1);
+            if (m.poll.voterNames) m.poll.voterNames.splice(voterIdx, 1);
+            if (m.poll.voterChoices) delete m.poll.voterChoices[voterId];
+            saveMatches(); renderMatches();
+        }
+        // (no poll timer needed — voting is always open)
         function updatePlayerFromMatch(playerName, stat, delta) {
             const p = players.find(pl => pl.name === playerName);
             if (!p) return;
@@ -1759,7 +1999,7 @@
             // Latest match - prominent
             const latestM = matches[latestIdx];
             const latestLabel = latestM.opponent ? `vs ${esc(latestM.opponent)}` : `Match ${latestIdx + 1}`;
-            html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}</button>`;
+            html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}${latestM.status === 'live' ? ' <span class="match-live-badge" style="font-size:0.5rem;padding:2px 6px">Live</span>' : ''}</button>`;
 
             if (editable) html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
             html += `<a href="https://system.gotsport.com/splash/25643/events/50579/schedules?team=3738001" target="_blank" rel="noopener" class="table-link-btn" style="margin-left:auto">Table</a>`;
@@ -1814,6 +2054,18 @@
                     </div>
                     ${resultText ? `<div style="font-size:0.9rem;font-weight:700;color:${resultColor};letter-spacing:3px;margin-top:4px">${resultText}</div>` : ''}
                     <div class="match-score-sub">${score} goal${score!==1?'s':''} &middot; ${assistCount} assist${assistCount!==1?'s':''}</div>
+                    <div class="match-status-bar">
+                        ${m.status === 'live' ? `<span class="match-live-badge">&#9679; Live</span>` : ''}
+                        ${m.status === 'ht' ? `<span class="match-ended-badge">Half Time</span>` : ''}
+                        ${m.status === 'ended' ? `<span class="match-ended-badge">Full Time</span>` : ''}
+                    </div>
+                    ${(m.status === 'live' || m.status === 'ht' || m.status === 'ended') ? `<div style="margin:6px 0 4px"><span class="match-timer-display" id="matchTimerDisplay">${formatMatchTime(m)}</span></div>` : ''}
+                    <div class="match-status-bar" style="margin-top:8px">
+                        ${userRole === 'coach' && activeMatch === latestIdx && (!m.status || m.status === 'pending') ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; Start Match</button>` : ''}
+                        ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'live' ? `<button class="match-ctrl-btn ht" onclick="setMatchStatus(${activeMatch},'ht')">HT</button>` : ''}
+                        ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'ht' ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; 2nd Half</button>` : ''}
+                        ${userRole === 'coach' && activeMatch === latestIdx && (m.status === 'live' || m.status === 'ht') ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; End Match</button>` : ''}
+                    </div>
                 </div>`;
 
                 // Layout: main + motm side
@@ -1822,7 +2074,7 @@
                 // Main column
                 html += `<div class="match-main">`;
 
-                if (editable) {
+                if (editable && activeMatch === latestIdx) {
                 // Add Goal form
                 html += `<div class="match-form-card">
                     <div class="match-form-title" style="color:#43e97b">Add Goals</div>
@@ -2049,6 +2301,170 @@
         function applyReadOnly() {
             document.getElementById('overrideBtn').style.display = userRole === 'parent' ? 'none' : '';
             document.getElementById('addPlayerBtn').style.display = isEditable() ? '' : 'none';
+            document.getElementById('removeVoteBtn').style.display = isEditable() ? '' : 'none';
+            document.getElementById('resetVotesBtn').style.display = isEditable() ? '' : 'none';
+            document.getElementById('resetAllDataBtn').style.display = userRole === 'coach' ? '' : 'none';
+            // Votes tab only visible to coaches
+            document.getElementById('votesTab').style.display = userRole === 'coach' ? 'block' : 'none';
+            // If a non-coach somehow ends up on votes tab, redirect to matches
+            if (currentTab === 'votes' && userRole !== 'coach') switchTab('matches');
+        }
+
+        // ===== RESET ALL DATA =====
+        function showResetAllDataModal() {
+            toggleAdminMenu();
+            document.getElementById('resetAllDataModal').classList.remove('hidden');
+        }
+        function closeResetAllDataModal() {
+            document.getElementById('resetAllDataModal').classList.add('hidden');
+        }
+        function confirmResetAllData() {
+            players = [];
+            matches = [];
+            activeMatch = -1;
+            db.collection('data').doc('players').set({ list: JSON.stringify([]) });
+            db.collection('data').doc('matches').set({ list: JSON.stringify([]) });
+            closeResetAllDataModal();
+            render();
+            renderMatches();
+            if (currentTab === 'votes') renderVotes();
+        }
+
+        // ===== RESET VOTES MODAL =====
+        function showResetVotesModal() {
+            toggleAdminMenu();
+            const sel = document.getElementById('resetVoteMatchSel');
+            sel.innerHTML = '<option value="all">All matches</option>' +
+                matches.map((m, i) => {
+                    const label = m.opponent ? `Match ${i + 1} — vs ${esc(m.opponent)}` : `Match ${i + 1}`;
+                    return `<option value="${i}">${label}</option>`;
+                }).join('');
+            document.getElementById('resetVotesModal').classList.remove('hidden');
+        }
+        function closeResetVotesModal() {
+            document.getElementById('resetVotesModal').classList.add('hidden');
+        }
+        function confirmResetVotes() {
+            const val = document.getElementById('resetVoteMatchSel').value;
+            const emptyPoll = () => ({ startTime: 0, votes: {}, voters: [], voterNames: [], voterChoices: {} });
+            if (val === 'all') {
+                matches.forEach(m => { m.poll = emptyPoll(); });
+            } else {
+                const idx = parseInt(val);
+                if (!isNaN(idx) && matches[idx]) matches[idx].poll = emptyPoll();
+            }
+            saveMatches();
+            closeResetVotesModal();
+            renderMatches();
+            if (currentTab === 'votes') renderVotes();
+        }
+
+        // ===== REMOVE VOTE MODAL =====
+        function showRemoveVoteModal() {
+            toggleAdminMenu();
+            const matchSel = document.getElementById('removeVoteMatchSel');
+            matchSel.innerHTML = '<option value="">Select match...</option>' +
+                matches.map((m, i) => {
+                    const label = m.opponent ? `Match ${i + 1} — vs ${esc(m.opponent)}` : `Match ${i + 1}`;
+                    const count = m.poll && m.poll.voters ? m.poll.voters.length : 0;
+                    return `<option value="${i}">${label} (${count} voter${count !== 1 ? 's' : ''})</option>`;
+                }).join('');
+            document.getElementById('removeVoteVoterSel').innerHTML = '<option value="">Select voter...</option>';
+            document.getElementById('removeVoteModal').classList.remove('hidden');
+        }
+        function populateRemoveVoters() {
+            const matchIdx = parseInt(document.getElementById('removeVoteMatchSel').value);
+            const voterSel = document.getElementById('removeVoteVoterSel');
+            voterSel.innerHTML = '<option value="">Select voter...</option>';
+            if (isNaN(matchIdx)) return;
+            const m = matches[matchIdx];
+            if (!m || !m.poll || !m.poll.voterNames || m.poll.voterNames.length === 0) {
+                voterSel.innerHTML = '<option value="">No voters on this match</option>';
+                return;
+            }
+            m.poll.voterNames.forEach((name, vi) => {
+                voterSel.innerHTML += `<option value="${vi}">${esc(name)}</option>`;
+            });
+        }
+        function closeRemoveVoteModal() {
+            document.getElementById('removeVoteModal').classList.add('hidden');
+        }
+        function confirmRemoveVote() {
+            const matchIdx = parseInt(document.getElementById('removeVoteMatchSel').value);
+            const voterIdx = parseInt(document.getElementById('removeVoteVoterSel').value);
+            if (isNaN(matchIdx) || isNaN(voterIdx)) return;
+            removeVoteByIndex(matchIdx, voterIdx);
+            closeRemoveVoteModal();
+        }
+
+        // ===== COACHES VOTES VIEW =====
+        function removeVoteByIndex(matchIdx, voterIdx) {
+            const m = matches[matchIdx];
+            if (!m || !m.poll) return;
+            const poll = m.poll;
+            const voterId = poll.voters && poll.voters[voterIdx];
+            if (!voterId) return;
+            // Remove the voter from all tracking arrays
+            poll.voters.splice(voterIdx, 1);
+            if (poll.voterNames) poll.voterNames.splice(voterIdx, 1);
+            if (poll.voterChoices) delete poll.voterChoices[voterId];
+            // Recompute vote counts entirely from remaining voterChoices
+            poll.votes = {};
+            if (poll.voterChoices) {
+                Object.values(poll.voterChoices).forEach(player => {
+                    poll.votes[player] = (poll.votes[player] || 0) + 1;
+                });
+            }
+            saveMatches();
+            renderVotes();
+        }
+
+        function renderVotes() {
+            const container = document.getElementById('votesView');
+            if (!container) return;
+
+            if (matches.length === 0) {
+                container.innerHTML = '<div class="votes-empty">No matches added yet.</div>';
+                return;
+            }
+
+            let html = '<div class="votes-list">';
+            matches.forEach((m, i) => {
+                const matchLabel = m.opponent ? `Match ${i + 1} — vs ${esc(m.opponent)}` : `Match ${i + 1}`;
+                const poll = m.poll || { votes: {}, voters: [], voterNames: [] };
+                const totalVotes = Object.values(poll.votes || {}).reduce((s, v) => s + v, 0);
+                const sorted = Object.entries(poll.votes || {}).sort((a, b) => b[1] - a[1]);
+                const topVotes = sorted.length > 0 ? sorted[0][1] : 0;
+                const voterNames = poll.voterNames || [];
+
+                let resultsHtml = '';
+                if (totalVotes === 0) {
+                    resultsHtml = `<div style="color:rgba(255,255,255,0.3);font-style:italic;font-size:0.8rem;padding:4px 0">No votes yet</div>`;
+                } else {
+                    resultsHtml = sorted.map(([name, count]) => {
+                        const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                        const isWinner = count === topVotes;
+                        return `<div class="poll-result ${isWinner ? 'winner' : ''}">
+                            <span>${esc(name)}</span><span>${count} vote${count !== 1 ? 's' : ''} (${pct}%)</span>
+                        </div>
+                        <div class="poll-bar"><div class="poll-bar-fill" style="width:${pct}%"></div></div>`;
+                    }).join('');
+                }
+
+                html += `<div class="votes-match-card">
+                    <div class="votes-match-header">
+                        <span class="votes-match-title">${matchLabel}</span>
+                        <span class="votes-total">${totalVotes} vote${totalVotes !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="votes-results">${resultsHtml}</div>
+                    ${voterNames.length > 0 ? `<div class="votes-voters">
+                        <div class="votes-voters-label">Voters</div>
+                        <div class="votes-voters-list">${voterNames.map((n, vi) => `<span class="voter-tag">${esc(n)}<button class="voter-remove-btn" onclick="removeVoteByIndex(${i},${vi})" title="Remove this vote">&times;</button></span>`).join('')}</div>
+                    </div>` : ''}
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         // Restore session

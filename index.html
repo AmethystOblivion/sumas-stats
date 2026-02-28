@@ -1244,7 +1244,7 @@
 
     <header style="position:relative">
         <h1>SUMAS LIVE</h1>
-        <p>Goals &middot; Assists &middot; Man of the Match</p>
+        <p>Goals &middot; Assists &middot; C-POTM &middot; P-POTM</p>
         <button class="admin-btn" onclick="toggleAdminMenu()">Admin</button>
         <div class="admin-menu hidden" id="adminMenu">
             <button id="overrideBtn" onclick="showOverrideModal();toggleAdminMenu()">&#128273; Override</button>
@@ -1302,11 +1302,20 @@
                         </div>
                         <div class="lb-category" id="lbMotm">
                             <button class="lb-cat-toggle" onclick="toggleLbCat('lbMotm')">
-                                <span>&#127942; MOTM</span>
+                                <span>&#127942; C-POTM</span>
                                 <span class="cat-arrow">&#9660;</span>
                             </button>
                             <div class="lb-cat-content">
                                 <div class="lb-section" id="motmLeaderboard" style="margin-top:0"></div>
+                            </div>
+                        </div>
+                        <div class="lb-category" id="lbPpotm">
+                            <button class="lb-cat-toggle" onclick="toggleLbCat('lbPpotm')">
+                                <span>&#11088; P-POTM</span>
+                                <span class="cat-arrow">&#9660;</span>
+                            </button>
+                            <div class="lb-cat-content">
+                                <div class="lb-section" id="ppotmLeaderboard" style="margin-top:0"></div>
                             </div>
                         </div>
                     </div>
@@ -1582,7 +1591,29 @@
         function renderLeaderboard() {
             renderLB('goalsLeaderboard', 'Goals', 'goals', 'goals-h');
             renderLB('assistsLeaderboard', 'Assists', 'assists', 'assists-h');
-            renderLB('motmLeaderboard', 'Man of the Match', 'motm', 'motm-h');
+            renderLB('motmLeaderboard', 'C-POTM', 'motm', 'motm-h');
+            renderPPOTM();
+        }
+        function renderPPOTM() {
+            const c = document.getElementById('ppotmLeaderboard');
+            if (!c) return;
+            // Aggregate poll votes across all matches
+            const totals = {};
+            matches.forEach(m => {
+                if (!m.poll || !m.poll.votes) return;
+                Object.entries(m.poll.votes).forEach(([player, count]) => {
+                    totals[player] = (totals[player] || 0) + count;
+                });
+            });
+            const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+            if (!sorted.length) { c.innerHTML = '<div class="lb-header motm-h">P-POTM</div><div style="color:rgba(255,255,255,0.3);font-size:0.85rem;padding:12px">No votes yet</div>'; return; }
+            const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
+            c.innerHTML = `<div class="lb-header motm-h">P-POTM</div><table class="lb-table">
+                ${sorted.map(([name, count], i) => `<tr>
+                    <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
+                    <td class="lb-name" style="display:flex;align-items:center;gap:8px">${jerseySVG(getJerseyNumber(name))} ${esc(name)}</td>
+                    <td class="lb-val motm">${count}</td>
+                </tr>`).join('')}</table>`;
         }
         function renderLB(cid, title, stat, hc) {
             const sorted = [...players].sort((a, b) => b[stat] - a[stat]);
@@ -1805,7 +1836,7 @@
                 : '';
 
             return `<div class="parents-poll-card">
-                <div class="poll-label">Parents MOTM${isClosed ? ' <span class="poll-closed-badge">CLOSED</span>' : ''}</div>
+                <div class="poll-label">P-POTM${isClosed ? ' <span class="poll-closed-badge">CLOSED</span>' : ''}</div>
                 ${coach && totalVotes > 0 ? `<div class="poll-timer">${totalVotes} vote${totalVotes!==1?'s':''}</div>` : ''}
                 ${content}
                 ${coachBtn}
@@ -2123,12 +2154,12 @@
                 html += `<div class="match-motm-side">
                     ${userRole === 'coach' || m.status === 'ended' ? `<div class="motm-trophy-card">
                         <div class="motm-trophy-icon">&#127942;</div>
-                        <div class="motm-trophy-label">Coaches MOTM</div>
+                        <div class="motm-trophy-label">C-POTM</div>
                         ${m.motm
                             ? `<div class="motm-trophy-name">${esc(m.motm)}</div>`
                             : `<div class="motm-none">Not selected</div>`}
                         ${editable ? `<select class="motm-trophy-select" onchange="setMatchMOTM(${activeMatch}, this.value)">
-                            <option value="">Select MOTM...</option>
+                            <option value="">Select C-POTM...</option>
                             ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
                         </select>` : ''}
                     </div>` : ''}

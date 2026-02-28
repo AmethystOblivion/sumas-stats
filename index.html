@@ -1605,14 +1605,6 @@
             renderLB('motmLeaderboard',    'C-POTM',  'motm',    'motm-h', ppotm);
             renderPPOTM(ppotm);
         }
-        function statBadges(p, ppotm) {
-            return `<span style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin-left:6px;font-weight:400">`
-                + `(<span style="color:#43e97b">&#9917;${p.goals}</span>`
-                + ` <span style="color:#38f9d7">&#127919;${p.assists}</span>`
-                + ` <span style="color:#f9d423">&#127942;${p.motm}</span>`
-                + ` <span style="color:#f9d423">&#11088;${ppotm[p.name]||0}</span>)`
-                + `</span>`;
-        }
         function renderPPOTM(ppotm) {
             const c = document.getElementById('ppotmLeaderboard');
             if (!c) return;
@@ -1624,7 +1616,7 @@
                     <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
                     <td class="lb-name" style="display:flex;align-items:center;gap:8px">
                         ${jerseySVG(getJerseyNumber(p.name))}
-                        <span>${esc(p.name)}${statBadges(p, ppotm)}</span>
+                        <span>${esc(p.name)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-weight:400">(${ppotm[p.name]||0})</span></span>
                     </td>
                     <td class="lb-val motm">${ppotm[p.name]||0}</td>
                 </tr>`).join('')}</table>`;
@@ -1639,7 +1631,7 @@
                     <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
                     <td class="lb-name" style="display:flex;align-items:center;gap:8px">
                         ${jerseySVG(getJerseyNumber(p.name))}
-                        <span>${esc(p.name)}${statBadges(p, ppotm)}</span>
+                        <span>${esc(p.name)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-weight:400">(${p[stat]})</span></span>
                     </td>
                     <td class="lb-val ${stat}">${p[stat]}</td>
                 </tr>`).join('')}</table>`;

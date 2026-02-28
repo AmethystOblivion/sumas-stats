@@ -1761,6 +1761,7 @@
                     m.liveStart = null;
                 }
                 if (matchTimerInterval) { clearInterval(matchTimerInterval); matchTimerInterval = null; }
+                if (status === 'ht') m.htReached = true;
                 if (status === 'ended') {
                     // Automatically open the parents poll when match ends
                     if (!m.poll) m.poll = { votes: {}, voters: [], voterNames: [], voterChoices: {} };
@@ -2071,7 +2072,7 @@
                         ${userRole === 'coach' && activeMatch === latestIdx && (!m.status || m.status === 'pending') ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; Kick-off</button>` : ''}
                         ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'live' ? `<button class="match-ctrl-btn ht" onclick="setMatchStatus(${activeMatch},'ht')">HT</button>` : ''}
                         ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'ht' ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; 2nd Half</button>` : ''}
-                        ${userRole === 'coach' && activeMatch === latestIdx && (m.status === 'live' || m.status === 'ht') ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; FT</button>` : ''}
+                        ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'live' && m.htReached ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; FT</button>` : ''}
                     </div>
                 </div>`;
 

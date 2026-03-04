@@ -561,13 +561,14 @@
 
         /* History match tabs - faded */
         .match-mini-tab.history {
-            opacity: 0.5; border-color: rgba(255,255,255,0.06);
-            background: rgba(255,255,255,0.015); font-size: 0.8rem;
+            border-color: rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.03); font-size: 0.8rem;
+            color: rgba(255,255,255,0.8);
         }
-        .match-mini-tab.history:hover { opacity: 0.8; border-color: rgba(255,255,255,0.15); }
+        .match-mini-tab.history:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
         .match-mini-tab.history.active {
-            opacity: 0.85; border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7);
-            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.35); color: #fff;
+            background: rgba(255,255,255,0.08);
             box-shadow: none;
         }
 
@@ -830,6 +831,11 @@
             cursor: pointer; font-size: 1rem; padding: 2px 6px;
         }
         .match-event-remove:hover { color: #f5576c; }
+        .match-event-edit {
+            background: none; border: none; color: rgba(255,255,255,0.2);
+            cursor: pointer; font-size: 0.8rem; padding: 2px 4px;
+        }
+        .match-event-edit:hover { color: #ff8c00; }
         .match-delete-btn {
             margin-top: 16px; padding: 8px 16px; border-radius: 8px;
             border: 1px solid rgba(245,87,108,0.3); background: rgba(245,87,108,0.1);
@@ -847,10 +853,10 @@
             color: rgba(255,255,255,0.4); margin-bottom: 10px;
         }
         .match-report-textarea {
-            width: 100%; min-height: 120px; background: rgba(0,0,0,0.2);
+            width: 100%; min-height: 80px; background: rgba(0,0,0,0.2);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
             color: #e0e0e0; font-size: 0.9rem; line-height: 1.6;
-            padding: 10px 12px; resize: vertical; outline: none;
+            padding: 10px 12px; resize: none; overflow: hidden; outline: none;
             font-family: inherit; box-sizing: border-box;
         }
         .match-report-textarea:focus { border-color: rgba(255,140,0,0.4); }
@@ -1167,6 +1173,28 @@
         <div class="custom-modal-box">
             <h3>New Match</h3>
             <input type="text" id="newMatchInput" placeholder="Opponent name..." autocomplete="off">
+            <input type="date" id="newMatchDate" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:1rem;outline:none;margin-top:8px;box-sizing:border-box;color-scheme:dark">
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="haHomeBtn" type="button" onclick="setNewMatchHA('home')" style="flex:1;padding:10px;border-radius:10px;border:2px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-weight:700;font-size:0.9rem;cursor:pointer">🏠 Home</button>
+                <button id="haAwayBtn" type="button" onclick="setNewMatchHA('away')" style="flex:1;padding:10px;border-radius:10px;border:2px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-weight:700;font-size:0.9rem;cursor:pointer">✈️ Away</button>
+            </div>
+            <div id="newMatchLocationWrap" style="display:none;margin-top:8px">
+                <select id="newMatchLocationSel" onchange="onNewMatchLocSelChange()" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);font-size:0.95rem;outline:none;box-sizing:border-box;display:none">
+                    <option value="">📍 Select location...</option>
+                    <option value="Charvil">Charvil</option>
+                    <option value="Cantley Park">Cantley Park</option>
+                    <option value="other">Other...</option>
+                </select>
+                <input type="text" id="newMatchLocation" placeholder="📍 Location..." autocomplete="off" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:0.95rem;outline:none;margin-top:8px;box-sizing:border-box;display:none">
+            </div>
+            <input type="text" id="newMatchCompetition" placeholder="Competition (e.g. League, Cup)..." autocomplete="off" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:0.95rem;outline:none;margin-top:8px;box-sizing:border-box">
+            <select id="newMatchLinesmanSel" onchange="onNewMatchLinesmanSelChange()" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);font-size:0.95rem;outline:none;margin-top:8px;box-sizing:border-box">
+                <option value="">👤 Linesman (optional)...</option>
+                <option value="Walid">Walid</option>
+                <option value="James">James</option>
+                <option value="other">Other...</option>
+            </select>
+            <input type="text" id="newMatchLinesman" placeholder="👤 Linesman name..." autocomplete="off" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:0.95rem;outline:none;margin-top:8px;box-sizing:border-box;display:none">
             <div class="custom-modal-btns">
                 <button class="custom-modal-cancel" onclick="closeNewMatchModal()">Cancel</button>
                 <button class="custom-modal-confirm" onclick="confirmNewMatch()">Create</button>
@@ -1408,6 +1436,7 @@
                     if (!Array.isArray(matches)) matches = [];
                 } catch(e) { matches = []; }
             }
+            sortMatchesByDate();
             if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
             try { renderMatches(); } catch(e) {}
             try { if (currentTab === 'votes') renderVotes(); } catch(e) {}
@@ -1593,7 +1622,7 @@
             matches.forEach(m => {
                 // Goals and assists derived from match events
                 (m.events || []).forEach(e => {
-                    if (e.type === 'goal') {
+                    if (e.type === 'goal' && !e.ownGoal) {
                         goals[e.player] = (goals[e.player] || 0) + (e.count || 1);
                         if (e.assistBy) assists[e.assistBy] = (assists[e.assistBy] || 0) + 1;
                     }
@@ -1662,23 +1691,112 @@
             if (team === 'opp') matches[idx].scoreOpp = Math.max(0, n);
             saveMatches(); renderMatches();
         }
+        let newMatchHA = '';
+        function setNewMatchHA(val) {
+            newMatchHA = newMatchHA === val ? '' : val; // toggle off if same
+            const homeBtn = document.getElementById('haHomeBtn');
+            const awayBtn = document.getElementById('haAwayBtn');
+            if (!homeBtn || !awayBtn) return;
+            homeBtn.style.borderColor = newMatchHA === 'home' ? '#43e97b' : 'rgba(255,255,255,0.1)';
+            homeBtn.style.color      = newMatchHA === 'home' ? '#43e97b' : 'rgba(255,255,255,0.5)';
+            homeBtn.style.background = newMatchHA === 'home' ? 'rgba(67,233,123,0.12)' : 'rgba(255,255,255,0.05)';
+            awayBtn.style.borderColor = newMatchHA === 'away' ? '#a89cff' : 'rgba(255,255,255,0.1)';
+            awayBtn.style.color      = newMatchHA === 'away' ? '#a89cff' : 'rgba(255,255,255,0.5)';
+            awayBtn.style.background = newMatchHA === 'away' ? 'rgba(108,99,255,0.12)' : 'rgba(255,255,255,0.05)';
+            // Show/hide location widget
+            const locWrap = document.getElementById('newMatchLocationWrap');
+            const locSel  = document.getElementById('newMatchLocationSel');
+            const locTxt  = document.getElementById('newMatchLocation');
+            if (!locWrap) return;
+            if (newMatchHA === 'home') {
+                locWrap.style.display = 'block';
+                locSel.style.display = 'block'; locSel.value = '';
+                locTxt.style.display = 'none'; locTxt.value = '';
+            } else if (newMatchHA === 'away') {
+                locWrap.style.display = 'block';
+                locSel.style.display = 'none';
+                locTxt.style.display = 'block'; locTxt.style.marginTop = '0';
+            } else {
+                locWrap.style.display = 'none';
+                locSel.style.display = 'none'; locSel.value = '';
+                locTxt.style.display = 'none'; locTxt.value = '';
+            }
+        }
+        function onNewMatchLocSelChange() {
+            const sel = document.getElementById('newMatchLocationSel');
+            const txt = document.getElementById('newMatchLocation');
+            if (sel.value === 'other') {
+                txt.style.display = 'block'; txt.value = '';
+                setTimeout(() => txt.focus(), 50);
+            } else {
+                txt.style.display = 'none';
+            }
+        }
+        function onNewMatchLinesmanSelChange() {
+            const sel = document.getElementById('newMatchLinesmanSel');
+            const txt = document.getElementById('newMatchLinesman');
+            if (sel.value === 'other') {
+                txt.style.display = 'block'; txt.value = '';
+                setTimeout(() => txt.focus(), 50);
+            } else {
+                txt.style.display = 'none';
+            }
+        }
         function addMatch() {
             document.getElementById('newMatchModal').classList.remove('hidden');
             const input = document.getElementById('newMatchInput');
             input.value = '';
+            document.getElementById('newMatchDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('newMatchLocation').value = '';
+            document.getElementById('newMatchCompetition').value = '';
+            document.getElementById('newMatchLinesmanSel').value = '';
+            document.getElementById('newMatchLinesman').style.display = 'none';
+            document.getElementById('newMatchLinesman').value = '';
+            newMatchHA = ''; setNewMatchHA('');
             setTimeout(() => input.focus(), 100);
         }
-        function closeNewMatchModal() { document.getElementById('newMatchModal').classList.add('hidden'); }
+        function closeNewMatchModal() {
+            document.getElementById('newMatchModal').classList.add('hidden');
+            document.getElementById('newMatchDate').value = '';
+            document.getElementById('newMatchLocation').value = '';
+            document.getElementById('newMatchCompetition').value = '';
+            document.getElementById('newMatchLinesmanSel').value = '';
+            document.getElementById('newMatchLinesman').style.display = 'none';
+            document.getElementById('newMatchLinesman').value = '';
+            newMatchHA = ''; setNewMatchHA('');
+        }
         function confirmNewMatch() {
-            const name = document.getElementById('newMatchInput').value.trim();
+            const name        = document.getElementById('newMatchInput').value.trim();
+            const date        = document.getElementById('newMatchDate').value || null;
+            const homeAway    = newMatchHA || null;
+            const locSel = document.getElementById('newMatchLocationSel');
+            const locTxt = document.getElementById('newMatchLocation');
+            let location = null;
+            if (newMatchHA === 'home') {
+                if (locSel && locSel.value && locSel.value !== 'other') location = locSel.value;
+                else if (locTxt) location = locTxt.value.trim() || null;
+            } else if (newMatchHA === 'away') {
+                if (locTxt) location = locTxt.value.trim() || null;
+            }
+            const competition = document.getElementById('newMatchCompetition').value.trim() || null;
+            const linesmanSel = document.getElementById('newMatchLinesmanSel');
+            const linesmanTxt = document.getElementById('newMatchLinesman');
+            let linesman = null;
+            if (linesmanSel.value && linesmanSel.value !== 'other') linesman = linesmanSel.value;
+            else if (linesmanSel.value === 'other') linesman = linesmanTxt.value.trim() || null;
             closeNewMatchModal();
-            matches.push({ events: [], motm: '', opponent: name, scoreSumas: 0, scoreOpp: 0, status: 'pending', poll: { opened: false, closed: false, votes: {}, voters: [], voterNames: [], voterChoices: {} } });
-            activeMatch = matches.length - 1;
+            const newMatch = { events: [], motm: '', opponent: name, date, homeAway, location, competition, linesman, scoreSumas: 0, scoreOpp: 0, status: 'pending', poll: { opened: false, closed: false, votes: {}, voters: [], voterNames: [], voterChoices: {} } };
+            matches.push(newMatch);
+            sortMatchesByDate();
+            activeMatch = matches.indexOf(newMatch);
             saveMatches(); renderMatches();
         }
         document.getElementById('newMatchInput').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewMatch(); });
+        document.getElementById('newMatchDate').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewMatch(); });
+        document.getElementById('newMatchLocation').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewMatch(); });
+        document.getElementById('newMatchCompetition').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewMatch(); });
 
-        function selectMatch(idx) { activeMatch = idx; renderMatches(); }
+        function selectMatch(idx) { activeMatch = idx; matchEditOpen = false; goalIsPenalty = false; goalIsOwnGoal = false; editingEventIdx = -1; reportEditOpen = false; reportOriginalText = ''; renderMatches(); }
 
         let pendingDeleteIdx = -1;
         function deleteMatch(idx) {
@@ -1717,6 +1835,7 @@
             const ta = document.getElementById(`match-report-ta-${idx}`);
             if (ta) matches[idx].report = ta.value;
             matches[idx].reportPublished = true;
+            reportEditOpen = false;
             saveMatches(); renderMatches();
         }
         function addOppGoal(idx) {
@@ -1724,9 +1843,121 @@
             saveMatches(); renderMatches();
         }
 
-        // ===== PENALTY TOGGLE =====
+        // ===== DATE HELPERS =====
+        function formatMatchDate(d) {
+            if (!d) return '';
+            const [y, mo, day] = d.split('-');
+            return `${day}/${mo}/${y.slice(2)}`;
+        }
+        function sortMatchesByDate() {
+            const active = activeMatch >= 0 && activeMatch < matches.length ? matches[activeMatch] : null;
+            matches.sort((a, b) => {
+                if (!a.date && !b.date) return 0;
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                return a.date.localeCompare(b.date);
+            });
+            if (active) {
+                const newIdx = matches.indexOf(active);
+                if (newIdx !== -1) activeMatch = newIdx;
+            }
+        }
+        function setMatchDate(idx, val) {
+            const activeRef = activeMatch >= 0 ? matches[activeMatch] : null;
+            matches[idx].date = val || null;
+            sortMatchesByDate();
+            if (activeRef) {
+                const newIdx = matches.indexOf(activeRef);
+                if (newIdx !== -1) activeMatch = newIdx;
+            }
+            saveMatches(); renderMatches();
+        }
+        function setMatchHomeAway(idx, val) {
+            matches[idx].homeAway = matches[idx].homeAway === val ? null : val; // toggle off if same
+            saveMatches(); renderMatches();
+        }
+        function setMatchCompetition(idx, val) {
+            matches[idx].competition = val.trim() || null;
+            saveMatches();
+        }
+        function setMatchLocation(idx, val) {
+            matches[idx].location = val.trim() || null;
+            saveMatches();
+        }
+        function setMatchLinesman(idx, val) {
+            matches[idx].linesman = val.trim() || null;
+            saveMatches();
+        }
+        function setMatchLinesmanSel(idx, val) {
+            if (val === 'other') {
+                matches[idx].linesman = ''; // empty string signals "other selected, waiting for text"
+            } else {
+                matches[idx].linesman = val || null;
+            }
+            saveMatches(); renderMatches();
+        }
+        let matchEditOpen = false;
+        function toggleMatchEdit() {
+            matchEditOpen = !matchEditOpen;
+            renderMatches();
+        }
+
+        // ===== GOAL ENTRY INLINE EDIT =====
+        let editingEventIdx = -1;
+        function startEditEvent(evIdx) { editingEventIdx = evIdx; renderMatches(); }
+        function cancelEditEvent()     { editingEventIdx = -1;   renderMatches(); }
+        function saveEditEvent(matchIdx, evIdx) {
+            const ev = matches[matchIdx].events[evIdx];
+            const timeEl = document.getElementById(`edit-ev-time-${evIdx}`);
+            if (ev.ownGoal) {
+                ev.time = (timeEl && timeEl.value.trim()) || null;
+            } else {
+                const playerEl = document.getElementById(`edit-ev-player-${evIdx}`);
+                const penEl    = document.getElementById(`edit-ev-pen-${evIdx}`);
+                const assistEl = document.getElementById(`edit-ev-assist-${evIdx}`);
+                const newPlayer = playerEl ? playerEl.value : ev.player;
+                const newAssist = assistEl ? (assistEl.value || null) : ev.assistBy;
+                if (newPlayer && newPlayer !== ev.player) {
+                    updatePlayerFromMatch(ev.player, 'goals', -1);
+                    updatePlayerFromMatch(newPlayer, 'goals', 1);
+                }
+                if (newAssist !== ev.assistBy) {
+                    if (ev.assistBy) updatePlayerFromMatch(ev.assistBy, 'assists', -1);
+                    if (newAssist)   updatePlayerFromMatch(newAssist, 'assists', 1);
+                }
+                ev.player  = newPlayer || ev.player;
+                ev.assistBy = newAssist;
+                ev.penalty = penEl ? penEl.checked : ev.penalty;
+                ev.time    = (timeEl && timeEl.value.trim()) || null;
+            }
+            editingEventIdx = -1;
+            saveMatches(); renderMatches(); render();
+        }
+
+        // ===== MATCH REPORT EDIT TOGGLE =====
+        let reportEditOpen = false;
+        let reportOriginalText = '';
+        function toggleReportEdit() {
+            if (!reportEditOpen) {
+                // Capture current saved text before opening editor
+                reportOriginalText = matches[activeMatch].report || '';
+            }
+            reportEditOpen = !reportEditOpen;
+            renderMatches();
+        }
+        function cancelReportEdit() {
+            // Read textarea and discard — restore original text
+            matches[activeMatch].report = reportOriginalText;
+            reportEditOpen = false;
+            saveMatches(); renderMatches();
+        }
+
+        // ===== PENALTY / OWN GOAL TOGGLES =====
         let goalIsPenalty = false;
+        let goalIsOwnGoal = false;
+
         function togglePenalty(btn) {
+            if (goalIsOwnGoal) return; // OG active — penalty not applicable
             goalIsPenalty = !goalIsPenalty;
             btn.style.background = goalIsPenalty ? 'rgba(245,87,108,0.25)' : 'transparent';
             btn.style.color = goalIsPenalty ? '#f5576c' : 'rgba(255,255,255,0.4)';
@@ -1736,6 +1967,31 @@
                 assistSel.disabled = goalIsPenalty;
                 assistSel.style.opacity = goalIsPenalty ? '0.3' : '1';
                 if (goalIsPenalty) assistSel.value = '';
+            }
+        }
+
+        function toggleOwnGoal(btn) {
+            goalIsOwnGoal = !goalIsOwnGoal;
+            btn.style.background = goalIsOwnGoal ? 'rgba(245,166,35,0.25)' : 'transparent';
+            btn.style.color = goalIsOwnGoal ? '#f5a623' : 'rgba(255,255,255,0.4)';
+            btn.style.borderColor = goalIsOwnGoal ? '#f5a623' : 'rgba(255,255,255,0.2)';
+            const scorerSel = document.getElementById(`match-goal-select-${activeMatch}`);
+            const assistSel = document.getElementById(`match-goal-assist-${activeMatch}`);
+            const penBtn    = document.getElementById(`match-pen-btn-${activeMatch}`);
+            if (goalIsOwnGoal) {
+                // Reset penalty
+                goalIsPenalty = false;
+                if (penBtn) {
+                    penBtn.style.background = 'transparent';
+                    penBtn.style.color = 'rgba(255,255,255,0.4)';
+                    penBtn.style.borderColor = 'rgba(255,255,255,0.2)';
+                }
+                // Disable scorer & assist
+                if (scorerSel) { scorerSel.disabled = true; scorerSel.style.opacity = '0.3'; scorerSel.value = ''; }
+                if (assistSel) { assistSel.disabled = true; assistSel.style.opacity = '0.3'; assistSel.value = ''; }
+            } else {
+                if (scorerSel) { scorerSel.disabled = false; scorerSel.style.opacity = '1'; }
+                if (assistSel) { assistSel.disabled = false; assistSel.style.opacity = '1'; }
             }
         }
 
@@ -1945,10 +2201,22 @@
         }
 
         function addMatchEvent(matchIdx, type) {
+            const m = matches[matchIdx];
+            if (!m) return;
+            // Own goal — no player selection needed
+            if (type === 'goal' && goalIsOwnGoal) {
+                const timeEl = document.getElementById(`match-goal-time-${matchIdx}`);
+                const time = (timeEl && timeEl.value.trim()) ? timeEl.value.trim() : formatMatchTime(m);
+                goalIsOwnGoal = false;
+                m.events.push({ player: 'OG', type: 'goal', count: 1, assistBy: null, time, penalty: false, ownGoal: true });
+                m.scoreOpp = (m.scoreOpp || 0) + 1;
+                playGoalAnimation();
+                saveMatches(); renderMatches(); render();
+                return;
+            }
             const sel = document.getElementById(`match-${type}-select-${matchIdx}`);
             const player = sel.value;
             if (!player) return;
-            const m = matches[matchIdx];
 
             if (type === 'goal') {
                 const assistSel = document.getElementById(`match-goal-assist-${matchIdx}`);
@@ -1975,17 +2243,21 @@
         }
         function removeMatchEvent(matchIdx, eventIdx) {
             const ev = matches[matchIdx].events[eventIdx];
-            const stat = ev.type === 'goal' ? 'goals' : 'assists';
-            updatePlayerFromMatch(ev.player, stat, -(ev.count || 1));
-            if (ev.type === 'goal' && ev.assistBy) {
-                updatePlayerFromMatch(ev.assistBy, 'assists', -1);
+            if (ev.ownGoal) {
+                matches[matchIdx].scoreOpp = Math.max(0, (matches[matchIdx].scoreOpp || 0) - 1);
+            } else {
+                const stat = ev.type === 'goal' ? 'goals' : 'assists';
+                updatePlayerFromMatch(ev.player, stat, -(ev.count || 1));
+                if (ev.type === 'goal' && ev.assistBy) {
+                    updatePlayerFromMatch(ev.assistBy, 'assists', -1);
+                }
             }
             matches[matchIdx].events.splice(eventIdx, 1);
             saveMatches(); renderMatches(); render();
         }
 
         function getMatchScore(m) {
-            return m.events.filter(e => e.type === 'goal').reduce((s, e) => s + e.count, 0);
+            return m.events.filter(e => e.type === 'goal' && !e.ownGoal).reduce((s, e) => s + e.count, 0);
         }
 
         function renderMatches() {
@@ -2017,7 +2289,8 @@
                     const score2 = getMatchScore(m2);
                     const sOpp2 = m2.scoreOpp || 0;
                     const miniScore = `${score2}-${sOpp2}`;
-                    html += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">${label} <span style="opacity:0.6;font-size:0.75rem">(${miniScore})</span></button>`;
+                    const d2 = m2.date ? ' · ' + formatMatchDate(m2.date) : '';
+                    html += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">${label} <span style="opacity:0.6;font-size:0.75rem">(${miniScore})${d2}</span></button>`;
                 }
                 html += `<span style="flex-basis:100%;height:8px"></span>`;
             }
@@ -2025,7 +2298,8 @@
             // Latest match - prominent
             const latestM = matches[latestIdx];
             const latestLabel = latestM.opponent ? `vs ${esc(latestM.opponent)}` : `Match ${latestIdx + 1}`;
-            html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}${latestM.status === 'live' ? ' <span class="match-live-badge" style="font-size:0.5rem;padding:2px 6px">Live</span>' : ''}</button>`;
+            const latestDateStr = latestM.date ? ' · ' + formatMatchDate(latestM.date) : '';
+            html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}${latestDateStr}${latestM.status === 'live' ? ' <span class="match-live-badge" style="font-size:0.5rem;padding:2px 6px">Live</span>' : ''}</button>`;
 
             if (editable) html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
             html += `<a href="https://system.gotsport.com/splash/25643/events/50579/schedules?team=3738001" target="_blank" rel="noopener" class="table-link-btn" style="margin-left:auto">Table</a>`;
@@ -2047,6 +2321,10 @@
                 let scorerLines = '';
                 if (goalEvents.length) {
                     scorerLines = goalEvents.map(e => {
+                        if (e.ownGoal) {
+                            const timeStr = e.time ? ` <span style="opacity:0.5;font-size:0.85em">${e.time}'</span>` : '';
+                            return `<div style="font-size:1.4rem;color:rgba(245,166,35,0.8);margin-top:2px">⚽ <span style="color:#f5a623">OG</span>${timeStr}</div>`;
+                        }
                         const num = jerseyNumbers[e.player.toLowerCase()];
                         const numStr = num ? `<span style="opacity:0.5">${num}</span> ` : '';
                         const penStr = e.penalty ? ` <span style="color:#f5576c;font-size:0.85em">(P)</span>` : '';
@@ -2056,8 +2334,38 @@
                     }).join('');
                 }
 
+                const dateDisplay = m.date ? formatMatchDate(m.date) : '';
                 html += `<div class="match-score-banner">
-                    <div class="match-score-label">Match ${activeMatch + 1} &mdash; Score</div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+                        <div class="match-score-label" style="margin-bottom:0">Match ${activeMatch + 1}${dateDisplay ? ' &mdash; ' + dateDisplay : ''}</div>
+                        ${editable ? `<button onclick="toggleMatchEdit()" style="padding:4px 12px;border-radius:8px;border:1px solid ${matchEditOpen ? 'rgba(255,140,0,0.5)' : 'rgba(255,255,255,0.15)'};background:${matchEditOpen ? 'rgba(255,140,0,0.12)' : 'rgba(255,255,255,0.05)'};color:${matchEditOpen ? '#ff8c00' : 'rgba(255,255,255,0.5)'};font-size:0.75rem;font-weight:600;cursor:pointer">✏️ Edit</button>` : ''}
+                    </div>
+                    ${(m.homeAway || m.competition || m.location || m.linesman) ? `<div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:8px;margin-bottom:2px">
+                        ${m.homeAway === 'home' ? '<span style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(67,233,123,0.1);color:#43e97b">🏠 Home</span>' : m.homeAway === 'away' ? '<span style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(108,99,255,0.1);color:#a89cff">✈️ Away</span>' : ''}
+                        ${m.competition ? '<span style="font-size:0.8rem;color:rgba(255,255,255,0.45)">' + esc(m.competition) + '</span>' : ''}
+                        ${m.location ? '<span style="font-size:0.8rem;color:rgba(255,255,255,0.35)">📍 ' + esc(m.location) + '</span>' : ''}
+                        ${m.linesman ? '<span style="font-size:0.8rem;color:rgba(255,255,255,0.35)">👤 ' + esc(m.linesman) + '</span>' : ''}
+                    </div>` : ''}
+                    ${editable && matchEditOpen ? `<div style="margin:12px 0 8px;padding:14px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(255,255,255,0.1);text-align:left">
+                        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35);margin-bottom:10px;font-weight:600">Match Properties</div>
+                        <div style="display:flex;flex-direction:column;gap:8px">
+                            <input type="text" value="${esc(m.opponent||'')}" placeholder="Opponent..." onchange="setMatchOpponent(${activeMatch},this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:100%;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:8px 12px;font-size:0.9rem;outline:none;box-sizing:border-box;font-family:inherit">
+                            <input type="date" value="${m.date||''}" onchange="setMatchDate(${activeMatch},this.value)" style="width:100%;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(255,255,255,0.7);padding:8px 12px;font-size:0.9rem;outline:none;cursor:pointer;color-scheme:dark;box-sizing:border-box">
+                            <div style="display:flex;gap:8px">
+                                <button onclick="setMatchHomeAway(${activeMatch},'home')" style="flex:1;padding:8px;border-radius:8px;border:2px solid ${m.homeAway==='home'?'#43e97b':'rgba(255,255,255,0.1)'};background:${m.homeAway==='home'?'rgba(67,233,123,0.12)':'rgba(255,255,255,0.04)'};color:${m.homeAway==='home'?'#43e97b':'rgba(255,255,255,0.4)'};font-weight:700;font-size:0.85rem;cursor:pointer">🏠 Home</button>
+                                <button onclick="setMatchHomeAway(${activeMatch},'away')" style="flex:1;padding:8px;border-radius:8px;border:2px solid ${m.homeAway==='away'?'#a89cff':'rgba(255,255,255,0.1)'};background:${m.homeAway==='away'?'rgba(108,99,255,0.12)':'rgba(255,255,255,0.04)'};color:${m.homeAway==='away'?'#a89cff':'rgba(255,255,255,0.4)'};font-weight:700;font-size:0.85rem;cursor:pointer">✈️ Away</button>
+                            </div>
+                            <input type="text" value="${esc(m.location||'')}" placeholder="📍 Location..." onchange="setMatchLocation(${activeMatch},this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:100%;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:8px 12px;font-size:0.9rem;outline:none;box-sizing:border-box;font-family:inherit">
+                            <input type="text" value="${esc(m.competition||'')}" placeholder="Competition..." onchange="setMatchCompetition(${activeMatch},this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:100%;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:8px 12px;font-size:0.9rem;outline:none;box-sizing:border-box;font-family:inherit">
+                            ${(() => {
+                                const linesmanPresets = ['Walid', 'James'];
+                                const linesmanIsOther = m.linesman !== null && m.linesman !== undefined && !linesmanPresets.includes(m.linesman);
+                                const linesmanSelOpts = `<option value="">👤 Linesman...</option><option value="Walid" ${m.linesman==='Walid'?'selected':''}>Walid</option><option value="James" ${m.linesman==='James'?'selected':''}>James</option><option value="other" ${linesmanIsOther?'selected':''}>Other...</option>`;
+                                return `<select onchange="setMatchLinesmanSel(${activeMatch},this.value)" style="width:100%;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(255,255,255,0.7);padding:8px 12px;font-size:0.9rem;outline:none;box-sizing:border-box">${linesmanSelOpts}</select>`
+                                    + (linesmanIsOther ? `<input type="text" value="${esc(m.linesman||'')}" placeholder="👤 Linesman name..." onchange="setMatchLinesman(${activeMatch},this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:100%;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:8px 12px;font-size:0.9rem;outline:none;box-sizing:border-box;font-family:inherit;margin-top:6px">` : '');
+                            })()}
+                        </div>
+                    </div>` : ''}
                     <div style="display:flex;align-items:flex-start;justify-content:center;margin:12px 0 6px;gap:0">
                         <div style="text-align:center;flex:1">
                             <div class="score-input" style="display:inline-block;width:110px;font-size:5.6rem;font-weight:900;color:#ff8c00;text-shadow:0 0 30px rgba(255,140,0,0.5),0 0 60px rgba(255,140,0,0.2)">${sSumas}</div>
@@ -2121,7 +2429,8 @@
                             value="${formatMatchTime(m)}" placeholder="mm:ss"
                             style="width:72px;text-align:center;font-variant-numeric:tabular-nums"
                             title="Goal time (editable)">
-                        <button onclick="togglePenalty(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Penalty</button>
+                        <button id="match-pen-btn-${activeMatch}" onclick="togglePenalty(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Penalty</button>
+                        <button id="match-og-btn-${activeMatch}" onclick="toggleOwnGoal(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">OG</button>
                         <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
                     </div>
                 </div>`;
@@ -2136,14 +2445,57 @@
                         html += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:8px">Goal Scorers</div>`;
                         goals.forEach((e) => {
                             const idx = m.events.indexOf(e);
-                            html += `<div class="match-event-row">
-                                <span class="match-event-icon">&#9917;</span>
-                                <span class="match-event-name">${esc(e.player)}</span>
-                                ${e.penalty ? `<span style="font-size:0.7rem;color:#f5576c;margin-left:2px">(P)</span>` : ''}
-                                ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : `<span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>`}
-                                ${e.assistBy ? `<span style="font-size:0.75rem;color:#38f9d7;margin-left:4px">&#9889; ${esc(e.assistBy)}</span>` : ''}
-                                ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
-                            </div>`;
+                            if (editable && editingEventIdx === idx) {
+                                // ---- Inline edit form ----
+                                if (e.ownGoal) {
+                                    html += `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+                                        <span style="font-size:0.85rem;color:#f5a623;flex-shrink:0">&#9917; Own Goal</span>
+                                        <input type="text" id="edit-ev-time-${idx}" value="${esc(e.time||'')}" placeholder="mm:ss" style="width:70px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:5px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">
+                                        <button onclick="saveEditEvent(${activeMatch},${idx})" style="padding:5px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Save</button>
+                                        <button onclick="cancelEditEvent()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer">Cancel</button>
+                                    </div>`;
+                                } else {
+                                    const pOpts = players.map(p => `<option value="${esc(p.name)}" ${e.player===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
+                                    const aOpts = `<option value="">No assist</option>` + players.map(p => `<option value="${esc(p.name)}" ${e.assistBy===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
+                                    html += `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
+                                        <div style="display:flex;gap:8px">
+                                            <select id="edit-ev-player-${idx}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:0.85rem;outline:none">${pOpts}</select>
+                                            <input type="text" id="edit-ev-time-${idx}" value="${esc(e.time||'')}" placeholder="mm:ss" style="width:70px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">
+                                        </div>
+                                        <div style="display:flex;gap:8px;align-items:center">
+                                            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:0.8rem;color:rgba(255,255,255,0.5);flex-shrink:0">
+                                                <input type="checkbox" id="edit-ev-pen-${idx}" ${e.penalty?'checked':''}> Pen
+                                            </label>
+                                            <select id="edit-ev-assist-${idx}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.7);padding:6px 10px;font-size:0.85rem;outline:none">${aOpts}</select>
+                                        </div>
+                                        <div style="display:flex;gap:8px">
+                                            <button onclick="saveEditEvent(${activeMatch},${idx})" style="flex:1;padding:6px 12px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Save</button>
+                                            <button onclick="cancelEditEvent()" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer">Cancel</button>
+                                        </div>
+                                    </div>`;
+                                }
+                            } else {
+                                // ---- Normal display row ----
+                                if (e.ownGoal) {
+                                    html += `<div class="match-event-row">
+                                        <span class="match-event-icon">&#9917;</span>
+                                        <span class="match-event-name" style="color:#f5a623">Own Goal</span>
+                                        ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : ''}
+                                        ${editable ? `<button class="match-event-edit" onclick="startEditEvent(${idx})" title="Edit">✏️</button>` : ''}
+                                        ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
+                                    </div>`;
+                                } else {
+                                    html += `<div class="match-event-row">
+                                        <span class="match-event-icon">&#9917;</span>
+                                        <span class="match-event-name">${esc(e.player)}</span>
+                                        ${e.penalty ? `<span style="font-size:0.7rem;color:#f5576c;margin-left:2px">(P)</span>` : ''}
+                                        ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : `<span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>`}
+                                        ${e.assistBy ? `<span style="font-size:0.75rem;color:#38f9d7;margin-left:4px">&#9889; ${esc(e.assistBy)}</span>` : ''}
+                                        ${editable ? `<button class="match-event-edit" onclick="startEditEvent(${idx})" title="Edit">✏️</button>` : ''}
+                                        ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
+                                    </div>`;
+                                }
+                            }
                         });
                     }
                     if (standaloneAssists.length) {
@@ -2165,18 +2517,45 @@
                 const reportText = m.report || '';
                 const reportPublished = !!m.reportPublished;
                 if (userRole === 'coach') {
-                    html += `<div class="match-report-section">
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                    html += `<div class="match-report-section">`;
+                    if (!reportPublished) {
+                        // ── Unpublished: always show textarea + Publish button ──
+                        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
                             <div class="match-report-title" style="margin-bottom:0">Match Report</div>
-                            ${reportPublished
-                                ? `<span style="font-size:0.7rem;font-weight:700;color:#43e97b;letter-spacing:1px;text-transform:uppercase">&#10003; Published</span>`
-                                : `<button onclick="publishMatchReport(${activeMatch})" style="padding:5px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.75rem;font-weight:700;cursor:pointer">Publish</button>`}
                         </div>
                         <textarea id="match-report-ta-${activeMatch}" class="match-report-textarea"
                             placeholder="Write your match report here..."
                             onblur="saveMatchReport(${activeMatch}, this.value)"
+                            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
                         >${esc(reportText)}</textarea>
-                    </div>`;
+                        <button onclick="publishMatchReport(${activeMatch})" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Publish Report</button>`;
+                    } else if (!reportEditOpen) {
+                        // ── Published, view mode: show text + Edit button ──
+                        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                            <div class="match-report-title" style="margin-bottom:0">Match Report</div>
+                            <div style="display:flex;align-items:center;gap:8px">
+                                <span style="font-size:0.7rem;font-weight:700;color:#43e97b;letter-spacing:1px;text-transform:uppercase">&#10003; Published</span>
+                                <button onclick="toggleReportEdit()" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-size:0.75rem;font-weight:600;cursor:pointer">&#9998; Edit</button>
+                            </div>
+                        </div>
+                        ${reportText ? `<div class="match-report-text">${esc(reportText)}</div>` : `<p style="font-size:0.85rem;color:rgba(255,255,255,0.2);font-style:italic">No report written yet.</p>`}`;
+                    } else {
+                        // ── Published, edit mode: textarea + Re-publish + Cancel ──
+                        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                            <div class="match-report-title" style="margin-bottom:0">Match Report</div>
+                            <span style="font-size:0.7rem;font-weight:700;color:#43e97b;letter-spacing:1px;text-transform:uppercase">&#10003; Published</span>
+                        </div>
+                        <textarea id="match-report-ta-${activeMatch}" class="match-report-textarea"
+                            placeholder="Write your match report here..."
+                            onblur="saveMatchReport(${activeMatch}, this.value)"
+                            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+                        >${esc(reportText)}</textarea>
+                        <div style="display:flex;gap:8px;margin-top:8px">
+                            <button onclick="publishMatchReport(${activeMatch})" style="flex:1;padding:8px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Re-publish</button>
+                            <button onclick="cancelReportEdit()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:600;cursor:pointer">Cancel</button>
+                        </div>`;
+                    }
+                    html += `</div>`;
                 } else if (reportPublished && reportText) {
                     html += `<div class="match-report-section">
                         <div class="match-report-title">Match Report</div>
@@ -2207,6 +2586,9 @@
             }
 
             c.innerHTML = html;
+            // Auto-size any report textarea that already has content
+            const ta = document.getElementById(`match-report-ta-${activeMatch}`);
+            if (ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
         }
 
         // ===== LEADERBOARD CATEGORY DROPDOWNS =====

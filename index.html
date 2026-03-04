@@ -1158,6 +1158,19 @@
         </div>
     </div>
 
+    <!-- Password (parents / players) -->
+    <div class="pin-overlay hidden" id="parentPassOverlay">
+        <div class="pin-box">
+            <div class="pin-lock-icon">&#128101;</div>
+            <h2>SUMAS STATS</h2>
+            <p>Enter the password to continue</p>
+            <input type="password" class="pin-input" id="parentPassInput" placeholder="Password" maxlength="20" autocomplete="off">
+            <button class="pin-submit" onclick="checkParentPass()">Enter</button>
+            <div class="pin-error" id="parentPassError"></div>
+            <button onclick="parentPassGoBack()" style="margin-top:16px;padding:8px 18px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:none;color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:600;cursor:pointer">&#8592; Back</button>
+        </div>
+    </div>
+
     <div class="override-modal hidden" id="overrideModal">
         <div class="override-modal-box">
             <h3>Manual Override</h3>
@@ -2613,12 +2626,9 @@
                 document.getElementById('pinOverlay').classList.remove('hidden');
                 document.getElementById('pinInput').focus();
             } else {
-                userRole = 'parent';
-                sessionStorage.setItem('sumasRole', 'parent');
                 document.getElementById('roleOverlay').classList.add('hidden');
-                applyReadOnly();
-                render();
-                renderMatches();
+                document.getElementById('parentPassOverlay').classList.remove('hidden');
+                document.getElementById('parentPassInput').focus();
             }
         }
 
@@ -2649,6 +2659,34 @@
         }
         document.getElementById('pinInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') checkPin();
+        });
+
+        // ===== PARENT PASSWORD =====
+        const PARENT_PASS = 'SUMAS@WTFC';
+        function parentPassGoBack() {
+            document.getElementById('parentPassOverlay').classList.add('hidden');
+            document.getElementById('roleOverlay').classList.remove('hidden');
+            document.getElementById('parentPassInput').value = '';
+            document.getElementById('parentPassError').textContent = '';
+        }
+        function checkParentPass() {
+            const input = document.getElementById('parentPassInput');
+            const error = document.getElementById('parentPassError');
+            if (input.value === PARENT_PASS) {
+                userRole = 'parent';
+                // Intentionally not persisted to sessionStorage — required every session
+                document.getElementById('parentPassOverlay').classList.add('hidden');
+                applyReadOnly();
+                render();
+                renderMatches();
+            } else {
+                error.textContent = 'Incorrect password. Try again.';
+                input.value = '';
+                input.focus();
+            }
+        }
+        document.getElementById('parentPassInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') checkParentPass();
         });
 
         // ===== MANUAL OVERRIDE =====
@@ -2728,6 +2766,7 @@
             if (overrideTimer) { clearInterval(overrideTimer); overrideActive = false; }
             document.getElementById('roleOverlay').classList.remove('hidden');
             document.getElementById('pinOverlay').classList.add('hidden');
+            document.getElementById('parentPassOverlay').classList.add('hidden');
         }
 
         function applyReadOnly() {
@@ -2903,14 +2942,14 @@
         if (userRole === 'coach' && sessionStorage.getItem('sumasUnlocked') === 'true') {
             document.getElementById('roleOverlay').classList.add('hidden');
             document.getElementById('pinOverlay').classList.add('hidden');
-            applyReadOnly();
-        } else if (userRole === 'parent') {
-            document.getElementById('roleOverlay').classList.add('hidden');
-            document.getElementById('pinOverlay').classList.add('hidden');
+            document.getElementById('parentPassOverlay').classList.add('hidden');
             applyReadOnly();
         } else {
-            // Show role selection
+            // Always prompt on fresh load — show role selection
+            userRole = null;
+            sessionStorage.removeItem('sumasRole');
             document.getElementById('pinOverlay').classList.add('hidden');
+            document.getElementById('parentPassOverlay').classList.add('hidden');
         }
 
         // ===== INIT =====

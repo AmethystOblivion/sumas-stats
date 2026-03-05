@@ -1279,16 +1279,20 @@
     <div class="custom-modal hidden" id="batchImportModal">
         <div class="custom-modal-box" style="max-width:520px;width:95%">
             <h3>Batch Import Matches</h3>
-            <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:10px">
-                One match per line. Columns separated by commas:<br>
-                <span style="color:rgba(255,255,255,0.35);font-style:italic">Date, Opponent, Score, Home/Away, Competition</span>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:6px">
+                One match per block — separate matches with a blank line.<br>
+                First line: <span style="color:rgba(255,255,255,0.7);font-style:italic">Date, Opponent, Score, H/A, Competition</span>
             </p>
-            <p style="color:rgba(255,255,255,0.35);font-size:0.75rem;margin-bottom:10px">
-                Date: DD/MM/YY &nbsp;·&nbsp; Score: 3-1 (us first) &nbsp;·&nbsp; H/A: H or A &nbsp;·&nbsp; Last two columns optional<br>
-                Example: <span style="color:rgba(255,255,255,0.5)">15/03/25, Woodley Utd, 3-1, H, League</span>
+            <p style="color:rgba(255,255,255,0.35);font-size:0.75rem;margin-bottom:8px;line-height:1.8">
+                Date: DD/MM/YY &nbsp;·&nbsp; Score: 3-1 (us first) &nbsp;·&nbsp; H/A: H or A &nbsp;·&nbsp; Last two optional<br>
+                Optional extra lines per match:<br>
+                <span style="color:rgba(255,255,255,0.45)">GOAL: Player [time] [pen] [assist: Player]</span><br>
+                <span style="color:rgba(255,255,255,0.45)">OG [time]</span> &nbsp;·&nbsp;
+                <span style="color:rgba(255,255,255,0.45)">MOTM: Player</span> &nbsp;·&nbsp;
+                <span style="color:rgba(255,255,255,0.45)">REPORT: text…</span>
             </p>
             <textarea id="batchImportText"
-                placeholder="15/03/25, Woodley Utd, 3-1, H, League&#10;08/03/25, Tilehurst, 0-2, A, Cup&#10;01/03/25, Earley, 2-2, H"
+                placeholder="15/03/25, Woodley Utd, 3-1, H, League&#10;GOAL: Charlie 22 assist: Oliver&#10;GOAL: Oliver 67 pen&#10;MOTM: Charlie&#10;REPORT: Great win for the boys!&#10;&#10;08/03/25, Tilehurst, 0-2, A, Cup&#10;&#10;01/03/25, Earley, 2-2, H&#10;GOAL: OG 10&#10;GOAL: Harry 35"
                 style="width:100%;min-height:140px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);
                        border-radius:10px;color:#fff;font-size:0.85rem;line-height:1.6;padding:10px 12px;
                        resize:none;outline:none;font-family:monospace;box-sizing:border-box;overflow:hidden"
@@ -3082,14 +3086,12 @@
 
         function batchParseDate(raw) {
             raw = raw.trim();
-            // DD/MM/YY or DD/MM/YYYY
             const dmy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
             if (dmy) {
                 const [, d, m, y] = dmy;
                 const year = y.length === 2 ? '20' + y : y;
                 return `${year}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
             }
-            // YYYY-MM-DD already
             if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
             return null;
         }
@@ -3108,33 +3110,116 @@
             return null;
         }
 
-        function batchParseLine(line) {
+        // Parse the first line of a block: Date, Opponent, Score, H/A, Competition
+        function batchParseMatchHeader(line) {
             line = line.trim();
-            if (!line || line.startsWith('#')) return null; // blank / comment
-
+            if (!line || line.startsWith('#')) return null;
             const parts = line.split(',').map(p => p.trim());
             if (parts.length < 3) return { error: line, msg: 'Need at least: Date, Opponent, Score' };
-
-            const date   = batchParseDate(parts[0]);
-            const opp    = parts[1] || '';
-            const score  = batchParseScore(parts[2]);
-            const ha     = batchParseHA(parts[3]);
-            const comp   = parts[4] || null;
-
-            if (!date) return { error: line, msg: `Can't read date "${parts[0]}" — use DD/MM/YY` };
-            if (!opp)  return { error: line, msg: 'Opponent name is empty' };
+            const date  = batchParseDate(parts[0]);
+            const opp   = parts[1] || '';
+            const score = batchParseScore(parts[2]);
+            const ha    = batchParseHA(parts[3]);
+            const comp  = parts[4] || null;
+            if (!date)  return { error: line, msg: `Can't read date "${parts[0]}" — use DD/MM/YY` };
+            if (!opp)   return { error: line, msg: 'Opponent name is empty' };
             if (!score) return { error: line, msg: `Can't read score "${parts[2]}" — use 3-1 format` };
+            return { ok: true, date, opponent: opp, scoreUs: score.us, scoreThem: score.them, homeAway: ha, competition: comp };
+        }
+
+        // Parse a GOAL: or OG line into an event object
+        function batchParseGoalLine(line) {
+            line = line.trim();
+            // Own goal: "OG" or "OG 22"
+            if (/^OG\b/i.test(line)) {
+                const timeMatch = line.match(/\d+/);
+                return { ok: true, ownGoal: true, time: timeMatch ? timeMatch[0] : null };
+            }
+            // Regular goal: "GOAL: Charlie 22 pen assist: Oliver"
+            if (!/^GOAL\s*:/i.test(line)) return null;
+            const content = line.replace(/^GOAL\s*:/i, '').trim();
+            // Split on "assist:" to get left (player+time+pen) and right (assister)
+            const assistIdx = content.search(/\bassist\s*:/i);
+            const leftPart  = assistIdx >= 0 ? content.slice(0, assistIdx).trim() : content.trim();
+            const rightPart = assistIdx >= 0 ? content.slice(assistIdx).replace(/^assist\s*:\s*/i, '').trim() : null;
+            // Parse left: pick out number (time) and "pen" keyword; rest = player name
+            const tokens = leftPart.split(/\s+/);
+            let penalty = false, time = null;
+            const nameParts = [];
+            for (const tok of tokens) {
+                if (/^pen$/i.test(tok))    { penalty = true; }
+                else if (/^\d+$/.test(tok)) { time = tok; }
+                else                        { nameParts.push(tok); }
+            }
+            const player = nameParts.join(' ');
+            if (!player) return { error: true, msg: 'GOAL line missing player name' };
+            // Parse assist name (take up to but not including any trailing digits/pen)
+            let assistBy = null;
+            if (rightPart) {
+                const aToks = rightPart.split(/\s+/);
+                const aName = aToks.filter(t => !/^\d+$/.test(t) && !/^pen$/i.test(t)).join(' ');
+                assistBy = aName || null;
+            }
+            return { ok: true, ownGoal: false, player, time, penalty, assistBy };
+        }
+
+        // Parse a full block (array of non-empty lines) into a match object
+        function batchParseBlock(lines) {
+            const header = batchParseMatchHeader(lines[0]);
+            if (!header || header.error) return header;
+
+            const events = [];
+            let motm = '';
+            let reportLines = [];
+            let inReport = false;
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // If we're accumulating a multi-line report, check if this line is a new keyword
+                if (inReport) {
+                    if (/^(GOAL\s*:|OG\b|MOTM\s*:|REPORT\s*:)/i.test(line)) {
+                        inReport = false; // fall through to process as keyword
+                    } else {
+                        reportLines.push(line);
+                        continue;
+                    }
+                }
+
+                if (/^(GOAL\s*:|OG\b)/i.test(line)) {
+                    const g = batchParseGoalLine(line);
+                    if (g && g.ok) {
+                        events.push({
+                            type: 'goal', count: 1,
+                            player:   g.ownGoal ? 'OG' : g.player,
+                            assistBy: g.assistBy || null,
+                            time:     g.time || null,
+                            penalty:  g.penalty || false,
+                            ownGoal:  g.ownGoal || false
+                        });
+                    }
+                } else if (/^MOTM\s*:/i.test(line)) {
+                    motm = line.replace(/^MOTM\s*:/i, '').trim();
+                } else if (/^REPORT\s*:/i.test(line)) {
+                    const first = line.replace(/^REPORT\s*:/i, '').trim();
+                    if (first) reportLines.push(first);
+                    inReport = true;
+                }
+            }
 
             return {
-                ok: true,
-                date, opponent: opp, scoreUs: score.us, scoreThem: score.them,
-                homeAway: ha, competition: comp
+                ...header,
+                events,
+                motm,
+                report: reportLines.join('\n')
             };
         }
 
         function batchParsePreview() {
-            const text  = document.getElementById('batchImportText').value;
-            const lines = text.split('\n');
+            const text = document.getElementById('batchImportText').value;
+            // Split into blocks separated by one or more blank lines
+            const blocks = text.split(/\n[ \t]*\n/).map(b => b.trim()).filter(b => b);
             const preview = document.getElementById('batchPreview');
             const confirmBtn = document.getElementById('batchImportConfirmBtn');
             batchParsed = [];
@@ -3142,23 +3227,45 @@
             let html = '';
             let okCount = 0;
 
-            lines.forEach(line => {
-                const r = batchParseLine(line);
-                if (!r) return; // blank / comment — skip silently
+            blocks.forEach(block => {
+                const lines = block.split('\n').filter(l => l.trim());
+                if (!lines.length) return;
+                const r = batchParseBlock(lines);
+                if (!r) return;
                 if (r.error) {
                     html += `<div class="batch-preview-row error">
                         <span style="color:var(--danger);font-size:0.75rem">✕ ${esc(r.msg)}</span>
-                        <span style="color:rgba(255,255,255,0.3);font-size:0.72rem;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(line)}</span>
+                        <span style="color:rgba(255,255,255,0.3);font-size:0.72rem;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(lines[0])}</span>
                     </div>`;
                 } else {
                     okCount++;
                     batchParsed.push(r);
-                    const haLabel = r.homeAway === 'home' ? ' · 🏠' : r.homeAway === 'away' ? ' · ✈️' : '';
+                    const haLabel   = r.homeAway === 'home' ? ' · 🏠' : r.homeAway === 'away' ? ' · ✈️' : '';
                     const compLabel = r.competition ? ` · ${esc(r.competition)}` : '';
                     const resultColor = r.scoreUs > r.scoreThem ? '#43e97b' : r.scoreUs < r.scoreThem ? '#f5576c' : '#f9d423';
-                    html += `<div class="batch-preview-row ok">
-                        <span style="color:#fff;font-size:0.82rem">${esc(formatMatchDate(r.date))} &nbsp;vs ${esc(r.opponent)}${haLabel}${compLabel}</span>
-                        <span style="font-weight:700;font-size:0.85rem;color:${resultColor}">${r.scoreUs}–${r.scoreThem}</span>
+                    // Build detail line: goals, motm, report badge
+                    const goalStrs = r.events.filter(e => !e.ownGoal).map(e => {
+                        let s = esc(e.player);
+                        if (e.time)    s += ` ${e.time}'`;
+                        if (e.penalty) s += '(P)';
+                        if (e.assistBy) s += ` ⚡${esc(e.assistBy)}`;
+                        return s;
+                    });
+                    const ogCount = r.events.filter(e => e.ownGoal).length;
+                    if (ogCount) goalStrs.push(`OG×${ogCount}`);
+                    const detailParts = [];
+                    if (goalStrs.length) detailParts.push('⚽ ' + goalStrs.join(', '));
+                    if (r.motm)         detailParts.push(`🏆 ${esc(r.motm)}`);
+                    if (r.report)       detailParts.push('📝 Report');
+                    const detailHtml = detailParts.length
+                        ? `<div style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin-top:3px">${detailParts.join(' &nbsp;·&nbsp; ')}</div>`
+                        : '';
+                    html += `<div class="batch-preview-row ok" style="flex-direction:column;align-items:flex-start;gap:0">
+                        <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+                            <span style="color:#fff;font-size:0.82rem">${esc(formatMatchDate(r.date))} &nbsp;vs ${esc(r.opponent)}${haLabel}${compLabel}</span>
+                            <span style="font-weight:700;font-size:0.85rem;color:${resultColor}">${r.scoreUs}–${r.scoreThem}</span>
+                        </div>
+                        ${detailHtml}
                     </div>`;
                 }
             });
@@ -3167,32 +3274,62 @@
             const hasOk = okCount > 0;
             confirmBtn.disabled = !hasOk;
             confirmBtn.style.opacity = hasOk ? '1' : '0.4';
-            if (hasOk) confirmBtn.textContent = `Import ${okCount} match${okCount > 1 ? 'es' : ''}`;
-            else confirmBtn.textContent = 'Import';
+            confirmBtn.textContent = hasOk ? `Import ${okCount} match${okCount > 1 ? 'es' : ''}` : 'Import';
         }
 
         function confirmBatchImport() {
             if (!batchParsed.length) return;
+            // Collect all stat deltas to apply in one pass (avoids many save() calls)
+            const delta = {};
+            const addDelta = (name, stat, d) => {
+                if (!name || name === 'OG') return;
+                if (!delta[name]) delta[name] = {};
+                delta[name][stat] = (delta[name][stat] || 0) + d;
+            };
+
             batchParsed.forEach(r => {
+                const nonOgGoals = r.events.filter(e => !e.ownGoal).length;
+                const needOverride = nonOgGoals !== r.scoreUs; // events don't cover all goals
                 matches.push({
-                    events: [],
-                    motm: '',
-                    opponent: r.opponent,
-                    date: r.date,
-                    homeAway: r.homeAway,
-                    location: null,
-                    competition: r.competition,
-                    linesman: null,
-                    scoreOverride: r.scoreUs,   // SUMAS score stored as override (no event detail)
-                    scoreOpp: r.scoreThem,
-                    status: 'ended',
+                    events:         r.events,
+                    motm:           r.motm || '',
+                    opponent:       r.opponent,
+                    date:           r.date,
+                    homeAway:       r.homeAway,
+                    location:       null,
+                    competition:    r.competition,
+                    linesman:       null,
+                    ...(needOverride ? { scoreOverride: r.scoreUs } : {}),
+                    scoreOpp:       r.scoreThem,
+                    report:         r.report || '',
+                    reportPublished: !!r.report,
+                    status:         'ended',
                     poll: { opened: false, closed: false, votes: {}, voters: [], voterNames: [], voterChoices: {} }
                 });
+                // Accumulate player stat changes
+                r.events.forEach(e => {
+                    if (e.type === 'goal' && !e.ownGoal) {
+                        addDelta(e.player, 'goals', e.count || 1);
+                        if (e.assistBy) addDelta(e.assistBy, 'assists', 1);
+                    }
+                });
+                if (r.motm) addDelta(r.motm, 'motm', 1);
             });
+
+            // Apply all player stat changes at once, then save players once
+            Object.entries(delta).forEach(([name, stats]) => {
+                const p = players.find(pl => pl.name === name);
+                if (!p) return;
+                Object.entries(stats).forEach(([stat, d]) => {
+                    p[stat] = Math.max(0, (p[stat] || 0) + d);
+                });
+            });
+            if (Object.keys(delta).length) save();
+
             sortMatchesByDate();
             activeMatch = matches.length - 1;
             closeBatchImportModal();
-            saveMatches(); renderMatches();
+            saveMatches(); renderMatches(); render();
         }
 
         // ===== AI CHAT =====

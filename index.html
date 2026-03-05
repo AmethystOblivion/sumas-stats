@@ -598,6 +598,20 @@
             font-weight: 700; cursor: pointer; transition: all 0.2s;
         }
         .match-add-btn:hover { border-color: #43e97b; color: #43e97b; }
+        .batch-import-btn {
+            padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700;
+            border: 1px solid rgba(168,156,255,0.4); background: rgba(108,99,255,0.1);
+            color: #a89cff; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .batch-import-btn:hover { border-color: #a89cff; background: rgba(108,99,255,0.2); }
+        .batch-preview-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 10px; border-radius: 8px; font-size: 0.8rem;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+            margin-bottom: 4px;
+        }
+        .batch-preview-row.error { border-color: rgba(245,87,108,0.3); background: rgba(245,87,108,0.06); }
+        .batch-preview-row.ok   { border-color: rgba(67,233,123,0.2); }
 
         /* Match Score Banner */
         .match-score-banner {
@@ -1261,6 +1275,32 @@
             </div>
         </div>
     </div>
+    <!-- Batch Import Modal -->
+    <div class="custom-modal hidden" id="batchImportModal">
+        <div class="custom-modal-box" style="max-width:520px;width:95%">
+            <h3>Batch Import Matches</h3>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:10px">
+                One match per line. Columns separated by commas:<br>
+                <span style="color:rgba(255,255,255,0.35);font-style:italic">Date, Opponent, Score, Home/Away, Competition</span>
+            </p>
+            <p style="color:rgba(255,255,255,0.35);font-size:0.75rem;margin-bottom:10px">
+                Date: DD/MM/YY &nbsp;·&nbsp; Score: 3-1 (us first) &nbsp;·&nbsp; H/A: H or A &nbsp;·&nbsp; Last two columns optional<br>
+                Example: <span style="color:rgba(255,255,255,0.5)">15/03/25, Woodley Utd, 3-1, H, League</span>
+            </p>
+            <textarea id="batchImportText"
+                placeholder="15/03/25, Woodley Utd, 3-1, H, League&#10;08/03/25, Tilehurst, 0-2, A, Cup&#10;01/03/25, Earley, 2-2, H"
+                style="width:100%;min-height:140px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);
+                       border-radius:10px;color:#fff;font-size:0.85rem;line-height:1.6;padding:10px 12px;
+                       resize:none;outline:none;font-family:monospace;box-sizing:border-box;overflow:hidden"
+                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';batchParsePreview()"></textarea>
+            <div id="batchPreview" style="margin-top:10px;max-height:220px;overflow-y:auto"></div>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeBatchImportModal()">Cancel</button>
+                <button class="custom-modal-confirm" id="batchImportConfirmBtn" onclick="confirmBatchImport()" disabled style="opacity:0.4">Import</button>
+            </div>
+        </div>
+    </div>
+
     <div class="custom-modal hidden" id="deleteMatchModal">
         <div class="custom-modal-box">
             <h3 id="deleteMatchTitle">Delete Match?</h3>
@@ -2340,6 +2380,7 @@
         }
 
         function getMatchScore(m) {
+            if (typeof m.scoreOverride === 'number') return m.scoreOverride;
             return m.events.filter(e => e.type === 'goal' && !e.ownGoal).reduce((s, e) => s + e.count, 0);
         }
 
@@ -2385,6 +2426,7 @@
             html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}${latestDateStr}${latestM.status === 'live' ? ' <span class="match-live-badge" style="font-size:0.5rem;padding:2px 6px">Live</span>' : ''}</button>`;
 
             if (editable) html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
+            if (editable) html += `<button class="batch-import-btn" onclick="showBatchImportModal()">⬆ Import</button>`;
             html += `<a href="https://system.gotsport.com/splash/25643/events/50579/schedules?team=3738001" target="_blank" rel="noopener" class="table-link-btn" style="margin-left:auto">Table</a>`;
             html += `</div>`;
 
@@ -3020,6 +3062,137 @@
             sessionStorage.removeItem('sumasRole');
             document.getElementById('pinOverlay').classList.add('hidden');
             document.getElementById('parentPassOverlay').classList.add('hidden');
+        }
+
+        // ===== BATCH IMPORT =====
+        let batchParsed = [];
+
+        function showBatchImportModal() {
+            document.getElementById('batchImportModal').classList.remove('hidden');
+            document.getElementById('batchImportText').value = '';
+            document.getElementById('batchPreview').innerHTML = '';
+            document.getElementById('batchImportConfirmBtn').disabled = true;
+            document.getElementById('batchImportConfirmBtn').style.opacity = '0.4';
+            setTimeout(() => document.getElementById('batchImportText').focus(), 100);
+        }
+        function closeBatchImportModal() {
+            document.getElementById('batchImportModal').classList.add('hidden');
+            batchParsed = [];
+        }
+
+        function batchParseDate(raw) {
+            raw = raw.trim();
+            // DD/MM/YY or DD/MM/YYYY
+            const dmy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+            if (dmy) {
+                const [, d, m, y] = dmy;
+                const year = y.length === 2 ? '20' + y : y;
+                return `${year}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+            }
+            // YYYY-MM-DD already
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+            return null;
+        }
+
+        function batchParseScore(raw) {
+            raw = raw.trim();
+            const m = raw.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+            if (!m) return null;
+            return { us: parseInt(m[1]), them: parseInt(m[2]) };
+        }
+
+        function batchParseHA(raw) {
+            raw = (raw || '').trim().toLowerCase();
+            if (raw === 'h' || raw === 'home') return 'home';
+            if (raw === 'a' || raw === 'away') return 'away';
+            return null;
+        }
+
+        function batchParseLine(line) {
+            line = line.trim();
+            if (!line || line.startsWith('#')) return null; // blank / comment
+
+            const parts = line.split(',').map(p => p.trim());
+            if (parts.length < 3) return { error: line, msg: 'Need at least: Date, Opponent, Score' };
+
+            const date   = batchParseDate(parts[0]);
+            const opp    = parts[1] || '';
+            const score  = batchParseScore(parts[2]);
+            const ha     = batchParseHA(parts[3]);
+            const comp   = parts[4] || null;
+
+            if (!date) return { error: line, msg: `Can't read date "${parts[0]}" — use DD/MM/YY` };
+            if (!opp)  return { error: line, msg: 'Opponent name is empty' };
+            if (!score) return { error: line, msg: `Can't read score "${parts[2]}" — use 3-1 format` };
+
+            return {
+                ok: true,
+                date, opponent: opp, scoreUs: score.us, scoreThem: score.them,
+                homeAway: ha, competition: comp
+            };
+        }
+
+        function batchParsePreview() {
+            const text  = document.getElementById('batchImportText').value;
+            const lines = text.split('\n');
+            const preview = document.getElementById('batchPreview');
+            const confirmBtn = document.getElementById('batchImportConfirmBtn');
+            batchParsed = [];
+
+            let html = '';
+            let okCount = 0;
+
+            lines.forEach(line => {
+                const r = batchParseLine(line);
+                if (!r) return; // blank / comment — skip silently
+                if (r.error) {
+                    html += `<div class="batch-preview-row error">
+                        <span style="color:var(--danger);font-size:0.75rem">✕ ${esc(r.msg)}</span>
+                        <span style="color:rgba(255,255,255,0.3);font-size:0.72rem;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(line)}</span>
+                    </div>`;
+                } else {
+                    okCount++;
+                    batchParsed.push(r);
+                    const haLabel = r.homeAway === 'home' ? ' · 🏠' : r.homeAway === 'away' ? ' · ✈️' : '';
+                    const compLabel = r.competition ? ` · ${esc(r.competition)}` : '';
+                    const resultColor = r.scoreUs > r.scoreThem ? '#43e97b' : r.scoreUs < r.scoreThem ? '#f5576c' : '#f9d423';
+                    html += `<div class="batch-preview-row ok">
+                        <span style="color:#fff;font-size:0.82rem">${esc(formatMatchDate(r.date))} &nbsp;vs ${esc(r.opponent)}${haLabel}${compLabel}</span>
+                        <span style="font-weight:700;font-size:0.85rem;color:${resultColor}">${r.scoreUs}–${r.scoreThem}</span>
+                    </div>`;
+                }
+            });
+
+            preview.innerHTML = html || '';
+            const hasOk = okCount > 0;
+            confirmBtn.disabled = !hasOk;
+            confirmBtn.style.opacity = hasOk ? '1' : '0.4';
+            if (hasOk) confirmBtn.textContent = `Import ${okCount} match${okCount > 1 ? 'es' : ''}`;
+            else confirmBtn.textContent = 'Import';
+        }
+
+        function confirmBatchImport() {
+            if (!batchParsed.length) return;
+            batchParsed.forEach(r => {
+                matches.push({
+                    events: [],
+                    motm: '',
+                    opponent: r.opponent,
+                    date: r.date,
+                    homeAway: r.homeAway,
+                    location: null,
+                    competition: r.competition,
+                    linesman: null,
+                    scoreOverride: r.scoreUs,   // SUMAS score stored as override (no event detail)
+                    scoreOpp: r.scoreThem,
+                    status: 'ended',
+                    poll: { opened: false, closed: false, votes: {}, voters: [], voterNames: [], voterChoices: {} }
+                });
+            });
+            sortMatchesByDate();
+            activeMatch = matches.length - 1;
+            closeBatchImportModal();
+            saveMatches(); renderMatches();
         }
 
         // ===== AI CHAT =====

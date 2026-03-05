@@ -2526,10 +2526,10 @@
                     html += `</div>`;
                 }
 
-                // Match Report
+                // Match Report (only after Full Time)
                 const reportText = m.report || '';
                 const reportPublished = !!m.reportPublished;
-                if (userRole === 'coach') {
+                if (m.status === 'ended' && userRole === 'coach') {
                     html += `<div class="match-report-section">`;
                     if (!reportPublished) {
                         // ── Unpublished: always show textarea + Publish button ──
@@ -2569,7 +2569,7 @@
                         </div>`;
                     }
                     html += `</div>`;
-                } else if (reportPublished && reportText) {
+                } else if (m.status === 'ended' && reportPublished && reportText) {
                     html += `<div class="match-report-section">
                         <div class="match-report-title">Match Report</div>
                         <div class="match-report-text">${esc(reportText)}</div>

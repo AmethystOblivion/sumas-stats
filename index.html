@@ -1291,6 +1291,21 @@
                 <span style="color:rgba(255,255,255,0.45)">MOTM: Player</span> &nbsp;·&nbsp;
                 <span style="color:rgba(255,255,255,0.45)">REPORT: text…</span>
             </p>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="file" id="batchExcelInput" accept=".xlsx,.xls,.csv" style="display:none"
+                    onchange="if(this.files[0])loadSheetJSAndImport(this.files[0]);this.value=''">
+                <button onclick="document.getElementById('batchExcelInput').click()"
+                    style="flex:1;padding:9px 14px;background:rgba(67,233,123,0.1);border:1px solid rgba(67,233,123,0.3);
+                           border-radius:10px;color:#43e97b;font-size:0.85rem;font-weight:600;cursor:pointer">
+                    📊 Upload Excel or CSV
+                </button>
+                <button onclick="downloadBatchTemplate()"
+                    style="padding:9px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+                           border-radius:10px;color:rgba(255,255,255,0.4);font-size:0.8rem;cursor:pointer;white-space:nowrap">
+                    ⬇ Template
+                </button>
+            </div>
+            <div style="text-align:center;color:rgba(255,255,255,0.18);font-size:0.72rem;margin:0 0 8px">— or paste text below —</div>
             <textarea id="batchImportText"
                 placeholder="15/03/25, Woodley Utd, 3-1, H, League&#10;GOAL: Charlie 22 assist: Oliver&#10;GOAL: Oliver 67 pen&#10;MOTM: Charlie&#10;REPORT: Great win for the boys!&#10;&#10;08/03/25, Tilehurst, 0-2, A, Cup&#10;&#10;01/03/25, Earley, 2-2, H&#10;GOAL: OG 10&#10;GOAL: Harry 35"
                 style="width:100%;min-height:140px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);
@@ -3216,65 +3231,70 @@
             };
         }
 
-        function batchParsePreview() {
-            const text = document.getElementById('batchImportText').value;
-            // Split into blocks separated by one or more blank lines
-            const blocks = text.split(/\n[ \t]*\n/).map(b => b.trim()).filter(b => b);
+        // Shared renderer — call after batchParsed is populated (from text or Excel)
+        function renderBatchPreview(errors) {
+            errors = errors || [];
             const preview = document.getElementById('batchPreview');
             const confirmBtn = document.getElementById('batchImportConfirmBtn');
-            batchParsed = [];
-
             let html = '';
-            let okCount = 0;
 
+            errors.forEach(r => {
+                html += `<div class="batch-preview-row error">
+                    <span style="color:var(--danger);font-size:0.75rem">✕ ${esc(r.msg)}</span>
+                    <span style="color:rgba(255,255,255,0.3);font-size:0.72rem;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.error||'')}</span>
+                </div>`;
+            });
+
+            batchParsed.forEach(r => {
+                const haLabel   = r.homeAway === 'home' ? ' · 🏠' : r.homeAway === 'away' ? ' · ✈️' : '';
+                const compLabel = r.competition ? ` · ${esc(r.competition)}` : '';
+                const resultColor = r.scoreUs > r.scoreThem ? '#43e97b' : r.scoreUs < r.scoreThem ? '#f5576c' : '#f9d423';
+                const goalStrs = (r.events || []).filter(e => !e.ownGoal).map(e => {
+                    let s = esc(e.player);
+                    if (e.time)     s += ` ${e.time}'`;
+                    if (e.penalty)  s += '(P)';
+                    if (e.assistBy) s += ` ⚡${esc(e.assistBy)}`;
+                    return s;
+                });
+                const ogCount = (r.events || []).filter(e => e.ownGoal).length;
+                if (ogCount) goalStrs.push(`OG×${ogCount}`);
+                const detailParts = [];
+                if (goalStrs.length) detailParts.push('⚽ ' + goalStrs.join(', '));
+                if (r.motm)         detailParts.push(`🏆 ${esc(r.motm)}`);
+                if (r.report)       detailParts.push('📝 Report');
+                const detailHtml = detailParts.length
+                    ? `<div style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin-top:3px">${detailParts.join(' &nbsp;·&nbsp; ')}</div>`
+                    : '';
+                html += `<div class="batch-preview-row ok" style="flex-direction:column;align-items:flex-start;gap:0">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+                        <span style="color:#fff;font-size:0.82rem">${esc(formatMatchDate(r.date))} &nbsp;vs ${esc(r.opponent)}${haLabel}${compLabel}</span>
+                        <span style="font-weight:700;font-size:0.85rem;color:${resultColor}">${r.scoreUs}–${r.scoreThem}</span>
+                    </div>
+                    ${detailHtml}
+                </div>`;
+            });
+
+            preview.innerHTML = html || '';
+            const hasOk = batchParsed.length > 0;
+            confirmBtn.disabled = !hasOk;
+            confirmBtn.style.opacity = hasOk ? '1' : '0.4';
+            confirmBtn.textContent = hasOk ? `Import ${batchParsed.length} match${batchParsed.length > 1 ? 'es' : ''}` : 'Import';
+        }
+
+        function batchParsePreview() {
+            const text = document.getElementById('batchImportText').value;
+            const blocks = text.split(/\n[ \t]*\n/).map(b => b.trim()).filter(b => b);
+            batchParsed = [];
+            const errors = [];
             blocks.forEach(block => {
                 const lines = block.split('\n').filter(l => l.trim());
                 if (!lines.length) return;
                 const r = batchParseBlock(lines);
                 if (!r) return;
-                if (r.error) {
-                    html += `<div class="batch-preview-row error">
-                        <span style="color:var(--danger);font-size:0.75rem">✕ ${esc(r.msg)}</span>
-                        <span style="color:rgba(255,255,255,0.3);font-size:0.72rem;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(lines[0])}</span>
-                    </div>`;
-                } else {
-                    okCount++;
-                    batchParsed.push(r);
-                    const haLabel   = r.homeAway === 'home' ? ' · 🏠' : r.homeAway === 'away' ? ' · ✈️' : '';
-                    const compLabel = r.competition ? ` · ${esc(r.competition)}` : '';
-                    const resultColor = r.scoreUs > r.scoreThem ? '#43e97b' : r.scoreUs < r.scoreThem ? '#f5576c' : '#f9d423';
-                    // Build detail line: goals, motm, report badge
-                    const goalStrs = r.events.filter(e => !e.ownGoal).map(e => {
-                        let s = esc(e.player);
-                        if (e.time)    s += ` ${e.time}'`;
-                        if (e.penalty) s += '(P)';
-                        if (e.assistBy) s += ` ⚡${esc(e.assistBy)}`;
-                        return s;
-                    });
-                    const ogCount = r.events.filter(e => e.ownGoal).length;
-                    if (ogCount) goalStrs.push(`OG×${ogCount}`);
-                    const detailParts = [];
-                    if (goalStrs.length) detailParts.push('⚽ ' + goalStrs.join(', '));
-                    if (r.motm)         detailParts.push(`🏆 ${esc(r.motm)}`);
-                    if (r.report)       detailParts.push('📝 Report');
-                    const detailHtml = detailParts.length
-                        ? `<div style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin-top:3px">${detailParts.join(' &nbsp;·&nbsp; ')}</div>`
-                        : '';
-                    html += `<div class="batch-preview-row ok" style="flex-direction:column;align-items:flex-start;gap:0">
-                        <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
-                            <span style="color:#fff;font-size:0.82rem">${esc(formatMatchDate(r.date))} &nbsp;vs ${esc(r.opponent)}${haLabel}${compLabel}</span>
-                            <span style="font-weight:700;font-size:0.85rem;color:${resultColor}">${r.scoreUs}–${r.scoreThem}</span>
-                        </div>
-                        ${detailHtml}
-                    </div>`;
-                }
+                if (r.error) errors.push(r);
+                else batchParsed.push(r);
             });
-
-            preview.innerHTML = html || '';
-            const hasOk = okCount > 0;
-            confirmBtn.disabled = !hasOk;
-            confirmBtn.style.opacity = hasOk ? '1' : '0.4';
-            confirmBtn.textContent = hasOk ? `Import ${okCount} match${okCount > 1 ? 'es' : ''}` : 'Import';
+            renderBatchPreview(errors);
         }
 
         function confirmBatchImport() {
@@ -3330,6 +3350,154 @@
             activeMatch = matches.length - 1;
             closeBatchImportModal();
             saveMatches(); renderMatches(); render();
+        }
+
+        // ===== EXCEL IMPORT =====
+
+        // Parse a Goals/Scorers cell: "Charlie 22 pen, Oliver assist: Tom, OG 10"
+        function batchParseGoalsCell(text) {
+            if (!text || !text.trim()) return [];
+            const entries = text.split(/[,;]/).map(s => s.trim()).filter(s => s);
+            const events = [];
+            entries.forEach(entry => {
+                if (/^OG\b/i.test(entry)) {
+                    const tm = entry.match(/\d+/);
+                    events.push({ type:'goal', count:1, player:'OG', assistBy:null, time: tm ? tm[0] : null, penalty:false, ownGoal:true });
+                    return;
+                }
+                const assistIdx = entry.search(/\bassist\s*:/i);
+                const leftPart  = assistIdx >= 0 ? entry.slice(0, assistIdx).trim() : entry.trim();
+                const rightPart = assistIdx >= 0 ? entry.slice(assistIdx).replace(/^assist\s*:\s*/i,'').trim() : null;
+                const tokens = leftPart.split(/\s+/);
+                let penalty = false, time = null;
+                const nameParts = [];
+                for (const tok of tokens) {
+                    if (/^pen$/i.test(tok))     penalty = true;
+                    else if (/^\d+$/.test(tok)) time = tok;
+                    else                        nameParts.push(tok);
+                }
+                const player = nameParts.join(' ');
+                if (!player) return;
+                let assistBy = null;
+                if (rightPart) {
+                    const aName = rightPart.split(/\s+/).filter(t => !/^\d+$/.test(t) && !/^pen$/i.test(t)).join(' ');
+                    assistBy = aName || null;
+                }
+                events.push({ type:'goal', count:1, player, assistBy, time, penalty, ownGoal:false });
+            });
+            return events;
+        }
+
+        // Download a CSV template the coach can fill in
+        function downloadBatchTemplate() {
+            const header = 'Date,Opponent,Us,Them,H/A,Competition,MOTM,Goals,Report\n';
+            const example = '15/03/25,Woodley Utd,3,1,H,League,Charlie,"Charlie 22 assist: Oliver, Oliver 67 pen",Great win for the boys!\n' +
+                            '08/03/25,Tilehurst,0,2,A,Cup,,,\n' +
+                            '01/03/25,Earley,2,2,H,,,"Harry 35, OG 10",\n';
+            const blob = new Blob([header + example], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'sumas-match-import-template.csv';
+            a.click();
+        }
+
+        // Lazy-load SheetJS (xlsx) then process the chosen file
+        function loadSheetJSAndImport(file) {
+            if (window.XLSX) { processExcelFile(file); return; }
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            script.onload  = () => processExcelFile(file);
+            script.onerror = () => alert('Could not load the Excel library. Please check your internet connection.');
+            document.head.appendChild(script);
+        }
+
+        function processExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type:'array', cellDates:true });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    // raw:false gives us string values; Date cells come as JS Date when cellDates:true
+                    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:'' });
+
+                    if (!rows.length) { alert('The file appears to be empty.'); return; }
+
+                    // First non-empty row = headers
+                    const headerRow = rows[0].map(h => String(h || '').toLowerCase().trim());
+                    const col = (...names) => { for (const n of names) { const i = headerRow.indexOf(n); if (i >= 0) return i; } return -1; };
+
+                    const dateCol  = col('date');
+                    const oppCol   = col('opponent', 'opp', 'team');
+                    const scoreCol = col('score');
+                    const usCol    = col('us', 'for', 'gf', 'goals for', 'score us');
+                    const themCol  = col('them', 'against', 'ga', 'goals against', 'score them');
+                    const haCol    = col('h/a', 'ha', 'home/away', 'venue');
+                    const compCol  = col('competition', 'comp', 'league', 'cup');
+                    const motmCol  = col('motm', 'man of the match', 'potm', 'player of the match', 'cpotm');
+                    const goalsCol = col('goals', 'scorers', 'goalscorers');
+                    const reportCol= col('report', 'match report');
+
+                    if (dateCol < 0 || oppCol < 0) {
+                        alert('Could not find required columns.\nExpected headers: Date, Opponent, plus Score or Us+Them.\nDownload the template to see the correct format.');
+                        return;
+                    }
+                    if (scoreCol < 0 && (usCol < 0 || themCol < 0)) {
+                        alert('Could not find score columns.\nAdd a "Score" column (e.g. 3-1) or separate "Us" and "Them" columns.');
+                        return;
+                    }
+
+                    batchParsed = [];
+                    const errors = [];
+
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        // Date: could be a JS Date (from Excel serial), or a string
+                        let dateRaw = row[dateCol];
+                        let date;
+                        if (dateRaw instanceof Date) {
+                            const y = dateRaw.getFullYear();
+                            const mo = String(dateRaw.getMonth() + 1).padStart(2,'0');
+                            const d  = String(dateRaw.getDate()).padStart(2,'0');
+                            date = `${y}-${mo}-${d}`;
+                        } else {
+                            date = batchParseDate(String(dateRaw || '').trim());
+                        }
+                        const opp = String(row[oppCol] || '').trim();
+                        if (!date || !opp) continue; // skip blank rows
+
+                        let scoreUs, scoreThem;
+                        if (scoreCol >= 0) {
+                            const s = batchParseScore(String(row[scoreCol] || ''));
+                            if (!s) { errors.push({ error: `Row ${i+1}`, msg: `Can't read score "${row[scoreCol]}"` }); continue; }
+                            scoreUs = s.us; scoreThem = s.them;
+                        } else {
+                            scoreUs   = parseInt(row[usCol]   || 0);
+                            scoreThem = parseInt(row[themCol] || 0);
+                            if (isNaN(scoreUs) || isNaN(scoreThem)) { errors.push({ error: `Row ${i+1}`, msg: 'Score columns are not numbers' }); continue; }
+                        }
+
+                        const homeAway   = batchParseHA(String(row[haCol]    || ''));
+                        const competition = compCol   >= 0 ? String(row[compCol]  || '').trim() || null : null;
+                        const motm        = motmCol   >= 0 ? String(row[motmCol]  || '').trim() : '';
+                        const goalsText   = goalsCol  >= 0 ? String(row[goalsCol] || '').trim() : '';
+                        const report      = reportCol >= 0 ? String(row[reportCol]|| '').trim() : '';
+                        const events      = batchParseGoalsCell(goalsText);
+
+                        batchParsed.push({ ok:true, date, opponent:opp, scoreUs, scoreThem, homeAway, competition, motm, events, report });
+                    }
+
+                    if (!batchParsed.length && !errors.length) {
+                        alert('No valid match rows found. Make sure the spreadsheet has a header row and at least one data row.');
+                        return;
+                    }
+                    renderBatchPreview(errors);
+                } catch (err) {
+                    console.error(err);
+                    alert('Could not read the file. Make sure it is a valid .xlsx, .xls, or .csv file.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         // ===== AI CHAT =====

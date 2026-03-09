@@ -2768,32 +2768,13 @@
                                     + (linesmanIsOther ? `<input type="text" value="${esc(m.linesman||'')}" placeholder="👤 Linesman name..." onchange="setMatchLinesman(${activeMatch},this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:100%;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:8px 12px;font-size:0.9rem;outline:none;box-sizing:border-box;font-family:inherit;margin-top:6px">` : '');
                             })()}
                         </div>
-                        <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">
-                            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35);margin-bottom:10px;font-weight:600">Goals &amp; Assists</div>
-                            <div class="match-form-row">
-                                <select class="match-select" id="match-goal-select-${activeMatch}">
-                                    <option value="">Scorer...</option>
-                                    ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
-                                </select>
-                                <select class="match-select" id="match-goal-assist-${activeMatch}" style="color:rgba(255,255,255,0.5)">
-                                    <option value="">No assist</option>
-                                    ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
-                                </select>
-                                <input type="text" class="match-input-num" id="match-goal-time-${activeMatch}"
-                                    value="${formatMatchTime(m)}" placeholder="mm:ss"
-                                    style="width:72px;text-align:center;font-variant-numeric:tabular-nums"
-                                    title="Goal time (editable)">
-                                <button id="match-pen-btn-${activeMatch}" onclick="togglePenalty(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Penalty</button>
-                                <button id="match-og-btn-${activeMatch}" onclick="toggleOwnGoal(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">OG</button>
-                                <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
-                            </div>
-                            ${(() => {
+                        ${(() => {
                                 const evGoals = m.events.filter(e => e.type === 'goal');
                                 const evAssists = m.events.filter(e => e.type === 'assist');
                                 if (!evGoals.length && !evAssists.length) return '';
-                                let evHtml = '<div class="match-events" style="margin-top:10px">';
+                                let evHtml = '<div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px"><div class="match-events">';
                                 if (evGoals.length) {
-                                    evHtml += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:8px">Goal Scorers</div>`;
+                                    evHtml += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px">Goal Scorers</div>`;
                                     evGoals.forEach((e) => {
                                         const idx = m.events.indexOf(e);
                                         if (editingEventIdx === idx) {
@@ -2859,10 +2840,9 @@
                                         </div>`;
                                     });
                                 }
-                                evHtml += '</div>';
+                                evHtml += '</div></div>';
                                 return evHtml;
                             })()}
-                        </div>
                     </div>` : ''}
                     <div style="display:flex;align-items:flex-start;justify-content:center;margin:12px 0 6px;gap:0">
                         <div style="text-align:center;flex:1">
@@ -2906,6 +2886,29 @@
                         ${userRole === 'coach' && m.status === 'live' && m.htReached ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; FT</button>` : ''}
                     </div>
                 </div>`;
+
+                // Add Goal form (coach only, always visible outside edit panel)
+                if (editable) {
+                    html += `<div class="match-form-card" style="margin-top:10px">
+                        <div class="match-form-row">
+                            <select class="match-select" id="match-goal-select-${activeMatch}">
+                                <option value="">Scorer...</option>
+                                ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                            </select>
+                            <select class="match-select" id="match-goal-assist-${activeMatch}" style="color:rgba(255,255,255,0.5)">
+                                <option value="">No assist</option>
+                                ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                            </select>
+                            <input type="text" class="match-input-num" id="match-goal-time-${activeMatch}"
+                                value="${formatMatchTime(m)}" placeholder="mm:ss"
+                                style="width:72px;text-align:center;font-variant-numeric:tabular-nums"
+                                title="Goal time (editable)">
+                            <button id="match-pen-btn-${activeMatch}" onclick="togglePenalty(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Penalty</button>
+                            <button id="match-og-btn-${activeMatch}" onclick="toggleOwnGoal(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">OG</button>
+                            <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
+                        </div>
+                    </div>`;
+                }
 
                 // Match Report (only after Full Time)
                 const reportText = m.report || '';

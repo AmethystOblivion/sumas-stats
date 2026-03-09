@@ -499,6 +499,54 @@
         .empty-state p { font-size: 1.1rem; margin-bottom: 8px; }
         .empty-state span { font-size: 0.85rem; }
 
+        /* ===== SEASON STATS ===== */
+        .season-header { text-align: center; padding: 20px 0 18px; }
+        .season-title { font-size: 1.1rem; font-weight: 800; letter-spacing: 3px; color: #ff8c00; text-transform: uppercase; }
+        .season-subtitle { font-size: 0.68rem; color: rgba(255,255,255,0.3); letter-spacing: 1px; margin-top: 4px; }
+        .season-stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px;
+        }
+        .season-goals-grid { grid-template-columns: repeat(3, 1fr); }
+        .season-stat-card {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 16px 8px; text-align: center;
+        }
+        .season-stat-label {
+            font-size: 0.58rem; text-transform: uppercase; letter-spacing: 2px;
+            color: rgba(255,255,255,0.35); margin-bottom: 8px;
+        }
+        .season-stat-value {
+            font-size: 2.2rem; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; line-height: 1;
+        }
+        .season-stat-value.wins   { color: #43e97b; text-shadow: 0 0 16px rgba(67,233,123,0.35); }
+        .season-stat-value.losses { color: #f5576c; text-shadow: 0 0 16px rgba(245,87,108,0.35); }
+        .season-stat-value.draws  { color: #f9d423; text-shadow: 0 0 16px rgba(249,212,35,0.35); }
+        .season-stat-value.gd-pos { color: #43e97b; }
+        .season-stat-value.gd-neg { color: #f5576c; }
+        .season-stat-value.gd-zero { color: rgba(255,255,255,0.4); }
+        .season-form-section {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 16px 18px; margin-top: 12px;
+        }
+        .season-form-label {
+            font-size: 0.62rem; text-transform: uppercase; letter-spacing: 2px;
+            color: rgba(255,255,255,0.35); margin-bottom: 12px;
+        }
+        .season-form-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+        .form-badge {
+            width: 38px; height: 38px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; font-weight: 800;
+        }
+        .form-badge.W { background: rgba(67,233,123,0.15); color: #43e97b; border: 1.5px solid rgba(67,233,123,0.4); }
+        .form-badge.D { background: rgba(249,212,35,0.15); color: #f9d423; border: 1.5px solid rgba(249,212,35,0.4); }
+        .form-badge.L { background: rgba(245,87,108,0.15); color: #f5576c; border: 1.5px solid rgba(245,87,108,0.4); }
+        .season-record {
+            text-align: center; font-size: 0.8rem; color: rgba(255,255,255,0.3);
+            margin: 6px 0 14px; letter-spacing: 1px;
+        }
+        .season-record span { color: rgba(255,255,255,0.6); font-weight: 700; }
+
         /* ===== PLAYER TILES ===== */
         .player-grid {
             display: grid;
@@ -1468,6 +1516,7 @@
             <button class="tab" onclick="switchTab('players')">Players</button>
             <button class="tab active matches-tab" onclick="switchTab('matches')">&#9917; Matches</button>
             <button class="tab" onclick="switchTab('leaderboard')">Leaderboard</button>
+            <button class="tab" onclick="switchTab('season')">&#128200; Season</button>
             <button class="tab" id="votesTab" onclick="switchTab('votes')">&#128202; Votes</button>
             <!-- AI tab hidden until function is deployed: <button class="tab" onclick="switchTab('ai')">&#129302; Ask AI</button> -->
         </div>
@@ -1485,6 +1534,7 @@
         </div>
 
         <div id="votesView" class="view-panel"></div>
+        <div id="seasonView" class="view-panel"></div>
 
         <div id="aiView" class="view-panel">
             <div class="ai-view">
@@ -1643,6 +1693,7 @@
             if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
             try { renderMatches(); } catch(e) {}
             try { if (currentTab === 'votes') renderVotes(); } catch(e) {}
+            try { if (currentTab === 'season') renderSeasonStats(); } catch(e) {}
             // Resume live timer if match is ongoing
             const liveM = activeMatch >= 0 ? matches[activeMatch] : null;
             if (liveM && liveM.status === 'live' && !matchTimerInterval) startMatchTimerInterval();
@@ -1772,8 +1823,8 @@
 
         // ===== TAB SWITCHING =====
         let currentTab = 'matches';
-        const tabMap = { players: 0, matches: 1, leaderboard: 2, votes: 3, ai: 4 };
-        const viewIds = { players: 'playersView', matches: 'matchesView', leaderboard: 'leaderboardView', votes: 'votesView', ai: 'aiView' };
+        const tabMap = { players: 0, matches: 1, leaderboard: 2, season: 3, votes: 4, ai: 5 };
+        const viewIds = { players: 'playersView', matches: 'matchesView', leaderboard: 'leaderboardView', season: 'seasonView', votes: 'votesView', ai: 'aiView' };
 
         function switchTab(tab) {
             if (tab === currentTab) return;
@@ -1793,6 +1844,7 @@
                 if (tab === 'leaderboard') renderLeaderboard();
                 if (tab === 'matches') renderMatches();
                 if (tab === 'votes') renderVotes();
+                if (tab === 'season') renderSeasonStats();
                 inEl.classList.add('active', 'tab-content', 'sweep-in');
                 requestAnimationFrame(() => requestAnimationFrame(() => inEl.classList.remove('sweep-in')));
                 setTimeout(() => inEl.classList.remove('tab-content'), 350);
@@ -1848,6 +1900,85 @@
             });
             return { goals, assists, cpotm, ppotm };
         }
+        function renderSeasonStats() {
+            const c = document.getElementById('seasonView');
+            if (!c) return;
+            const ended = matches.filter(m => m.status === 'ended');
+            const played = ended.length;
+
+            if (played === 0) {
+                c.innerHTML = `<div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.25)">
+                    <p style="font-size:1.1rem;margin-bottom:8px">No completed matches yet</p>
+                    <span style="font-size:0.85rem">Stats appear once matches are marked Full Time</span>
+                </div>`;
+                return;
+            }
+
+            let won = 0, drawn = 0, lost = 0, goalsFor = 0, goalsAgainst = 0;
+            ended.forEach(m => {
+                const s = getMatchScore(m), o = m.scoreOpp || 0;
+                goalsFor += s; goalsAgainst += o;
+                if (s > o) won++; else if (s === o) drawn++; else lost++;
+            });
+
+            const gd = goalsFor - goalsAgainst;
+            const gdStr = gd > 0 ? `+${gd}` : `${gd}`;
+            const gdClass = gd > 0 ? 'gd-pos' : gd < 0 ? 'gd-neg' : 'gd-zero';
+
+            const last5 = ended.slice(-5);
+            const formBadges = last5.map(m => {
+                const s = getMatchScore(m), o = m.scoreOpp || 0;
+                const r = s > o ? 'W' : s === o ? 'D' : 'L';
+                const opp = m.opponent ? esc(m.opponent) : '?';
+                return `<div class="form-badge ${r}" title="${opp} ${s}-${o}">${r}</div>`;
+            }).join('');
+
+            c.innerHTML = `
+                <div class="season-header">
+                    <div class="season-title">&#9917; Season Stats</div>
+                    <div class="season-subtitle">Completed matches · ${played} played</div>
+                </div>
+
+                <div class="season-stats-grid">
+                    <div class="season-stat-card">
+                        <div class="season-stat-label">Played</div>
+                        <div class="season-stat-value">${played}</div>
+                    </div>
+                    <div class="season-stat-card">
+                        <div class="season-stat-label">Won</div>
+                        <div class="season-stat-value wins">${won}</div>
+                    </div>
+                    <div class="season-stat-card">
+                        <div class="season-stat-label">Drawn</div>
+                        <div class="season-stat-value draws">${drawn}</div>
+                    </div>
+                    <div class="season-stat-card">
+                        <div class="season-stat-label">Lost</div>
+                        <div class="season-stat-value losses">${lost}</div>
+                    </div>
+                </div>
+
+                <div class="season-stats-grid season-goals-grid">
+                    <div class="season-stat-card">
+                        <div class="season-stat-label">For</div>
+                        <div class="season-stat-value">${goalsFor}</div>
+                    </div>
+                    <div class="season-stat-card">
+                        <div class="season-stat-label">Against</div>
+                        <div class="season-stat-value">${goalsAgainst}</div>
+                    </div>
+                    <div class="season-stat-card">
+                        <div class="season-stat-label">GD</div>
+                        <div class="season-stat-value ${gdClass}">${gdStr}</div>
+                    </div>
+                </div>
+
+                <div class="season-form-section">
+                    <div class="season-form-label">Form &mdash; last ${last5.length} matches</div>
+                    <div class="season-form-badges">${formBadges}</div>
+                </div>`;
+        }
+
         function renderLeaderboard() {
             const { goals, assists, cpotm, ppotm } = computeStatsFromMatches();
             renderLB('goalsLeaderboard',   'Goals',   'goals-h',   goals);

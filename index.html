@@ -2742,6 +2742,7 @@
                     <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
                         <div class="match-score-label" style="margin-bottom:0">Match ${activeMatch + 1}${dateDisplay ? ' &mdash; ' + dateDisplay : ''}</div>
                         ${editable ? `<button onclick="toggleMatchEdit()" style="padding:4px 12px;border-radius:8px;border:1px solid ${matchEditOpen ? 'rgba(255,140,0,0.5)' : 'rgba(255,255,255,0.15)'};background:${matchEditOpen ? 'rgba(255,140,0,0.12)' : 'rgba(255,255,255,0.05)'};color:${matchEditOpen ? '#ff8c00' : 'rgba(255,255,255,0.5)'};font-size:0.75rem;font-weight:600;cursor:pointer">✏️ Edit</button>` : ''}
+                        ${editable ? `<button onclick="deleteMatch(${activeMatch})" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(245,87,108,0.3);background:rgba(245,87,108,0.08);color:#f5576c;font-size:0.75rem;font-weight:600;cursor:pointer">🗑️</button>` : ''}
                     </div>
                     ${(m.homeAway || m.competition || m.location || m.linesman) ? `<div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:8px;margin-bottom:2px">
                         ${m.homeAway === 'home' ? '<span style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(67,233,123,0.1);color:#43e97b">🏠 Home</span>' : m.homeAway === 'away' ? '<span style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(108,99,255,0.1);color:#a89cff">✈️ Away</span>' : ''}
@@ -2985,7 +2986,6 @@
                     </div></div>`;
                 }
 
-                if (editable) html += `<button class="match-delete-btn" onclick="deleteMatch(${activeMatch})">Delete Match</button>`;
             }
 
             c.innerHTML = html;

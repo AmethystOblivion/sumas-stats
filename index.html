@@ -1658,6 +1658,7 @@
         let matches = [];
         let activeMatch = -1;
         let historyExpanded = false;
+        let votesHistoryExpanded = false;
         let firebaseReady = false;
 
         function save() {
@@ -2137,6 +2138,13 @@
             const chevron = document.getElementById('matchHistoryChevron');
             if (list) list.style.display = historyExpanded ? 'flex' : 'none';
             if (chevron) chevron.textContent = historyExpanded ? '▲' : '▼';
+        }
+        function toggleVotesHistory() {
+            votesHistoryExpanded = !votesHistoryExpanded;
+            const list = document.getElementById('votesHistoryList');
+            const chevron = document.getElementById('votesHistoryChevron');
+            if (list) list.style.display = votesHistoryExpanded ? 'block' : 'none';
+            if (chevron) chevron.textContent = votesHistoryExpanded ? '▲' : '▼';
         }
 
         let pendingDeleteIdx = -1;
@@ -3275,15 +3283,13 @@
                 return;
             }
 
-            let html = '<div class="votes-list">';
-            matches.forEach((m, i) => {
+            function buildVoteCard(m, i) {
                 const matchLabel = m.opponent ? `Match ${i + 1} — vs ${esc(m.opponent)}` : `Match ${i + 1}`;
                 const poll = m.poll || { votes: {}, voters: [], voterNames: [] };
                 const totalVotes = Object.values(poll.votes || {}).reduce((s, v) => s + v, 0);
                 const sorted = Object.entries(poll.votes || {}).sort((a, b) => b[1] - a[1]);
                 const topVotes = sorted.length > 0 ? sorted[0][1] : 0;
                 const voterNames = poll.voterNames || [];
-
                 let resultsHtml = '';
                 if (totalVotes === 0) {
                     resultsHtml = `<div style="color:rgba(255,255,255,0.3);font-style:italic;font-size:0.8rem;padding:4px 0">No votes yet</div>`;
@@ -3297,8 +3303,7 @@
                         <div class="poll-bar"><div class="poll-bar-fill" style="width:${pct}%"></div></div>`;
                     }).join('');
                 }
-
-                html += `<div class="votes-match-card">
+                return `<div class="votes-match-card">
                     <div class="votes-match-header">
                         <span class="votes-match-title">${matchLabel}</span>
                         <span class="votes-total">${totalVotes} vote${totalVotes !== 1 ? 's' : ''}</span>
@@ -3309,7 +3314,28 @@
                         <div class="votes-voters-list">${voterNames.map((n, vi) => `<span class="voter-tag">${esc(n)}<button class="voter-remove-btn" onclick="removeVoteByIndex(${i},${vi})" title="Remove this vote">&times;</button></span>`).join('')}</div>
                     </div>` : ''}
                 </div>`;
-            });
+            }
+
+            const latestIdx = matches.length - 1;
+            let html = '<div class="votes-list">';
+
+            // Collapsible past matches section
+            if (matches.length > 1) {
+                html += `<div class="match-history-section" style="margin-bottom:12px">
+                    <button class="match-history-toggle" onclick="toggleVotesHistory()">
+                        <span>Past Matches</span>
+                        <span class="match-history-count">${latestIdx}</span>
+                        <span id="votesHistoryChevron" class="match-history-chevron">${votesHistoryExpanded ? '▲' : '▼'}</span>
+                    </button>
+                    <div id="votesHistoryList" style="display:${votesHistoryExpanded ? 'block' : 'none'};margin-top:8px">`;
+                for (let i = 0; i < latestIdx; i++) {
+                    html += buildVoteCard(matches[i], i);
+                }
+                html += `</div></div>`;
+            }
+
+            // Latest match always visible
+            html += buildVoteCard(matches[latestIdx], latestIdx);
             html += '</div>';
             container.innerHTML = html;
         }

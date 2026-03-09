@@ -2910,6 +2910,22 @@
                     </div>`;
                 }
 
+                // POTM row - side by side
+                if (userRole === 'coach' || m.status === 'ended' || (m.poll && m.poll.opened)) {
+                    html += `<div style="display:flex;gap:12px;margin-top:16px;align-items:flex-start">
+                        ${userRole === 'coach' || m.status === 'ended' ? `<div class="motm-trophy-card" style="flex:1">
+                            <div class="motm-trophy-icon">&#127942;</div>
+                            <div class="motm-trophy-label">C-POTM</div>
+                            ${m.motm ? `<div class="motm-trophy-name">${esc(m.motm)}</div>` : `<div class="motm-none">Not selected</div>`}
+                            ${editable ? `<select class="motm-trophy-select" onchange="setMatchMOTM(${activeMatch}, this.value)">
+                                <option value="">Select C-POTM...</option>
+                                ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+                            </select>` : ''}
+                        </div>` : '<div style="flex:1"></div>'}
+                        <div style="flex:1">${renderParentsPoll(activeMatch, m)}</div>
+                    </div>`;
+                }
+
                 // Match Report (only after Full Time)
                 const reportText = m.report || '';
                 const reportPublished = !!m.reportPublished;
@@ -2970,22 +2986,6 @@
                 }
 
                 if (editable) html += `<button class="match-delete-btn" onclick="deleteMatch(${activeMatch})">Delete Match</button>`;
-
-                // POTM row - side by side
-                if (userRole === 'coach' || m.status === 'ended' || (m.poll && m.poll.opened)) {
-                    html += `<div style="display:flex;gap:12px;margin-top:16px;align-items:flex-start">
-                        ${userRole === 'coach' || m.status === 'ended' ? `<div class="motm-trophy-card" style="flex:1">
-                            <div class="motm-trophy-icon">&#127942;</div>
-                            <div class="motm-trophy-label">C-POTM</div>
-                            ${m.motm ? `<div class="motm-trophy-name">${esc(m.motm)}</div>` : `<div class="motm-none">Not selected</div>`}
-                            ${editable ? `<select class="motm-trophy-select" onchange="setMatchMOTM(${activeMatch}, this.value)">
-                                <option value="">Select C-POTM...</option>
-                                ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-                            </select>` : ''}
-                        </div>` : '<div style="flex:1"></div>'}
-                        <div style="flex:1">${renderParentsPoll(activeMatch, m)}</div>
-                    </div>`;
-                }
             }
 
             c.innerHTML = html;

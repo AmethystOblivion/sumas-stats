@@ -2395,6 +2395,11 @@
             if (status === 'live') {
                 if (!m.elapsedMs) m.elapsedMs = 0;
                 m.liveStart = now;
+                // Open the P-POTM poll on kick-off (first time going live)
+                if (!m.htReached) {
+                    if (!m.poll) m.poll = { votes: {}, voters: [], voterNames: [], voterChoices: {} };
+                    if (!m.poll.opened) { m.poll.opened = true; m.poll.closed = false; }
+                }
             } else if (status === 'ht' || status === 'ended') {
                 if (m.liveStart) {
                     m.elapsedMs = (m.elapsedMs || 0) + (now - m.liveStart);
@@ -2403,10 +2408,6 @@
                 if (matchTimerInterval) { clearInterval(matchTimerInterval); matchTimerInterval = null; }
                 if (status === 'ht') { m.htReached = true; m.ht1ElapsedMs = m.elapsedMs || 0; }
                 if (status === 'ended') {
-                    // Automatically open the parents poll when match ends
-                    if (!m.poll) m.poll = { votes: {}, voters: [], voterNames: [], voterChoices: {} };
-                    m.poll.opened = true;
-                    m.poll.closed = false;
                     // Trigger win celebration
                     const sSumas = getMatchScore(m);
                     const sOpp = m.scoreOpp || 0;

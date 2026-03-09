@@ -1839,6 +1839,12 @@
             const outEl = document.getElementById(viewIds[currentTab]);
             const inEl = document.getElementById(viewIds[tab]);
 
+            // Pre-render into the hidden panel before animation starts
+            if (tab === 'leaderboard') renderLeaderboard();
+            if (tab === 'matches') renderMatches();
+            if (tab === 'votes') renderVotes();
+            if (tab === 'season') renderSeasonStats();
+
             outEl.classList.add('tab-content', 'sweep-out');
             setTimeout(() => {
                 outEl.classList.remove('active', 'tab-content', 'sweep-out');
@@ -1847,10 +1853,6 @@
                     t.classList.toggle('active', i === tabMap[tab]);
                     if (i === 1) t.classList.toggle('matches-tab', tab === 'matches');
                 });
-                if (tab === 'leaderboard') renderLeaderboard();
-                if (tab === 'matches') renderMatches();
-                if (tab === 'votes') renderVotes();
-                if (tab === 'season') renderSeasonStats();
                 inEl.classList.add('active', 'tab-content', 'sweep-in');
                 requestAnimationFrame(() => requestAnimationFrame(() => inEl.classList.remove('sweep-in')));
                 setTimeout(() => inEl.classList.remove('tab-content'), 350);

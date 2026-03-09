@@ -1504,6 +1504,7 @@
         <div class="admin-menu hidden" id="adminMenu">
             <button id="overrideBtn" onclick="showOverrideModal();toggleAdminMenu()">&#128273; Override</button>
             <button id="addPlayerBtn" onclick="showAddPlayerPrompt();toggleAdminMenu()">&#10133; Add Player</button>
+            <button onclick="showBatchImportModal();toggleAdminMenu()">&#11014; Import Matches</button>
             <button id="removeVoteBtn" onclick="showRemoveVoteModal()">&#10060; Remove Vote</button>
             <button id="resetVotesBtn" onclick="showResetVotesModal()">&#128260; Reset Votes</button>
             <button id="resetAllDataBtn" onclick="showResetAllDataModal()" style="color:#f5576c;border-color:rgba(245,87,108,0.4)">&#128465; Reset All Data</button>
@@ -2696,7 +2697,6 @@
             html += `<div class="match-mini-tabs">`;
             html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}${latestDateStr}${latestM.status === 'live' ? ' <span class="match-live-badge" style="font-size:0.5rem;padding:2px 6px">Live</span>' : ''}</button>`;
             if (editable) html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
-            if (editable) html += `<button class="batch-import-btn" onclick="showBatchImportModal()">⬆ Import</button>`;
             html += `<a href="https://system.gotsport.com/splash/25643/events/50579/schedules?team=3738001" target="_blank" rel="noopener" class="table-link-btn" style="margin-left:auto">Table</a>`;
             html += `</div>`;
 

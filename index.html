@@ -2887,8 +2887,8 @@
                     </div>
                 </div>`;
 
-                // Add Goal form (coach only, always visible outside edit panel)
-                if (editable) {
+                // Add Goal form (coach only, live match only)
+                if (editable && m.status === 'live') {
                     html += `<div class="match-form-card" style="margin-top:10px">
                         <div class="match-form-row">
                             <select class="match-select" id="match-goal-select-${activeMatch}">

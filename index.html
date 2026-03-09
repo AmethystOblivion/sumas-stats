@@ -2255,7 +2255,7 @@
             saveMatches(); renderMatches();
         }
         let matchEditOpen = false;
-        let matchSectionOpen = { addGoal: true, events: true, report: true, motm: true };
+        let matchSectionOpen = { report: true, motm: true };
         function toggleMatchSection(key) {
             matchSectionOpen[key] = !matchSectionOpen[key];
             const el = document.getElementById('ms_' + key);
@@ -2469,26 +2469,19 @@
             }
 
             if (coach) {
-                // Coaches see full results at all times
-                const sorted = Object.entries(poll.votes || {}).sort((a, b) => b[1] - a[1]);
-                const topVotes = sorted.length > 0 ? sorted[0][1] : 0;
-                if (sorted.length === 0) {
-                    content = `<div class="motm-none">No votes cast yet</div>`;
+                if (isClosed) {
+                    const sorted = Object.entries(poll.votes || {}).sort((a, b) => b[1] - a[1]);
+                    const topVotes = sorted.length > 0 ? sorted[0][1] : 0;
+                    if (isClosed && sorted.length > 0 && topVotes > 0) {
+                        const winners = sorted.filter(([,c]) => c === topVotes).map(([n]) => esc(n)).join(' &amp; ');
+                        content = `<div class="poll-winner-banner"><div class="poll-winner-label">&#127942; Winner</div><div class="poll-winner-name">${winners}</div></div>`;
+                    } else {
+                        content = `<div class="poll-closed-msg">Voting is closed.</div>`;
+                    }
                 } else {
-                    content = sorted.map(([name, count]) => {
-                        const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                        const isWinner = isClosed && count === topVotes;
-                        return `<div class="poll-result ${isWinner ? 'winner' : ''}">
-                            <span>${esc(name)}</span><span>${count} vote${count!==1?'s':''} (${pct}%)</span>
-                        </div>
-                        <div class="poll-bar"><div class="poll-bar-fill" style="width:${pct}%"></div></div>`;
-                    }).join('');
-                }
-                if (isClosed && sorted.length > 0 && topVotes > 0) {
-                    const winners = sorted.filter(([,c]) => c === topVotes).map(([n]) => esc(n)).join(' &amp; ');
-                    content += `<div class="poll-winner-banner"><div class="poll-winner-label">&#127942; Winner</div><div class="poll-winner-name">${winners}</div></div>`;
-                } else if (isClosed) {
-                    content += `<div class="poll-closed-msg">Voting is closed.</div>`;
+                    content = totalVotes > 0
+                        ? `<div class="poll-timer">${totalVotes} vote${totalVotes!==1?'s':''} cast</div>`
+                        : `<div class="motm-none">No votes yet</div>`;
                 }
             } else if (isClosed) {
                 // Poll closed — show winner to parents
@@ -2521,7 +2514,6 @@
 
             return `<div class="parents-poll-card">
                 <div class="poll-label">P-POTM${isClosed ? ' <span class="poll-closed-badge">CLOSED</span>' : ''}</div>
-                ${coach && totalVotes > 0 ? `<div class="poll-timer">${totalVotes} vote${totalVotes!==1?'s':''}</div>` : ''}
                 ${content}
                 ${coachBtn}
             </div>`;
@@ -2776,6 +2768,101 @@
                                     + (linesmanIsOther ? `<input type="text" value="${esc(m.linesman||'')}" placeholder="👤 Linesman name..." onchange="setMatchLinesman(${activeMatch},this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:100%;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:8px 12px;font-size:0.9rem;outline:none;box-sizing:border-box;font-family:inherit;margin-top:6px">` : '');
                             })()}
                         </div>
+                        <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">
+                            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35);margin-bottom:10px;font-weight:600">Goals &amp; Assists</div>
+                            <div class="match-form-row">
+                                <select class="match-select" id="match-goal-select-${activeMatch}">
+                                    <option value="">Scorer...</option>
+                                    ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                                </select>
+                                <select class="match-select" id="match-goal-assist-${activeMatch}" style="color:rgba(255,255,255,0.5)">
+                                    <option value="">No assist</option>
+                                    ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                                </select>
+                                <input type="text" class="match-input-num" id="match-goal-time-${activeMatch}"
+                                    value="${formatMatchTime(m)}" placeholder="mm:ss"
+                                    style="width:72px;text-align:center;font-variant-numeric:tabular-nums"
+                                    title="Goal time (editable)">
+                                <button id="match-pen-btn-${activeMatch}" onclick="togglePenalty(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Penalty</button>
+                                <button id="match-og-btn-${activeMatch}" onclick="toggleOwnGoal(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">OG</button>
+                                <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
+                            </div>
+                            ${(() => {
+                                const evGoals = m.events.filter(e => e.type === 'goal');
+                                const evAssists = m.events.filter(e => e.type === 'assist');
+                                if (!evGoals.length && !evAssists.length) return '';
+                                let evHtml = '<div class="match-events" style="margin-top:10px">';
+                                if (evGoals.length) {
+                                    evHtml += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:8px">Goal Scorers</div>`;
+                                    evGoals.forEach((e) => {
+                                        const idx = m.events.indexOf(e);
+                                        if (editingEventIdx === idx) {
+                                            if (e.ownGoal) {
+                                                evHtml += `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+                                                    <span style="font-size:0.85rem;color:#f5a623;flex-shrink:0">&#9917; Own Goal</span>
+                                                    <input type="text" id="edit-ev-time-${idx}" value="${esc(e.time||'')}" placeholder="mm:ss" style="width:70px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:5px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">
+                                                    <button onclick="saveEditEvent(${activeMatch},${idx})" style="padding:5px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Save</button>
+                                                    <button onclick="cancelEditEvent()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer">Cancel</button>
+                                                </div>`;
+                                            } else {
+                                                const pOpts = players.map(p => `<option value="${esc(p.name)}" ${e.player===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
+                                                const aOpts = `<option value="">No assist</option>` + players.map(p => `<option value="${esc(p.name)}" ${e.assistBy===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
+                                                evHtml += `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
+                                                    <div style="display:flex;gap:8px">
+                                                        <select id="edit-ev-player-${idx}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:0.85rem;outline:none">${pOpts}</select>
+                                                        <input type="text" id="edit-ev-time-${idx}" value="${esc(e.time||'')}" placeholder="mm:ss" style="width:70px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">
+                                                    </div>
+                                                    <div style="display:flex;gap:8px;align-items:center">
+                                                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:0.8rem;color:rgba(255,255,255,0.5);flex-shrink:0">
+                                                            <input type="checkbox" id="edit-ev-pen-${idx}" ${e.penalty?'checked':''}> Pen
+                                                        </label>
+                                                        <select id="edit-ev-assist-${idx}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.7);padding:6px 10px;font-size:0.85rem;outline:none">${aOpts}</select>
+                                                    </div>
+                                                    <div style="display:flex;gap:8px">
+                                                        <button onclick="saveEditEvent(${activeMatch},${idx})" style="flex:1;padding:6px 12px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Save</button>
+                                                        <button onclick="cancelEditEvent()" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer">Cancel</button>
+                                                    </div>
+                                                </div>`;
+                                            }
+                                        } else {
+                                            if (e.ownGoal) {
+                                                evHtml += `<div class="match-event-row">
+                                                    <span class="match-event-icon">&#9917;</span>
+                                                    <span class="match-event-name" style="color:#f5a623">Own Goal</span>
+                                                    ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : ''}
+                                                    <button class="match-event-edit" onclick="startEditEvent(${idx})" title="Edit">✏️</button>
+                                                    <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
+                                                </div>`;
+                                            } else {
+                                                evHtml += `<div class="match-event-row">
+                                                    <span class="match-event-icon">&#9917;</span>
+                                                    <span class="match-event-name">${esc(e.player)}</span>
+                                                    ${e.penalty ? `<span style="font-size:0.7rem;color:#f5576c;margin-left:2px">(P)</span>` : ''}
+                                                    ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : `<span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>`}
+                                                    ${e.assistBy ? `<span style="font-size:0.75rem;color:#38f9d7;margin-left:4px">&#9889; ${esc(e.assistBy)}</span>` : ''}
+                                                    <button class="match-event-edit" onclick="startEditEvent(${idx})" title="Edit">✏️</button>
+                                                    <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
+                                                </div>`;
+                                            }
+                                        }
+                                    });
+                                }
+                                if (evAssists.length) {
+                                    evHtml += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:12px">Assists</div>`;
+                                    evAssists.forEach((e) => {
+                                        const idx = m.events.indexOf(e);
+                                        evHtml += `<div class="match-event-row">
+                                            <span class="match-event-icon">&#129406;</span>
+                                            <span class="match-event-name">${esc(e.player)}</span>
+                                            <span class="match-event-count a">${e.count > 1 ? 'x' + e.count : ''}</span>
+                                            <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
+                                        </div>`;
+                                    });
+                                }
+                                evHtml += '</div>';
+                                return evHtml;
+                            })()}
+                        </div>
                     </div>` : ''}
                     <div style="display:flex;align-items:flex-start;justify-content:center;margin:12px 0 6px;gap:0">
                         <div style="text-align:center;flex:1">
@@ -2819,122 +2906,6 @@
                         ${userRole === 'coach' && m.status === 'live' && m.htReached ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; FT</button>` : ''}
                     </div>
                 </div>`;
-
-                // Layout: main + motm side
-                html += `<div class="match-layout">`;
-
-                // Main column
-                html += `<div class="match-main">`;
-
-                if (editable) {
-                // Add Goal form
-                html += `<div class="match-section-header" onclick="toggleMatchSection('addGoal')">
-                    <span>Add Goal</span>
-                    <span id="msc_addGoal">${matchSectionOpen.addGoal ? '▲' : '▼'}</span>
-                </div>
-                <div id="ms_addGoal" style="display:${matchSectionOpen.addGoal ? '' : 'none'}">
-                <div class="match-form-card">
-                    <div class="match-form-row">
-                        <select class="match-select" id="match-goal-select-${activeMatch}">
-                            <option value="">Scorer...</option>
-                            ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
-                        </select>
-                        <select class="match-select" id="match-goal-assist-${activeMatch}" style="color:rgba(255,255,255,0.5)">
-                            <option value="">No assist</option>
-                            ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
-                        </select>
-                        <input type="text" class="match-input-num" id="match-goal-time-${activeMatch}"
-                            value="${formatMatchTime(m)}" placeholder="mm:ss"
-                            style="width:72px;text-align:center;font-variant-numeric:tabular-nums"
-                            title="Goal time (editable)">
-                        <button id="match-pen-btn-${activeMatch}" onclick="togglePenalty(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Penalty</button>
-                        <button id="match-og-btn-${activeMatch}" onclick="toggleOwnGoal(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">OG</button>
-                        <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
-                    </div>
-                </div></div></div>`;
-                } // end editable forms
-
-                // Events log
-                const goals = m.events.filter(e => e.type === 'goal');
-                const standaloneAssists = m.events.filter(e => e.type === 'assist');
-                if (goals.length || standaloneAssists.length) {
-                    html += `<div class="match-section-header" onclick="toggleMatchSection('events')">
-                        <span>Goals &amp; Assists <span style="opacity:0.5;font-size:0.8rem">${goals.length + standaloneAssists.length}</span></span>
-                        <span id="msc_events">${matchSectionOpen.events ? '▲' : '▼'}</span>
-                    </div>
-                    <div id="ms_events" style="display:${matchSectionOpen.events ? '' : 'none'}">
-                    <div class="match-events">`;
-                    if (goals.length) {
-                        html += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:8px">Goal Scorers</div>`;
-                        goals.forEach((e) => {
-                            const idx = m.events.indexOf(e);
-                            if (editable && editingEventIdx === idx) {
-                                // ---- Inline edit form ----
-                                if (e.ownGoal) {
-                                    html += `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
-                                        <span style="font-size:0.85rem;color:#f5a623;flex-shrink:0">&#9917; Own Goal</span>
-                                        <input type="text" id="edit-ev-time-${idx}" value="${esc(e.time||'')}" placeholder="mm:ss" style="width:70px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:5px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">
-                                        <button onclick="saveEditEvent(${activeMatch},${idx})" style="padding:5px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Save</button>
-                                        <button onclick="cancelEditEvent()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer">Cancel</button>
-                                    </div>`;
-                                } else {
-                                    const pOpts = players.map(p => `<option value="${esc(p.name)}" ${e.player===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
-                                    const aOpts = `<option value="">No assist</option>` + players.map(p => `<option value="${esc(p.name)}" ${e.assistBy===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
-                                    html += `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
-                                        <div style="display:flex;gap:8px">
-                                            <select id="edit-ev-player-${idx}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:0.85rem;outline:none">${pOpts}</select>
-                                            <input type="text" id="edit-ev-time-${idx}" value="${esc(e.time||'')}" placeholder="mm:ss" style="width:70px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">
-                                        </div>
-                                        <div style="display:flex;gap:8px;align-items:center">
-                                            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:0.8rem;color:rgba(255,255,255,0.5);flex-shrink:0">
-                                                <input type="checkbox" id="edit-ev-pen-${idx}" ${e.penalty?'checked':''}> Pen
-                                            </label>
-                                            <select id="edit-ev-assist-${idx}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.7);padding:6px 10px;font-size:0.85rem;outline:none">${aOpts}</select>
-                                        </div>
-                                        <div style="display:flex;gap:8px">
-                                            <button onclick="saveEditEvent(${activeMatch},${idx})" style="flex:1;padding:6px 12px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Save</button>
-                                            <button onclick="cancelEditEvent()" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer">Cancel</button>
-                                        </div>
-                                    </div>`;
-                                }
-                            } else {
-                                // ---- Normal display row ----
-                                if (e.ownGoal) {
-                                    html += `<div class="match-event-row">
-                                        <span class="match-event-icon">&#9917;</span>
-                                        <span class="match-event-name" style="color:#f5a623">Own Goal</span>
-                                        ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : ''}
-                                        ${editable ? `<button class="match-event-edit" onclick="startEditEvent(${idx})" title="Edit">✏️</button>` : ''}
-                                        ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
-                                    </div>`;
-                                } else {
-                                    html += `<div class="match-event-row">
-                                        <span class="match-event-icon">&#9917;</span>
-                                        <span class="match-event-name">${esc(e.player)}</span>
-                                        ${e.penalty ? `<span style="font-size:0.7rem;color:#f5576c;margin-left:2px">(P)</span>` : ''}
-                                        ${e.time ? `<span class="match-event-count g">${e.time}'</span>` : `<span class="match-event-count g">${e.count > 1 ? 'x' + e.count : ''}</span>`}
-                                        ${e.assistBy ? `<span style="font-size:0.75rem;color:#38f9d7;margin-left:4px">&#9889; ${esc(e.assistBy)}</span>` : ''}
-                                        ${editable ? `<button class="match-event-edit" onclick="startEditEvent(${idx})" title="Edit">✏️</button>` : ''}
-                                        ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
-                                    </div>`;
-                                }
-                            }
-                        });
-                    }
-                    if (standaloneAssists.length) {
-                        html += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:12px">Assists</div>`;
-                        standaloneAssists.forEach((e) => {
-                            const idx = m.events.indexOf(e);
-                            html += `<div class="match-event-row">
-                                <span class="match-event-icon">&#129406;</span>
-                                <span class="match-event-name">${esc(e.player)}</span>
-                                <span class="match-event-count a">${e.count > 1 ? 'x' + e.count : ''}</span>
-                                ${editable ? `<button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>` : ''}
-                            </div>`;
-                        });
-                    }
-                    html += `</div></div></div>`; // end match-events, ms_events wrapper
-                }
 
                 // Match Report (only after Full Time)
                 const reportText = m.report || '';
@@ -2996,25 +2967,22 @@
                 }
 
                 if (editable) html += `<button class="match-delete-btn" onclick="deleteMatch(${activeMatch})">Delete Match</button>`;
-                html += `</div>`; // end match-main
 
-                // MOTM Trophy Side
-                html += `<div class="match-motm-side">
-                    ${userRole === 'coach' || m.status === 'ended' ? `<div class="motm-trophy-card">
-                        <div class="motm-trophy-icon">&#127942;</div>
-                        <div class="motm-trophy-label">C-POTM</div>
-                        ${m.motm
-                            ? `<div class="motm-trophy-name">${esc(m.motm)}</div>`
-                            : `<div class="motm-none">Not selected</div>`}
-                        ${editable ? `<select class="motm-trophy-select" onchange="setMatchMOTM(${activeMatch}, this.value)">
-                            <option value="">Select C-POTM...</option>
-                            ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-                        </select>` : ''}
-                    </div>` : ''}
-                    ${renderParentsPoll(activeMatch, m)}
-                </div>`;
-
-                html += `</div>`; // end match-layout
+                // POTM row - side by side
+                if (userRole === 'coach' || m.status === 'ended' || (m.poll && m.poll.opened)) {
+                    html += `<div style="display:flex;gap:12px;margin-top:16px;align-items:flex-start">
+                        ${userRole === 'coach' || m.status === 'ended' ? `<div class="motm-trophy-card" style="flex:1">
+                            <div class="motm-trophy-icon">&#127942;</div>
+                            <div class="motm-trophy-label">C-POTM</div>
+                            ${m.motm ? `<div class="motm-trophy-name">${esc(m.motm)}</div>` : `<div class="motm-none">Not selected</div>`}
+                            ${editable ? `<select class="motm-trophy-select" onchange="setMatchMOTM(${activeMatch}, this.value)">
+                                <option value="">Select C-POTM...</option>
+                                ${players.map(p => `<option value="${esc(p.name)}" ${m.motm === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+                            </select>` : ''}
+                        </div>` : '<div style="flex:1"></div>'}
+                        <div style="flex:1">${renderParentsPoll(activeMatch, m)}</div>
+                    </div>`;
+                }
             }
 
             c.innerHTML = html;

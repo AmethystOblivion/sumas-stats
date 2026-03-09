@@ -2513,21 +2513,20 @@
 
             // Mini tabs - latest match stands out, older ones are history
             const latestIdx = matches.length - 1;
-            let html = `<div class="match-mini-tabs">`;
+            let html = '';
 
-            // Show history matches in a collapsible subsection
+            // History section sits outside the flex tab row to avoid Safari layout glitches
             if (matches.length > 1) {
                 const historyCount = latestIdx;
                 const hasActiveHistory = activeMatch < latestIdx;
-                html += `<span style="flex-basis:100%"></span>`;
                 html += `<div class="match-history-section">
                     <button class="match-history-toggle ${hasActiveHistory ? 'has-active' : ''}" onclick="toggleHistory()">
                         <span>Past Matches</span>
                         <span class="match-history-count">${historyCount}</span>
                         <span class="match-history-chevron">${historyExpanded ? '▲' : '▼'}</span>
-                    </button>
-                    ${historyExpanded ? `<div class="match-history-list">` : ''}`;
+                    </button>`;
                 if (historyExpanded) {
+                    html += `<div class="match-history-list">`;
                     for (let i = 0; i < latestIdx; i++) {
                         const m2 = matches[i];
                         const label = m2.opponent ? `vs ${esc(m2.opponent)}` : `Match ${i + 1}`;
@@ -2545,15 +2544,14 @@
                     html += `</div>`;
                 }
                 html += `</div>`;
-                html += `<span style="flex-basis:100%;height:4px"></span>`;
             }
 
-            // Latest match - prominent
+            // Latest match tab row
             const latestM = matches[latestIdx];
             const latestLabel = latestM.opponent ? `vs ${esc(latestM.opponent)}` : `Match ${latestIdx + 1}`;
             const latestDateStr = latestM.date ? ' · ' + formatMatchDate(latestM.date) : '';
+            html += `<div class="match-mini-tabs">`;
             html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}${latestDateStr}${latestM.status === 'live' ? ' <span class="match-live-badge" style="font-size:0.5rem;padding:2px 6px">Live</span>' : ''}</button>`;
-
             if (editable) html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
             if (editable) html += `<button class="batch-import-btn" onclick="showBatchImportModal()">⬆ Import</button>`;
             html += `<a href="https://system.gotsport.com/splash/25643/events/50579/schedules?team=3738001" target="_blank" rel="noopener" class="table-link-btn" style="margin-left:auto">Table</a>`;

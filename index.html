@@ -1697,7 +1697,7 @@
             }
             sortMatchesByDate();
             if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
-            try { renderMatches(); } catch(e) {}
+            try { if (currentTab === 'matches') renderMatches(); } catch(e) {}
             try { if (currentTab === 'votes') renderVotes(); } catch(e) {}
             try { if (currentTab === 'season') renderSeasonStats(); } catch(e) {}
             // Resume live timer if match is ongoing

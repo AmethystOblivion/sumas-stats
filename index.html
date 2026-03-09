@@ -2000,7 +2000,13 @@
         document.getElementById('newMatchCompetition').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewMatch(); });
 
         function selectMatch(idx) { activeMatch = idx; matchEditOpen = false; goalIsPenalty = false; goalIsOwnGoal = false; editingEventIdx = -1; reportEditOpen = false; reportOriginalText = ''; renderMatches(); }
-        function toggleHistory() { historyExpanded = !historyExpanded; renderMatches(); }
+        function toggleHistory() {
+            historyExpanded = !historyExpanded;
+            const list = document.getElementById('matchHistoryList');
+            const chevron = document.getElementById('matchHistoryChevron');
+            if (list) list.style.display = historyExpanded ? 'flex' : 'none';
+            if (chevron) chevron.textContent = historyExpanded ? '▲' : '▼';
+        }
 
         let pendingDeleteIdx = -1;
         function deleteMatch(idx) {
@@ -2523,27 +2529,24 @@
                     <button class="match-history-toggle ${hasActiveHistory ? 'has-active' : ''}" onclick="toggleHistory()">
                         <span>Past Matches</span>
                         <span class="match-history-count">${historyCount}</span>
-                        <span class="match-history-chevron">${historyExpanded ? '▲' : '▼'}</span>
+                        <span id="matchHistoryChevron" class="match-history-chevron">${historyExpanded ? '▲' : '▼'}</span>
+                    </button>
+                    <div id="matchHistoryList" class="match-history-list" style="display:${historyExpanded ? 'flex' : 'none'}">`;
+                for (let i = 0; i < latestIdx; i++) {
+                    const m2 = matches[i];
+                    const label = m2.opponent ? `vs ${esc(m2.opponent)}` : `Match ${i + 1}`;
+                    const score2 = getMatchScore(m2);
+                    const sOpp2 = m2.scoreOpp || 0;
+                    const miniScore = `${score2}-${sOpp2}`;
+                    const d2 = m2.date ? formatMatchDate(m2.date) : '';
+                    const resultColor = score2 > sOpp2 ? '#43e97b' : score2 < sOpp2 ? '#f5576c' : '#f9d423';
+                    html += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">
+                        <span style="flex:1;text-align:left">${label}</span>
+                        <span style="color:${resultColor};font-weight:700;font-size:0.8rem">${miniScore}</span>
+                        ${d2 ? `<span style="opacity:0.45;font-size:0.75rem">${d2}</span>` : ''}
                     </button>`;
-                if (historyExpanded) {
-                    html += `<div class="match-history-list">`;
-                    for (let i = 0; i < latestIdx; i++) {
-                        const m2 = matches[i];
-                        const label = m2.opponent ? `vs ${esc(m2.opponent)}` : `Match ${i + 1}`;
-                        const score2 = getMatchScore(m2);
-                        const sOpp2 = m2.scoreOpp || 0;
-                        const miniScore = `${score2}-${sOpp2}`;
-                        const d2 = m2.date ? formatMatchDate(m2.date) : '';
-                        const resultColor = score2 > sOpp2 ? '#43e97b' : score2 < sOpp2 ? '#f5576c' : '#f9d423';
-                        html += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">
-                            <span style="flex:1;text-align:left">${label}</span>
-                            <span style="color:${resultColor};font-weight:700;font-size:0.8rem">${miniScore}</span>
-                            ${d2 ? `<span style="opacity:0.45;font-size:0.75rem">${d2}</span>` : ''}
-                        </button>`;
-                    }
-                    html += `</div>`;
                 }
-                html += `</div>`;
+                html += `</div></div>`;
             }
 
             // Latest match tab row

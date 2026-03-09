@@ -609,7 +609,7 @@
             background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.5);
             font-size: 0.85rem; font-weight: 600; cursor: pointer;
             transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
-            white-space: normal; word-break: break-word;
+            max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .match-mini-tab.active {
             border-color: #ff8c00; color: #ff8c00;
@@ -2786,7 +2786,7 @@
                                     ? `<input class="player-name-text" value="${esc(m.opponent)}" placeholder="Opponent"
                                         onchange="setMatchOpponent(${activeMatch}, this.value)"
                                         onkeydown="if(event.key==='Enter')this.blur()"
-                                        style="width:100%;max-width:160px;text-align:center;font-size:1.3rem;color:rgba(255,255,255,0.5);padding:2px;text-transform:uppercase;letter-spacing:2px;font-weight:600">`
+                                        style="width:160px;text-align:center;font-size:1.3rem;color:rgba(255,255,255,0.5);padding:2px;text-transform:uppercase;letter-spacing:2px;font-weight:600">`
                                     : `<span style="font-size:1.3rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;font-weight:600">${esc(m.opponent) || 'TBC'}</span>`}
                             </div>
                             ${userRole === 'coach' && m.status === 'live' ? `<button onclick="addOppGoal(${activeMatch})" style="margin-top:6px;padding:4px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:0.75rem;cursor:pointer">+ Goal</button>` : ''}

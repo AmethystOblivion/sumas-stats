@@ -470,6 +470,31 @@
         .lb-val.assists { color: #38f9d7; }
         .lb-val.motm { color: #f9d423; }
 
+        /* Top player row — opulent treatment */
+        .lb-top-row > td {
+            background: linear-gradient(135deg, rgba(255,215,0,0.07), rgba(255,140,0,0.04));
+            border-top: 1px solid rgba(255,215,0,0.22) !important;
+            border-bottom: 1px solid rgba(255,215,0,0.1) !important;
+        }
+        .lb-top-row > td:first-child { border-left: 2px solid rgba(255,215,0,0.4); }
+        .lb-top-row > td:last-child { border-right: 2px solid rgba(255,215,0,0.4); }
+        .lb-top-name {
+            color: #ffd700 !important; font-weight: 800 !important; font-size: 1.05em;
+            text-shadow: 0 0 12px rgba(255,215,0,0.65), 0 0 28px rgba(255,215,0,0.3);
+        }
+        /* Poll winner banner */
+        .poll-winner-banner {
+            text-align: center; padding: 10px 4px 6px;
+        }
+        .poll-winner-label {
+            font-size: 0.58rem; text-transform: uppercase; letter-spacing: 2px;
+            color: rgba(255,255,255,0.35); margin-bottom: 6px;
+        }
+        .poll-winner-name {
+            font-size: 1.5rem; font-weight: 900; color: #00ff87; letter-spacing: 1px;
+            text-shadow: 0 0 18px rgba(0,255,135,0.55), 0 0 36px rgba(0,255,135,0.25);
+        }
+
         .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.25); }
         .empty-state p { font-size: 1.1rem; margin-bottom: 8px; }
         .empty-state span { font-size: 0.85rem; }
@@ -578,6 +603,33 @@
             color: rgba(255,255,255,0.2); margin-right: 4px; align-self: center;
         }
 
+        /* Collapsible history subsection */
+        .match-history-section {
+            width: 100%; margin-bottom: 4px;
+        }
+        .match-history-toggle {
+            display: flex; align-items: center; gap: 8px; width: 100%;
+            padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.45);
+            font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .match-history-toggle:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
+        .match-history-toggle.has-active { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.65); }
+        .match-history-count {
+            background: rgba(255,255,255,0.1); border-radius: 20px;
+            padding: 1px 8px; font-size: 0.7rem;
+        }
+        .match-history-chevron { margin-left: auto; font-size: 0.65rem; }
+        .match-history-list {
+            display: flex; flex-direction: column; gap: 6px;
+            margin-top: 8px; padding: 0 2px;
+        }
+        .match-history-list .match-mini-tab.history {
+            display: flex; align-items: center; gap: 10px;
+            width: 100%; text-align: left;
+        }
+
         /* Table link button on the side */
         .table-link-btn {
             display: block; margin-top: 16px; padding: 12px 18px; border-radius: 12px;
@@ -656,6 +708,14 @@
         .match-timer-display {
             font-size: 3.2rem; font-weight: 900; color: #fff;
             letter-spacing: 3px; font-variant-numeric: tabular-nums;
+        }
+        .match-2nd-timer {
+            font-size: 1.5rem; font-weight: 700; color: rgba(255,255,255,0.45);
+            letter-spacing: 2px; font-variant-numeric: tabular-nums;
+        }
+        @keyframes goSumasPulse {
+            0%, 100% { transform: scale(1); text-shadow: 0 0 30px #ff8c00, 0 0 60px rgba(255,140,0,0.6), 0 0 10px #fff; }
+            50% { transform: scale(1.07); text-shadow: 0 0 60px #ff8c00, 0 0 120px rgba(255,140,0,0.8), 0 0 20px #fff; }
         }
         .match-ctrl-btn {
             padding: 7px 20px; border-radius: 10px; border: none;
@@ -1547,6 +1607,7 @@
         let players = [...defaultPlayers];
         let matches = [];
         let activeMatch = -1;
+        let historyExpanded = false;
         let firebaseReady = false;
 
         function save() {
@@ -1801,11 +1862,11 @@
             if (!sorted.length) { c.innerHTML = '<div class="lb-header motm-h">P-POTM</div><div style="color:rgba(255,255,255,0.3);font-size:0.85rem;padding:12px">No closed polls yet</div>'; return; }
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
             c.innerHTML = `<div class="lb-header motm-h">P-POTM</div><table class="lb-table">
-                ${sorted.map((p, i) => `<tr>
+                ${sorted.map((p, i) => `<tr class="${i===0?'lb-top-row':''}">
                     <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
                     <td class="lb-name" style="display:flex;align-items:center;gap:8px">
                         ${jerseySVG(getJerseyNumber(p.name))}
-                        <span>${esc(p.name)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-weight:400">(${wins[p.name]||0})</span></span>
+                        <span class="${i===0?'lb-top-name':''}">${esc(p.name)} <span style="font-size:0.75rem;color:${i===0?'rgba(255,215,0,0.45)':'rgba(255,255,255,0.4)'};font-weight:400">(${wins[p.name]||0})</span></span>
                     </td>
                     <td class="lb-val motm">${wins[p.name]||0}</td>
                 </tr>`).join('')}</table>`;
@@ -1817,11 +1878,11 @@
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
             const valClass = hc.replace('-h','');
             c.innerHTML = `<div class="lb-header ${hc}">${title}</div><table class="lb-table">
-                ${sorted.map((p, i) => `<tr>
+                ${sorted.map((p, i) => `<tr class="${i===0?'lb-top-row':''}">
                     <td style="width:50px"><span class="lb-rank ${rc(i)}">${i+1}</span></td>
                     <td class="lb-name" style="display:flex;align-items:center;gap:8px">
                         ${jerseySVG(getJerseyNumber(p.name))}
-                        <span>${esc(p.name)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-weight:400">(${statsMap[p.name]||0})</span></span>
+                        <span class="${i===0?'lb-top-name':''}">${esc(p.name)} <span style="font-size:0.75rem;color:${i===0?'rgba(255,215,0,0.45)':'rgba(255,255,255,0.4)'};font-weight:400">(${statsMap[p.name]||0})</span></span>
                     </td>
                     <td class="lb-val ${valClass}">${statsMap[p.name]||0}</td>
                 </tr>`).join('')}</table>`;
@@ -1939,6 +2000,7 @@
         document.getElementById('newMatchCompetition').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewMatch(); });
 
         function selectMatch(idx) { activeMatch = idx; matchEditOpen = false; goalIsPenalty = false; goalIsOwnGoal = false; editingEventIdx = -1; reportEditOpen = false; reportOriginalText = ''; renderMatches(); }
+        function toggleHistory() { historyExpanded = !historyExpanded; renderMatches(); }
 
         let pendingDeleteIdx = -1;
         function deleteMatch(idx) {
@@ -2149,6 +2211,17 @@
             return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
         }
 
+        function formatSecondHalfTime(m) {
+            let totalMs = m.elapsedMs || 0;
+            if (m.status === 'live' && m.liveStart) totalMs += Date.now() - m.liveStart;
+            const ht1Ms = m.ht1ElapsedMs || 0;
+            const ms = Math.max(0, totalMs - ht1Ms);
+            const totalSec = Math.floor(ms / 1000);
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        }
+
         function tickMatchTimer() {
             const el = document.getElementById('matchTimerDisplay');
             if (!el) { clearInterval(matchTimerInterval); matchTimerInterval = null; return; }
@@ -2156,6 +2229,9 @@
             if (!m || m.status !== 'live') { clearInterval(matchTimerInterval); matchTimerInterval = null; return; }
             const t = formatMatchTime(m);
             el.textContent = t;
+            // Update 2nd half timer if in 2nd half
+            const el2 = document.getElementById('match2ndHalfTimerDisplay');
+            if (el2) el2.textContent = formatSecondHalfTime(m);
             // Keep goal time input live — skip update only if coach is actively typing in it
             const goalTimeEl = document.getElementById(`match-goal-time-${activeMatch}`);
             if (goalTimeEl && document.activeElement !== goalTimeEl) {
@@ -2180,12 +2256,16 @@
                     m.liveStart = null;
                 }
                 if (matchTimerInterval) { clearInterval(matchTimerInterval); matchTimerInterval = null; }
-                if (status === 'ht') m.htReached = true;
+                if (status === 'ht') { m.htReached = true; m.ht1ElapsedMs = m.elapsedMs || 0; }
                 if (status === 'ended') {
                     // Automatically open the parents poll when match ends
                     if (!m.poll) m.poll = { votes: {}, voters: [], voterNames: [], voterChoices: {} };
                     m.poll.opened = true;
                     m.poll.closed = false;
+                    // Trigger win celebration
+                    const sSumas = getMatchScore(m);
+                    const sOpp = m.scoreOpp || 0;
+                    if (sSumas > sOpp) setTimeout(showWinCelebration, 400);
                 }
             }
             m.status = status;
@@ -2241,10 +2321,22 @@
                         <div class="poll-bar"><div class="poll-bar-fill" style="width:${pct}%"></div></div>`;
                     }).join('');
                 }
-                if (isClosed) content += `<div class="poll-closed-msg">Voting is closed.</div>`;
+                if (isClosed && sorted.length > 0 && topVotes > 0) {
+                    const winners = sorted.filter(([,c]) => c === topVotes).map(([n]) => esc(n)).join(' &amp; ');
+                    content += `<div class="poll-winner-banner"><div class="poll-winner-label">&#127942; Winner</div><div class="poll-winner-name">${winners}</div></div>`;
+                } else if (isClosed) {
+                    content += `<div class="poll-closed-msg">Voting is closed.</div>`;
+                }
             } else if (isClosed) {
-                // Poll closed — parents just see a closed message
-                content = `<div class="poll-closed-msg">Voting is now closed. Results will be announced by the coaches.</div>`;
+                // Poll closed — show winner to parents
+                const sortedVotes = Object.entries(poll.votes || {}).sort((a, b) => b[1] - a[1]);
+                if (sortedVotes.length > 0 && sortedVotes[0][1] > 0) {
+                    const topCount = sortedVotes[0][1];
+                    const winners = sortedVotes.filter(([,c]) => c === topCount).map(([n]) => esc(n)).join(' &amp; ');
+                    content = `<div class="poll-winner-banner"><div class="poll-winner-label">&#127942; P-POTM Winner</div><div class="poll-winner-name">${winners}</div></div>`;
+                } else {
+                    content = `<div class="poll-closed-msg">Voting is now closed.</div>`;
+                }
             } else if (hasVoted) {
                 // Parent has voted — confirm only, no breakdown
                 const myChoice = poll.voterChoices && poll.voterChoices[getVoterId()];
@@ -2423,19 +2515,37 @@
             const latestIdx = matches.length - 1;
             let html = `<div class="match-mini-tabs">`;
 
-            // Show history matches first (older ones)
+            // Show history matches in a collapsible subsection
             if (matches.length > 1) {
-                html += `<span class="match-history-label">History:</span>`;
-                for (let i = 0; i < latestIdx; i++) {
-                    const m2 = matches[i];
-                    const label = m2.opponent ? `vs ${esc(m2.opponent)}` : `Match ${i + 1}`;
-                    const score2 = getMatchScore(m2);
-                    const sOpp2 = m2.scoreOpp || 0;
-                    const miniScore = `${score2}-${sOpp2}`;
-                    const d2 = m2.date ? ' · ' + formatMatchDate(m2.date) : '';
-                    html += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">${label} <span style="opacity:0.6;font-size:0.75rem">(${miniScore})${d2}</span></button>`;
+                const historyCount = latestIdx;
+                const hasActiveHistory = activeMatch < latestIdx;
+                html += `<span style="flex-basis:100%"></span>`;
+                html += `<div class="match-history-section">
+                    <button class="match-history-toggle ${hasActiveHistory ? 'has-active' : ''}" onclick="toggleHistory()">
+                        <span>Past Matches</span>
+                        <span class="match-history-count">${historyCount}</span>
+                        <span class="match-history-chevron">${historyExpanded ? '▲' : '▼'}</span>
+                    </button>
+                    ${historyExpanded ? `<div class="match-history-list">` : ''}`;
+                if (historyExpanded) {
+                    for (let i = 0; i < latestIdx; i++) {
+                        const m2 = matches[i];
+                        const label = m2.opponent ? `vs ${esc(m2.opponent)}` : `Match ${i + 1}`;
+                        const score2 = getMatchScore(m2);
+                        const sOpp2 = m2.scoreOpp || 0;
+                        const miniScore = `${score2}-${sOpp2}`;
+                        const d2 = m2.date ? formatMatchDate(m2.date) : '';
+                        const resultColor = score2 > sOpp2 ? '#43e97b' : score2 < sOpp2 ? '#f5576c' : '#f9d423';
+                        html += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">
+                            <span style="flex:1;text-align:left">${label}</span>
+                            <span style="color:${resultColor};font-weight:700;font-size:0.8rem">${miniScore}</span>
+                            ${d2 ? `<span style="opacity:0.45;font-size:0.75rem">${d2}</span>` : ''}
+                        </button>`;
+                    }
+                    html += `</div>`;
                 }
-                html += `<span style="flex-basis:100%;height:8px"></span>`;
+                html += `</div>`;
+                html += `<span style="flex-basis:100%;height:4px"></span>`;
             }
 
             // Latest match - prominent
@@ -2541,12 +2651,15 @@
                         ${m.status === 'ht' ? `<span class="match-ended-badge">Half Time</span>` : ''}
                         ${m.status === 'ended' ? `<span class="match-ended-badge">Full Time</span>` : ''}
                     </div>
-                    ${(m.status === 'live' || m.status === 'ht') ? `<div style="margin:6px 0 4px"><span class="match-timer-display" id="matchTimerDisplay">${formatMatchTime(m)}</span></div>` : ''}
+                    ${(m.status === 'live' || m.status === 'ht') ? `<div style="margin:6px 0 4px">
+                        <span class="match-timer-display" id="matchTimerDisplay">${formatMatchTime(m)}</span>
+                        ${m.status === 'live' && m.htReached ? `<div style="margin-top:4px"><span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;opacity:0.4">2nd half</span> <span class="match-2nd-timer" id="match2ndHalfTimerDisplay">${formatSecondHalfTime(m)}</span></div>` : ''}
+                    </div>` : ''}
                     <div class="match-status-bar" style="margin-top:8px">
-                        ${userRole === 'coach' && activeMatch === latestIdx && (!m.status || m.status === 'pending') ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; Kick-off</button>` : ''}
-                        ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'live' && !m.htReached ? `<button class="match-ctrl-btn ht" onclick="setMatchStatus(${activeMatch},'ht')">HT</button>` : ''}
-                        ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'ht' ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; 2nd Half</button>` : ''}
-                        ${userRole === 'coach' && activeMatch === latestIdx && m.status === 'live' && m.htReached ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; FT</button>` : ''}
+                        ${userRole === 'coach' && (!m.status || m.status === 'pending') ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; Kick-off</button>` : ''}
+                        ${userRole === 'coach' && m.status === 'live' && !m.htReached ? `<button class="match-ctrl-btn ht" onclick="setMatchStatus(${activeMatch},'ht')">HT</button>` : ''}
+                        ${userRole === 'coach' && m.status === 'ht' ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; 2nd Half</button>` : ''}
+                        ${userRole === 'coach' && m.status === 'live' && m.htReached ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; FT</button>` : ''}
                     </div>
                 </div>`;
 
@@ -2556,7 +2669,7 @@
                 // Main column
                 html += `<div class="match-main">`;
 
-                if (editable && activeMatch === latestIdx) {
+                if (editable) {
                 // Add Goal form
                 html += `<div class="match-form-card">
                     <div class="match-form-title" style="color:#43e97b">Add Goal</div>
@@ -3564,6 +3677,124 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
         }
+
+        // ===== WIN CELEBRATION =====
+        function showWinCelebration() {
+            const overlay = document.getElementById('winCelebrationOverlay');
+            if (!overlay) return;
+            overlay.style.display = 'block';
+            overlay.style.opacity = '1';
+
+            const canvas = document.getElementById('fireworksCanvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext('2d');
+
+            const colors = ['#ff8c00','#ffd700','#ff4500','#ff69b4','#00ff7f','#00bfff','#ff1493','#adff2f','#ff6347'];
+            const particles = [];
+            let frameCount = 0;
+            let running = true;
+            let animId = null;
+
+            function createFirework(x, y) {
+                const count = 90;
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.3;
+                    const speed = 2.5 + Math.random() * 6;
+                    particles.push({
+                        x, y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 1,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        alpha: 1,
+                        radius: 2.5 + Math.random() * 2.5,
+                        gravity: 0.09,
+                        decay: 0.013 + Math.random() * 0.009,
+                        trail: []
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (frameCount % 22 === 0) {
+                    const x = canvas.width * 0.15 + Math.random() * canvas.width * 0.7;
+                    const y = canvas.height * 0.08 + Math.random() * canvas.height * 0.45;
+                    createFirework(x, y);
+                }
+                frameCount++;
+
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.trail.push({ x: p.x, y: p.y, alpha: p.alpha });
+                    if (p.trail.length > 4) p.trail.shift();
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += p.gravity;
+                    p.vx *= 0.98;
+                    p.alpha -= p.decay;
+
+                    // Trail
+                    p.trail.forEach((t, ti) => {
+                        ctx.save();
+                        ctx.globalAlpha = t.alpha * (ti / p.trail.length) * 0.4;
+                        ctx.beginPath();
+                        ctx.arc(t.x, t.y, p.radius * 0.6, 0, Math.PI * 2);
+                        ctx.fillStyle = p.color;
+                        ctx.fill();
+                        ctx.restore();
+                    });
+
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, p.alpha);
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    ctx.restore();
+
+                    if (p.alpha <= 0) particles.splice(i, 1);
+                }
+
+                if (running && frameCount < 360) {
+                    animId = requestAnimationFrame(animate);
+                } else if (running) {
+                    stopCelebration();
+                }
+            }
+
+            function stopCelebration() {
+                if (!running) return;
+                running = false;
+                if (animId) cancelAnimationFrame(animId);
+                overlay.style.transition = 'opacity 1.2s ease';
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    overlay.style.transition = '';
+                    overlay.style.opacity = '1';
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    particles.length = 0;
+                }, 1300);
+            }
+
+            animId = requestAnimationFrame(animate);
+            overlay.addEventListener('click', stopCelebration, { once: true });
+            setTimeout(stopCelebration, 7000);
+        }
     </script>
+
+    <!-- Win Celebration Overlay -->
+    <div id="winCelebrationOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;cursor:pointer">
+        <canvas id="fireworksCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;user-select:none">
+            <div style="font-size:clamp(2.5rem,8vw,4.5rem);font-weight:900;letter-spacing:5px;color:#ff8c00;animation:goSumasPulse 0.9s ease-in-out infinite;white-space:nowrap">GO SUMAS!</div>
+            <div style="margin-top:12px;font-size:0.9rem;color:rgba(255,255,255,0.4);letter-spacing:2px">TAP TO DISMISS</div>
+        </div>
+    </div>
 </body>
 </html>

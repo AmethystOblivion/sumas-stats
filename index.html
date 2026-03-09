@@ -19,6 +19,7 @@
             background: #1a0533;
             color: #e0e0e0;
             min-height: 100vh;
+            overflow-y: scroll;
         }
         header {
             background: linear-gradient(90deg, #37003c, #5a0050, #37003c);
@@ -214,12 +215,11 @@
             color: #37003c; box-shadow: 0 4px 15px rgba(0,255,135,0.3);
         }
         .tab.matches-tab {
-            flex: 1.5; position: relative;
+            position: relative;
         }
         .tab.active.matches-tab {
             background: linear-gradient(135deg, #ff8c00, #e85d04);
-            color: #fff; font-size: 1.1rem; font-weight: 800;
-            letter-spacing: 1.5px; padding: 16px 12px;
+            color: #fff; font-weight: 800;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(255, 140, 0, 0.4);
             text-shadow: 0 1px 3px rgba(0,0,0,0.3);
@@ -597,7 +597,6 @@
         .score-team-label {
             font-size: 1.3rem; text-transform: uppercase; letter-spacing: 2px;
             color: rgba(255,255,255,0.35); margin-top: 4px;
-            word-break: break-word; overflow-wrap: break-word;
         }
 
         /* ===== MATCHES TAB ===== */
@@ -654,6 +653,17 @@
             font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
             color: rgba(255,255,255,0.2); margin-right: 4px; align-self: center;
         }
+
+        /* Collapsible match sections */
+        .match-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; margin: 10px 0 0; border-radius: 10px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.55); font-size: 0.78rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .match-section-header:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
 
         /* Collapsible history subsection */
         .match-history-section {
@@ -1182,10 +1192,9 @@
         }
         .assist-overlay.active .assist-particle { animation: particleBurst 0.7s 0.55s ease-out forwards; }
 
-        /* Tab sweep */
-        .tab-content { transition: opacity 0.3s, transform 0.3s; }
-        .tab-content.sweep-out { opacity: 0; transform: translateX(-40px); }
-        .tab-content.sweep-in { opacity: 0; transform: translateX(40px); }
+        /* Tab fade */
+        @keyframes tabFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .view-panel.active { animation: tabFadeIn 0.18s ease; }
 
         /* Side text */
         .side-text {
@@ -1217,7 +1226,7 @@
             /* Tabs */
             .tabs { gap: 2px; padding: 4px; border-radius: 12px; }
             .tab { padding: 10px 6px; font-size: 0.8rem; }
-            .tab.active.matches-tab { font-size: 0.9rem; padding: 12px 6px; letter-spacing: 0.5px; }
+            .tab.active.matches-tab { font-weight: 800; }
 
             /* Add player */
             .add-player { max-width: 100%; }
@@ -1840,24 +1849,16 @@
             const outEl = document.getElementById(viewIds[currentTab]);
             const inEl = document.getElementById(viewIds[tab]);
 
-            // Pre-render into the hidden panel before animation starts
+            outEl.classList.remove('active');
+            currentTab = tab;
+            document.querySelectorAll('#mainTabs .tab').forEach((t, i) => {
+                t.classList.toggle('active', i === tabMap[tab]);
+            });
             if (tab === 'leaderboard') renderLeaderboard();
             if (tab === 'matches') renderMatches();
             if (tab === 'votes') renderVotes();
             if (tab === 'season') renderSeasonStats();
-
-            outEl.classList.add('tab-content', 'sweep-out');
-            setTimeout(() => {
-                outEl.classList.remove('active', 'tab-content', 'sweep-out');
-                currentTab = tab;
-                document.querySelectorAll('#mainTabs .tab').forEach((t, i) => {
-                    t.classList.toggle('active', i === tabMap[tab]);
-                    if (i === 1) t.classList.toggle('matches-tab', tab === 'matches');
-                });
-                inEl.classList.add('active', 'tab-content', 'sweep-in');
-                requestAnimationFrame(() => requestAnimationFrame(() => inEl.classList.remove('sweep-in')));
-                setTimeout(() => inEl.classList.remove('tab-content'), 350);
-            }, 300);
+            inEl.classList.add('active');
         }
 
         // ===== RENDER PLAYERS =====
@@ -2254,6 +2255,14 @@
             saveMatches(); renderMatches();
         }
         let matchEditOpen = false;
+        let matchSectionOpen = { addGoal: true, events: true, report: true, motm: true };
+        function toggleMatchSection(key) {
+            matchSectionOpen[key] = !matchSectionOpen[key];
+            const el = document.getElementById('ms_' + key);
+            const ch = document.getElementById('msc_' + key);
+            if (el) el.style.display = matchSectionOpen[key] ? '' : 'none';
+            if (ch) ch.textContent = matchSectionOpen[key] ? '▲' : '▼';
+        }
         function toggleMatchEdit() {
             matchEditOpen = !matchEditOpen;
             renderMatches();
@@ -2819,8 +2828,12 @@
 
                 if (editable) {
                 // Add Goal form
-                html += `<div class="match-form-card">
-                    <div class="match-form-title" style="color:#43e97b">Add Goal</div>
+                html += `<div class="match-section-header" onclick="toggleMatchSection('addGoal')">
+                    <span>Add Goal</span>
+                    <span id="msc_addGoal">${matchSectionOpen.addGoal ? '▲' : '▼'}</span>
+                </div>
+                <div id="ms_addGoal" style="display:${matchSectionOpen.addGoal ? '' : 'none'}">
+                <div class="match-form-card">
                     <div class="match-form-row">
                         <select class="match-select" id="match-goal-select-${activeMatch}">
                             <option value="">Scorer...</option>
@@ -2838,14 +2851,19 @@
                         <button id="match-og-btn-${activeMatch}" onclick="toggleOwnGoal(this)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">OG</button>
                         <button class="match-add-stat-btn goal-btn" onclick="addMatchEvent(${activeMatch},'goal')">+ Goal</button>
                     </div>
-                </div>`;
+                </div></div></div>`;
                 } // end editable forms
 
                 // Events log
                 const goals = m.events.filter(e => e.type === 'goal');
                 const standaloneAssists = m.events.filter(e => e.type === 'assist');
                 if (goals.length || standaloneAssists.length) {
-                    html += `<div class="match-events">`;
+                    html += `<div class="match-section-header" onclick="toggleMatchSection('events')">
+                        <span>Goals &amp; Assists <span style="opacity:0.5;font-size:0.8rem">${goals.length + standaloneAssists.length}</span></span>
+                        <span id="msc_events">${matchSectionOpen.events ? '▲' : '▼'}</span>
+                    </div>
+                    <div id="ms_events" style="display:${matchSectionOpen.events ? '' : 'none'}">
+                    <div class="match-events">`;
                     if (goals.length) {
                         html += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:8px">Goal Scorers</div>`;
                         goals.forEach((e) => {
@@ -2915,14 +2933,19 @@
                             </div>`;
                         });
                     }
-                    html += `</div>`;
+                    html += `</div></div></div>`; // end match-events, ms_events wrapper
                 }
 
                 // Match Report (only after Full Time)
                 const reportText = m.report || '';
                 const reportPublished = !!m.reportPublished;
                 if (m.status === 'ended' && userRole === 'coach') {
-                    html += `<div class="match-report-section">`;
+                    html += `<div class="match-section-header" onclick="toggleMatchSection('report')">
+                        <span>Match Report</span>
+                        <span id="msc_report">${matchSectionOpen.report ? '▲' : '▼'}</span>
+                    </div>
+                    <div id="ms_report" style="display:${matchSectionOpen.report ? '' : 'none'}">
+                    <div class="match-report-section">`;
                     if (!reportPublished) {
                         // ── Unpublished: always show textarea + Publish button ──
                         html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -2960,12 +2983,16 @@
                             <button onclick="cancelReportEdit()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:600;cursor:pointer">Cancel</button>
                         </div>`;
                     }
-                    html += `</div>`;
+                    html += `</div></div></div>`; // end match-report-section, ms_report wrapper
                 } else if (m.status === 'ended' && reportPublished && reportText) {
-                    html += `<div class="match-report-section">
-                        <div class="match-report-title">Match Report</div>
+                    html += `<div class="match-section-header" onclick="toggleMatchSection('report')">
+                        <span>Match Report</span>
+                        <span id="msc_report">${matchSectionOpen.report ? '▲' : '▼'}</span>
+                    </div>
+                    <div id="ms_report" style="display:${matchSectionOpen.report ? '' : 'none'}">
+                    <div class="match-report-section">
                         <div class="match-report-text">${esc(reportText)}</div>
-                    </div>`;
+                    </div></div>`;
                 }
 
                 if (editable) html += `<button class="match-delete-btn" onclick="deleteMatch(${activeMatch})">Delete Match</button>`;

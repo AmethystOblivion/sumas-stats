@@ -2197,6 +2197,10 @@
             saveMatches(); renderMatches();
         }
         function addOppGoal(idx) {
+            const timeEl = document.getElementById(`match-opp-goal-time-${idx}`);
+            const time = timeEl ? timeEl.value : '';
+            if (!matches[idx].oppGoals) matches[idx].oppGoals = [];
+            matches[idx].oppGoals.push({ time });
             matches[idx].scoreOpp = (matches[idx].scoreOpp || 0) + 1;
             saveMatches(); renderMatches();
         }
@@ -2398,6 +2402,10 @@
             const goalTimeEl = document.getElementById(`match-goal-time-${activeMatch}`);
             if (goalTimeEl && document.activeElement !== goalTimeEl) {
                 goalTimeEl.value = t;
+            }
+            const oppGoalTimeEl = document.getElementById(`match-opp-goal-time-${activeMatch}`);
+            if (oppGoalTimeEl && document.activeElement !== oppGoalTimeEl) {
+                oppGoalTimeEl.value = t;
             }
         }
 
@@ -2737,6 +2745,16 @@
                     }).join('');
                 }
 
+                // Build goal time list for opponent side
+                const oppGoalsList = m.oppGoals || [];
+                let oppScorerLines = '';
+                if (oppGoalsList.length) {
+                    oppScorerLines = oppGoalsList.map(g => {
+                        const timeStr = g.time ? ` <span style="opacity:0.5;font-size:0.85em">${g.time}'</span>` : '';
+                        return `<div style="font-size:1.4rem;color:rgba(255,255,255,0.5);margin-top:2px">⚽${timeStr}</div>`;
+                    }).join('');
+                }
+
                 const dateDisplay = m.date ? formatMatchDate(m.date) : '';
                 html += `<div class="match-score-banner">
                     <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
@@ -2866,7 +2884,11 @@
                                         style="width:160px;text-align:center;font-size:1.3rem;color:rgba(255,255,255,0.5);padding:2px;text-transform:uppercase;letter-spacing:2px;font-weight:600">`
                                     : `<span style="font-size:1.3rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;font-weight:600">${esc(m.opponent) || 'TBC'}</span>`}
                             </div>
-                            ${userRole === 'coach' && m.status === 'live' ? `<button onclick="addOppGoal(${activeMatch})" style="margin-top:6px;padding:4px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:0.75rem;cursor:pointer">+ Goal</button>` : ''}
+                            ${oppScorerLines ? `<div style="margin-top:4px;text-align:left;display:inline-block">${oppScorerLines}</div>` : ''}
+                            ${userRole === 'coach' && m.status === 'live' ? `<div style="display:flex;align-items:center;gap:6px;margin-top:6px;justify-content:center">
+                                <input type="text" id="match-opp-goal-time-${activeMatch}" value="${formatMatchTime(m)}" placeholder="mm:ss" style="width:66px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.7);padding:4px 8px;font-size:0.8rem;outline:none;text-align:center;font-family:inherit">
+                                <button onclick="addOppGoal(${activeMatch})" style="padding:4px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:0.75rem;cursor:pointer">+ Goal</button>
+                            </div>` : ''}
                         </div>
                     </div>
                     ${m.status === 'ended' && resultText ? `<div style="font-size:1.8rem;font-weight:700;color:${resultColor};letter-spacing:3px;margin-top:4px">${resultText}</div>` : ''}

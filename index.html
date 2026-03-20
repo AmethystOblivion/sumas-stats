@@ -3055,6 +3055,7 @@
                 applyReadOnly();
                 render();
                 renderMatches();
+                updateVoiceBtn();
             } else {
                 error.textContent = 'Incorrect PIN. Try again.';
                 input.value = '';
@@ -3366,6 +3367,7 @@
             document.getElementById('pinOverlay').classList.add('hidden');
             document.getElementById('parentPassOverlay').classList.add('hidden');
             applyReadOnly();
+            updateVoiceBtn();
         } else {
             // Always prompt on fresh load — show role selection
             userRole = null;
@@ -3964,6 +3966,198 @@
             overlay.addEventListener('click', stopCelebration, { once: true });
             setTimeout(stopCelebration, 7000);
         }
+    </script>
+
+    <!-- Voice Recording Overlay -->
+    <div id="voiceOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:rgba(0,0,0,0.85);flex-direction:column;align-items:center;justify-content:center;gap:20px">
+        <div style="font-size:3rem;animation:livePulse 1s ease-in-out infinite" id="voiceMicIcon">🎤</div>
+        <div style="font-size:1rem;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase">Listening…</div>
+        <div id="voiceTranscript" style="min-height:48px;max-width:320px;text-align:center;font-size:1.1rem;color:white;font-weight:600;padding:0 20px"></div>
+        <button onclick="stopVoice()" style="margin-top:8px;padding:10px 28px;border-radius:20px;border:1px solid rgba(255,255,255,0.3);background:transparent;color:rgba(255,255,255,0.6);font-size:0.9rem;cursor:pointer">Cancel</button>
+    </div>
+
+    <!-- Voice Confirm Card -->
+    <div id="voiceConfirm" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;background:#1e1e2e;border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:16px 20px;min-width:280px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
+        <div id="voiceConfirmText" style="color:white;font-size:1rem;font-weight:600;margin-bottom:14px;line-height:1.5"></div>
+        <div style="display:flex;gap:10px">
+            <button id="voiceConfirmBtn" onclick="confirmVoiceEvent()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#ff8c00;color:white;font-weight:700;font-size:0.95rem;cursor:pointer">Confirm</button>
+            <button onclick="dismissVoiceConfirm()" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.6);font-weight:600;font-size:0.95rem;cursor:pointer">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- Global floating mic button (coach only) -->
+    <button id="globalVoiceBtn" onclick="startVoice()"
+        style="display:none;position:fixed;bottom:24px;right:20px;z-index:8000;width:56px;height:56px;border-radius:50%;border:none;background:#ff8c00;color:white;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 16px rgba(255,140,0,0.5);transition:all 0.2s"
+        title="Voice command">🎤</button>
+
+    <script>
+    // ===== GLOBAL VOICE SYSTEM =====
+    let voiceRecognition = null;
+    let pendingVoiceEvent = null;
+
+    // Show/hide global mic button based on role
+    function updateVoiceBtn() {
+        const btn = document.getElementById('globalVoiceBtn');
+        if (btn) btn.style.display = userRole === 'coach' ? 'flex' : 'none';
+        if (btn) btn.style.alignItems = 'center';
+        if (btn) btn.style.justifyContent = 'center';
+    }
+
+    function startVoice() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) { alert('Voice not supported. Use Chrome or Safari.'); return; }
+
+        document.getElementById('voiceOverlay').style.display = 'flex';
+        document.getElementById('voiceTranscript').textContent = '';
+
+        voiceRecognition = new SpeechRecognition();
+        voiceRecognition.lang = 'en-GB';
+        voiceRecognition.interimResults = true;
+        voiceRecognition.maxAlternatives = 1;
+
+        voiceRecognition.onresult = (e) => {
+            const transcript = Array.from(e.results).map(r => r[0].transcript).join(' ');
+            document.getElementById('voiceTranscript').textContent = transcript;
+        };
+        voiceRecognition.onend = () => {
+            const transcript = document.getElementById('voiceTranscript').textContent.trim();
+            document.getElementById('voiceOverlay').style.display = 'none';
+            if (transcript) processVoice(transcript);
+        };
+        voiceRecognition.onerror = (e) => {
+            document.getElementById('voiceOverlay').style.display = 'none';
+            if (e.error !== 'aborted') showVoiceResult('⚠️ ' + e.error, null);
+        };
+        voiceRecognition.start();
+    }
+
+    function stopVoice() {
+        if (voiceRecognition) { voiceRecognition.abort(); voiceRecognition = null; }
+        document.getElementById('voiceOverlay').style.display = 'none';
+    }
+
+    function processVoice(text) {
+        const lower = text.toLowerCase();
+        const m = activeMatch >= 0 ? matches[activeMatch] : null;
+
+        // Helpers
+        const playerNames = players.map(p => p.name);
+        function findPlayer(str) {
+            return playerNames.find(n => str.includes(n.split(' ')[0].toLowerCase())) || null;
+        }
+        function findAssist(str) {
+            const am = str.match(/assist(?:ed)?(?: by)? (\w+)/i) || str.match(/(\w+) assist/i);
+            if (!am) return null;
+            return playerNames.find(n => n.toLowerCase().startsWith(am[1].toLowerCase())) || null;
+        }
+        function findTime(str) {
+            const tm = str.match(/(\d+)\s*(?:minute[s]?|min|')/i) || str.match(/(?:minute[s]?|min)\s*(\d+)/i);
+            return tm ? tm[1] : null;
+        }
+
+        // ── Navigation ──
+        if (/show players|player[s]? tab|go to player/.test(lower)) { switchTab('players'); showVoiceResult('📋 Players', null); return; }
+        if (/show matches|match(?:es)? tab|go to match/.test(lower)) { switchTab('matches'); showVoiceResult('📅 Matches', null); return; }
+        if (/leaderboard/.test(lower)) { switchTab('leaderboard'); showVoiceResult('🏆 Leaderboard', null); return; }
+        if (/season stats|season tab/.test(lower)) { switchTab('season'); showVoiceResult('📊 Season Stats', null); return; }
+        if (/votes|voting/.test(lower)) { switchTab('votes'); showVoiceResult('🗳️ Votes', null); return; }
+
+        // ── Match status (requires active match) ──
+        if (/kick.?off|start match|begin/.test(lower) && m) {
+            setMatchStatus(activeMatch, 'live');
+            showVoiceResult('▶️ Match started', null); return;
+        }
+        if (/half.?time|\bht\b/.test(lower) && m) {
+            setMatchStatus(activeMatch, 'ht');
+            showVoiceResult('⏸️ Half time', null); return;
+        }
+        if (/second half|2nd half/.test(lower) && m) {
+            setMatchStatus(activeMatch, 'live');
+            showVoiceResult('▶️ Second half', null); return;
+        }
+        if (/full.?time|\bft\b|finished|end match/.test(lower) && m) {
+            setMatchStatus(activeMatch, 'ended');
+            showVoiceResult('⏹️ Full time', null); return;
+        }
+
+        // ── POTM ──
+        if (/(?:potm|man of the match|motm|award).*?(\w+)/.test(lower) && m) {
+            const match = lower.match(/(?:potm|man of the match|motm|award)\s+(?:to\s+)?(\w+)/i);
+            if (match) {
+                const player = playerNames.find(n => n.toLowerCase().startsWith(match[1].toLowerCase()));
+                if (player) {
+                    setMatchMOTM(activeMatch, player);
+                    showVoiceResult(`🏅 C-POTM: ${player}`, null); return;
+                }
+            }
+        }
+
+        // ── Match events (require live match) ──
+        if (!m || m.status !== 'live') {
+            showVoiceResult('⚠️ No live match. Say "kick off" to start one.', null); return;
+        }
+
+        if (/opponent|they scored|their goal|opp goal/.test(lower)) {
+            const time = findTime(lower);
+            pendingVoiceEvent = { kind: 'opp_goal', time, matchIdx: activeMatch };
+            showVoiceResult(`⚽ Opponent goal${time ? ` (${time}')` : ''}`, pendingVoiceEvent); return;
+        }
+        if (/own goal|\bog\b/.test(lower)) {
+            const time = findTime(lower);
+            pendingVoiceEvent = { kind: 'own_goal', time, matchIdx: activeMatch };
+            showVoiceResult(`🔴 Own goal${time ? ` (${time}')` : ''}`, pendingVoiceEvent); return;
+        }
+        if (/goal|scored/.test(lower)) {
+            const player = findPlayer(lower);
+            if (!player) { showVoiceResult('⚠️ Couldn\'t identify scorer. Try again.', null); return; }
+            const assist = findAssist(lower);
+            const time = findTime(lower);
+            const penalty = /penalty|pen\b|spot/.test(lower);
+            let label = `⚽ Goal — ${player}`;
+            if (penalty) label += ' (pen)';
+            if (assist) label += `  ·  Assist: ${assist}`;
+            if (time) label += `  ·  ${time}'`;
+            pendingVoiceEvent = { kind: 'goal', player, assist, time, penalty, matchIdx: activeMatch };
+            showVoiceResult(label, pendingVoiceEvent); return;
+        }
+
+        showVoiceResult('⚠️ Didn\'t understand. Try: "Goal [name]", "Opponent goal", "Half time", "Kick off"…', null);
+    }
+
+    function showVoiceResult(label, event) {
+        document.getElementById('voiceConfirmText').textContent = label;
+        document.getElementById('voiceConfirmBtn').style.display = event ? 'block' : 'none';
+        document.getElementById('voiceConfirm').style.display = 'block';
+        if (!event) setTimeout(dismissVoiceConfirm, 2000);
+    }
+
+    function confirmVoiceEvent() {
+        dismissVoiceConfirm();
+        if (!pendingVoiceEvent) return;
+        const { kind, player, assist, time, penalty, matchIdx } = pendingVoiceEvent;
+        const m = matches[matchIdx];
+        if (!m) return;
+        const liveTime = time ? time + "'" : formatMatchTime(m);
+
+        if (kind === 'opp_goal') {
+            addOppGoal(matchIdx);
+        } else if (kind === 'own_goal') {
+            m.events.push({ player: 'OG', type: 'goal', count: 1, assistBy: null, time: liveTime, penalty: false, ownGoal: true });
+            m.scoreOpp = (m.scoreOpp || 0) + 1;
+            playGoalAnimation(); saveMatches(); renderMatches(); render();
+        } else if (kind === 'goal') {
+            m.events.push({ player, type: 'goal', count: 1, assistBy: assist || null, time: liveTime, penalty: !!penalty });
+            updatePlayerFromMatch(player, 'goals', 1);
+            if (assist) updatePlayerFromMatch(assist, 'assists', 1);
+            playGoalAnimation(); saveMatches(); renderMatches(); render();
+        }
+        pendingVoiceEvent = null;
+    }
+
+    function dismissVoiceConfirm() {
+        document.getElementById('voiceConfirm').style.display = 'none';
+        pendingVoiceEvent = null;
+    }
     </script>
 
     <!-- Win Celebration Overlay -->

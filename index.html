@@ -4055,6 +4055,21 @@
             return tm ? tm[1] : null;
         }
 
+        // ── New match ──
+        const newMatchMatch = lower.match(/(?:new match|add match|match (?:against|vs?\.?)) (.+)/i);
+        if (newMatchMatch) {
+            const opponent = text.slice(text.toLowerCase().indexOf(newMatchMatch[1])).trim();
+            const today = new Date().toISOString().split('T')[0];
+            const newMatch = { events: [], motm: '', opponent, date: today, homeAway: null, location: null, competition: null, linesman: null, scoreSumas: 0, scoreOpp: 0, status: 'pending', poll: { opened: false, closed: false, votes: {}, voters: [], voterNames: [], voterChoices: {} } };
+            matches.push(newMatch);
+            sortMatchesByDate();
+            activeMatch = matches.indexOf(newMatch);
+            saveMatches();
+            switchTab('matches');
+            showVoiceResult(`📅 New match vs ${opponent}`, null);
+            return;
+        }
+
         // ── Navigation ──
         if (/show players|player[s]? tab|go to player/.test(lower)) { switchTab('players'); showVoiceResult('📋 Players', null); return; }
         if (/show matches|match(?:es)? tab|go to match/.test(lower)) { switchTab('matches'); showVoiceResult('📅 Matches', null); return; }

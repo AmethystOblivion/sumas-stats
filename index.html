@@ -3055,7 +3055,7 @@
                 applyReadOnly();
                 render();
                 renderMatches();
-                updateVoiceBtn();
+                if (typeof updateVoiceBtn === 'function') updateVoiceBtn();
             } else {
                 error.textContent = 'Incorrect PIN. Try again.';
                 input.value = '';

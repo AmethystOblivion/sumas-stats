@@ -1699,19 +1699,17 @@
 
         // Real-time listener for matches
         db.collection('data').doc('matches').onSnapshot(doc => {
-            console.log('[SUMAS] matches snap — exists:', doc.exists, 'count:', matches.length);
             if (doc.exists) {
                 try {
                     matches = JSON.parse(doc.data().list);
                     if (!Array.isArray(matches)) matches = [];
-                } catch(e) { console.error('[SUMAS] matches parse error', e); matches = []; }
+                } catch(e) { matches = []; }
             }
-            console.log('[SUMAS] matches after parse:', matches.length, 'currentTab:', currentTab);
             sortMatchesByDate();
             if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
-            try { if (currentTab === 'matches') renderMatches(); } catch(e) { console.error('[SUMAS] renderMatches error', e); }
-            try { if (currentTab === 'votes') renderVotes(); } catch(e) { console.error('[SUMAS] renderVotes error', e); }
-            try { if (currentTab === 'season') renderSeasonStats(); } catch(e) { console.error('[SUMAS] renderSeasonStats error', e); }
+            try { if (currentTab === 'matches') renderMatches(); } catch(e) {}
+            try { if (currentTab === 'votes') renderVotes(); } catch(e) {}
+            try { if (currentTab === 'season') renderSeasonStats(); } catch(e) {}
             // Resume live timer if match is ongoing
             const liveM = activeMatch >= 0 ? matches[activeMatch] : null;
             if (liveM && liveM.status === 'live' && !matchTimerInterval) startMatchTimerInterval();

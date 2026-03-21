@@ -3367,7 +3367,7 @@
             document.getElementById('pinOverlay').classList.add('hidden');
             document.getElementById('parentPassOverlay').classList.add('hidden');
             applyReadOnly();
-            updateVoiceBtn();
+            if (typeof updateVoiceBtn === 'function') updateVoiceBtn();
         } else {
             // Always prompt on fresh load — show role selection
             userRole = null;

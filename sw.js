@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sumas-stats-v45';
+const CACHE_NAME = 'sumas-stats-v46';
 const ASSETS = [
   './',
   './index.html',

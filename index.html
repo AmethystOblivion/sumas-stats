@@ -1526,7 +1526,7 @@
         <div class="admin-menu hidden" id="adminMenu">
             <button id="overrideBtn" onclick="showOverrideModal();toggleAdminMenu()">&#128273; Override</button>
             <button id="addPlayerBtn" onclick="showAddPlayerPrompt();toggleAdminMenu()">&#10133; Add Player</button>
-            <button onclick="showBatchImportModal();toggleAdminMenu()">&#11014; Import Matches</button>
+            <button id="importMatchesBtn" onclick="showBatchImportModal();toggleAdminMenu()">&#11014; Import Matches</button>
             <button id="removeVoteBtn" onclick="showRemoveVoteModal()">&#10060; Remove Vote</button>
             <button id="resetVotesBtn" onclick="showResetVotesModal()">&#128260; Reset Votes</button>
             <button id="resetAllDataBtn" onclick="showResetAllDataModal()" style="color:#f5576c;border-color:rgba(245,87,108,0.4)">&#128465; Reset All Data</button>
@@ -3337,6 +3337,7 @@
             document.getElementById('removeVoteBtn').style.display = isEditable() ? '' : 'none';
             document.getElementById('resetVotesBtn').style.display = isEditable() ? '' : 'none';
             document.getElementById('resetAllDataBtn').style.display = userRole === 'coach' ? '' : 'none';
+            document.getElementById('importMatchesBtn').style.display = userRole === 'coach' ? '' : 'none';
             // Votes tab only visible to coaches
             document.getElementById('votesTab').style.display = userRole === 'coach' ? 'block' : 'none';
             // If a non-coach somehow ends up on votes tab, redirect to matches

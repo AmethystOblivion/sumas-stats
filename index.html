@@ -576,6 +576,14 @@
             transition: color 0.2s;
         }
         .player-tile-remove:hover { color: #f5576c; }
+        .player-tile-name-input {
+            font-size: 0.85rem; font-weight: 700; color: #e0e0e0;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,140,0,0.4);
+            border-radius: 6px; text-align: center; width: 100%;
+            padding: 2px 4px; outline: none; font-family: inherit;
+            box-sizing: border-box;
+        }
+        .player-tile-name-input:focus { border-color: #ff8c00; background: rgba(255,140,0,0.1); }
 
         /* Match score inputs */
         .score-input {
@@ -1877,7 +1885,12 @@
                 <div class="player-tile">
                     ${editable ? `<button class="player-tile-remove" onclick="removePlayer(${i})">&times;</button>` : ''}
                     ${jerseySVG(getJerseyNumber(p.name))}
-                    <div class="player-tile-name">${esc(p.name)}</div>
+                    ${editable
+                        ? `<input class="player-tile-name-input" value="${esc(p.name)}"
+                            onblur="renamePlayer(${i}, this)"
+                            onkeydown="if(event.key==='Enter')this.blur()"
+                            title="Edit name">`
+                        : `<div class="player-tile-name">${esc(p.name)}</div>`}
                 </div>`).join('')}</div>`;
         }
 
@@ -2204,6 +2217,79 @@
             saveMatches(); renderMatches();
         }
 
+        // ===== RETROSPECTIVE GOAL EDITING =====
+        let retroGoalIsPenalty = false;
+        let retroGoalIsOwnGoal = false;
+
+        function toggleRetroPenalty(btn, matchIdx) {
+            retroGoalIsPenalty = !retroGoalIsPenalty;
+            if (retroGoalIsPenalty) retroGoalIsOwnGoal = false;
+            btn.style.borderColor = retroGoalIsPenalty ? '#f5576c' : 'rgba(255,255,255,0.2)';
+            btn.style.color = retroGoalIsPenalty ? '#f5576c' : 'rgba(255,255,255,0.4)';
+            const ogBtn = document.getElementById(`retro-og-btn-${matchIdx}`);
+            if (ogBtn) { ogBtn.style.borderColor = 'rgba(255,255,255,0.2)'; ogBtn.style.color = 'rgba(255,255,255,0.4)'; }
+        }
+
+        function toggleRetroOwnGoal(btn, matchIdx) {
+            retroGoalIsOwnGoal = !retroGoalIsOwnGoal;
+            if (retroGoalIsOwnGoal) retroGoalIsPenalty = false;
+            btn.style.borderColor = retroGoalIsOwnGoal ? '#f5a623' : 'rgba(255,255,255,0.2)';
+            btn.style.color = retroGoalIsOwnGoal ? '#f5a623' : 'rgba(255,255,255,0.4)';
+            const penBtn = document.getElementById(`retro-pen-btn-${matchIdx}`);
+            if (penBtn) { penBtn.style.borderColor = 'rgba(255,255,255,0.2)'; penBtn.style.color = 'rgba(255,255,255,0.4)'; }
+        }
+
+        function addRetroGoal(matchIdx) {
+            const m = matches[matchIdx];
+            if (!m) return;
+            const timeEl = document.getElementById(`retro-goal-time-${matchIdx}`);
+            const time = (timeEl && timeEl.value.trim()) ? timeEl.value.trim() : '';
+            if (retroGoalIsOwnGoal) {
+                retroGoalIsOwnGoal = false;
+                m.events.push({ player: 'OG', type: 'goal', count: 1, assistBy: null, time, penalty: false, ownGoal: true });
+                m.scoreOpp = (m.scoreOpp || 0) + 1;
+                saveMatches(); renderMatches(); render();
+                return;
+            }
+            const sel = document.getElementById(`retro-goal-select-${matchIdx}`);
+            const player = sel ? sel.value : '';
+            if (!player) return;
+            const assistSel = document.getElementById(`retro-goal-assist-${matchIdx}`);
+            const assistBy = assistSel ? assistSel.value : '';
+            const penalty = retroGoalIsPenalty;
+            retroGoalIsPenalty = false;
+            m.events.push({ player, type: 'goal', count: 1, assistBy: assistBy || null, time, penalty });
+            updatePlayerFromMatch(player, 'goals', 1);
+            if (assistBy) updatePlayerFromMatch(assistBy, 'assists', 1);
+            saveMatches(); renderMatches(); render();
+        }
+
+        function addRetroOppGoal(matchIdx) {
+            const m = matches[matchIdx];
+            if (!m) return;
+            const timeEl = document.getElementById(`retro-opp-goal-time-${matchIdx}`);
+            const time = (timeEl && timeEl.value.trim()) ? timeEl.value.trim() : '';
+            if (!m.oppGoals) m.oppGoals = [];
+            m.oppGoals.push({ time });
+            m.scoreOpp = (m.scoreOpp || 0) + 1;
+            saveMatches(); renderMatches();
+        }
+
+        function removeOppGoal(matchIdx, goalIdx) {
+            const m = matches[matchIdx];
+            if (!m || !m.oppGoals) return;
+            m.oppGoals.splice(goalIdx, 1);
+            m.scoreOpp = Math.max(0, (m.scoreOpp || 0) - 1);
+            saveMatches(); renderMatches();
+        }
+
+        function setOppGoalTime(matchIdx, goalIdx, val) {
+            const m = matches[matchIdx];
+            if (!m || !m.oppGoals || !m.oppGoals[goalIdx]) return;
+            m.oppGoals[goalIdx].time = val.trim() || null;
+            saveMatches();
+        }
+
         // ===== DATE HELPERS =====
         function formatMatchDate(d) {
             if (!d) return '';
@@ -2278,7 +2364,20 @@
         function saveEditEvent(matchIdx, evIdx) {
             const ev = matches[matchIdx].events[evIdx];
             const timeEl = document.getElementById(`edit-ev-time-${evIdx}`);
-            if (ev.ownGoal) {
+            if (ev.type === 'assist') {
+                const playerEl = document.getElementById(`edit-ev-player-${evIdx}`);
+                const countEl  = document.getElementById(`edit-ev-count-${evIdx}`);
+                const newPlayer = playerEl ? playerEl.value : ev.player;
+                const newCount  = countEl  ? (parseInt(countEl.value) || 1) : ev.count;
+                if (newPlayer && newPlayer !== ev.player) {
+                    updatePlayerFromMatch(ev.player, 'assists', -(ev.count || 1));
+                    updatePlayerFromMatch(newPlayer, 'assists', newCount);
+                } else if (newCount !== ev.count) {
+                    updatePlayerFromMatch(ev.player, 'assists', newCount - (ev.count || 1));
+                }
+                ev.player = newPlayer || ev.player;
+                ev.count  = newCount;
+            } else if (ev.ownGoal) {
                 ev.time = (timeEl && timeEl.value.trim()) || null;
             } else {
                 const playerEl = document.getElementById(`edit-ev-player-${evIdx}`);
@@ -2846,17 +2945,75 @@
                                     evHtml += `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:6px;margin-top:12px">Assists</div>`;
                                     evAssists.forEach((e) => {
                                         const idx = m.events.indexOf(e);
-                                        evHtml += `<div class="match-event-row">
-                                            <span class="match-event-icon">&#129406;</span>
-                                            <span class="match-event-name">${esc(e.player)}</span>
-                                            <span class="match-event-count a">${e.count > 1 ? 'x' + e.count : ''}</span>
-                                            <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
-                                        </div>`;
+                                        if (editingEventIdx === idx) {
+                                            const pOpts = players.map(p => `<option value="${esc(p.name)}" ${e.player===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
+                                            evHtml += `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+                                                <span style="font-size:0.85rem;flex-shrink:0">&#129406;</span>
+                                                <select id="edit-ev-player-${idx}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:5px 8px;font-size:0.85rem;outline:none">${pOpts}</select>
+                                                <input type="number" id="edit-ev-count-${idx}" value="${e.count||1}" min="1" style="width:50px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:5px 6px;font-size:0.85rem;outline:none;text-align:center">
+                                                <button onclick="saveEditEvent(${activeMatch},${idx})" style="padding:5px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Save</button>
+                                                <button onclick="cancelEditEvent()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer">Cancel</button>
+                                            </div>`;
+                                        } else {
+                                            evHtml += `<div class="match-event-row">
+                                                <span class="match-event-icon">&#129406;</span>
+                                                <span class="match-event-name">${esc(e.player)}</span>
+                                                <span class="match-event-count a">${e.count > 1 ? 'x' + e.count : ''}</span>
+                                                <button class="match-event-edit" onclick="startEditEvent(${idx})" title="Edit">✏️</button>
+                                                <button class="match-event-remove" onclick="removeMatchEvent(${activeMatch},${idx})">&times;</button>
+                                            </div>`;
+                                        }
                                     });
                                 }
                                 evHtml += '</div></div>';
                                 return evHtml;
                             })()}
+                        <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.08);padding-top:14px">
+                            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35);margin-bottom:8px;font-weight:600">Add Goal</div>
+                            <div style="display:flex;flex-direction:column;gap:8px">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                                    <select id="retro-goal-select-${activeMatch}" style="flex:1;min-width:100px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:7px 10px;font-size:0.85rem;outline:none">
+                                        <option value="">Scorer...</option>
+                                        ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                                    </select>
+                                    <select id="retro-goal-assist-${activeMatch}" style="flex:1;min-width:90px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(255,255,255,0.5);padding:7px 10px;font-size:0.85rem;outline:none">
+                                        <option value="">No assist</option>
+                                        ${players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+                                    </select>
+                                    <input type="text" id="retro-goal-time-${activeMatch}" placeholder="mm:ss" style="width:64px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:7px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">
+                                </div>
+                                <div style="display:flex;gap:6px">
+                                    <button id="retro-pen-btn-${activeMatch}" onclick="toggleRetroPenalty(this,${activeMatch})" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">Pen</button>
+                                    <button id="retro-og-btn-${activeMatch}" onclick="toggleRetroOwnGoal(this,${activeMatch})" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s">OG</button>
+                                    <button onclick="addRetroGoal(${activeMatch})" style="flex:1;padding:7px 12px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff8c00,#e85d04);color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer">+ SUMAS Goal</button>
+                                </div>
+                                ${(() => {
+                                    const og = m.oppGoals || [];
+                                    let ogHtml = '<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;margin-top:2px">';
+                                    ogHtml += '<div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.25);margin-bottom:6px;font-weight:600">Opp Goals</div>';
+                                    if (og.length) {
+                                        og.forEach((g, gIdx) => {
+                                            ogHtml += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">'
+                                                + '<span style="font-size:1rem">&#9917;</span>'
+                                                + '<input type="text" value="' + esc(g.time||'') + '" placeholder="mm:ss"'
+                                                + ' onblur="setOppGoalTime(' + activeMatch + ',' + gIdx + ',this.value)"'
+                                                + ' onkeydown="if(event.key===\'Enter\')this.blur()"'
+                                                + ' style="width:64px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:6px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">'
+                                                + '<button onclick="removeOppGoal(' + activeMatch + ',' + gIdx + ')" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(245,87,108,0.3);background:rgba(245,87,108,0.08);color:#f5576c;font-size:0.8rem;font-weight:700;cursor:pointer">&times;</button>'
+                                                + '</div>';
+                                        });
+                                    } else {
+                                        ogHtml += '<div style="font-size:0.8rem;color:rgba(255,255,255,0.2);margin-bottom:6px">No opp goals logged</div>';
+                                    }
+                                    ogHtml += '<div style="display:flex;gap:6px;align-items:center;margin-top:4px">'
+                                        + '<input type="text" id="retro-opp-goal-time-' + activeMatch + '" placeholder="mm:ss" style="width:64px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;padding:7px 8px;font-size:0.85rem;outline:none;text-align:center;font-family:inherit">'
+                                        + '<button onclick="addRetroOppGoal(' + activeMatch + ')" style="flex:1;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:0.85rem;font-weight:700;cursor:pointer">+ Opp Goal</button>'
+                                        + '</div>';
+                                    ogHtml += '</div>';
+                                    return ogHtml;
+                                })()}
+                            </div>
+                        </div>
                     </div>` : ''}
                     <div style="display:flex;align-items:flex-start;justify-content:center;margin:12px 0 6px;gap:0">
                         <div style="text-align:center;flex:1">

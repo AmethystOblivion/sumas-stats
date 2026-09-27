@@ -99,6 +99,11 @@
             font-weight: 600; cursor: pointer; text-align: left; transition: all 0.15s;
         }
         .admin-menu button:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .admin-menu-label {
+            padding: 10px 18px 4px; font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.3);
+        }
+        .admin-menu-label:not(:first-child) { border-top: 1px solid rgba(255,255,255,0.08); margin-top: 4px; padding-top: 10px; }
         .override-modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000;
             background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
@@ -1568,13 +1573,22 @@
         <p>Goals &middot; Assists &middot; C-POTM &middot; P-POTM</p>
         <button class="admin-btn" onclick="toggleAdminMenu()">Admin</button>
         <div class="admin-menu hidden" id="adminMenu">
-            <button id="overrideBtn" onclick="showOverrideModal();toggleAdminMenu()">&#128273; Override</button>
+            <div class="admin-menu-label" id="adminGroupPlayers">Players</div>
             <button id="addPlayerBtn" onclick="showAddPlayerPrompt();toggleAdminMenu()">&#10133; Add Player</button>
+
+            <div class="admin-menu-label" id="adminGroupMatches">Matches</div>
             <button id="importMatchesBtn" onclick="showBatchImportModal();toggleAdminMenu()">&#11014; Import Matches</button>
+
+            <div class="admin-menu-label" id="adminGroupVotes">Votes</div>
             <button id="removeVoteBtn" onclick="showRemoveVoteModal()">&#10060; Remove Vote</button>
             <button id="resetVotesBtn" onclick="showResetVotesModal()">&#128260; Reset Votes</button>
+
+            <div class="admin-menu-label">Season</div>
             <button id="pastSeasonsBtn" onclick="showPastSeasonsModal();toggleAdminMenu()">&#128193; Past Seasons</button>
             <button id="newSeasonBtn" onclick="showNewSeasonModal();toggleAdminMenu()">&#127937; New Season</button>
+
+            <div class="admin-menu-label">Account</div>
+            <button id="overrideBtn" onclick="showOverrideModal();toggleAdminMenu()">&#128273; Override</button>
             <button id="resetAllDataBtn" onclick="showResetAllDataModal()" style="color:#f5576c;border-color:rgba(245,87,108,0.4)">&#128465; Reset All Data</button>
             <button id="backToRolesBtn" onclick="backToRoles()">&#8592; Switch Role</button>
         </div>
@@ -1584,6 +1598,7 @@
         <div class="tabs" id="mainTabs">
             <button class="tab" onclick="switchTab('players')">Players</button>
             <button class="tab active matches-tab" onclick="switchTab('matches')">&#9917; Matches</button>
+            <button class="tab" onclick="switchTab('fixtures')">&#128197; Fixtures</button>
             <button class="tab" onclick="switchTab('leaderboard')">Leaderboard</button>
             <button class="tab" onclick="switchTab('season')">&#128200; Season</button>
             <button class="tab" id="votesTab" onclick="switchTab('votes')">&#128202; Votes</button>
@@ -1604,6 +1619,10 @@
 
         <div id="matchesView" class="view-panel active">
             <div id="matchContent"></div>
+        </div>
+
+        <div id="fixturesView" class="view-panel">
+            <div id="fixturesContent"></div>
         </div>
 
         <div id="votesView" class="view-panel"></div>
@@ -1770,6 +1789,7 @@
             sortMatchesByDate();
             if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
             try { if (currentTab === 'matches') renderMatches(); } catch(e) {}
+            try { if (currentTab === 'fixtures') renderFixturesTab(); } catch(e) {}
             try { if (currentTab === 'votes') renderVotes(); } catch(e) {}
             try { if (currentTab === 'season') renderSeasonStats(); } catch(e) {}
             // Resume live timer if match is ongoing
@@ -1922,8 +1942,8 @@
 
         // ===== TAB SWITCHING =====
         let currentTab = 'matches';
-        const tabMap = { players: 0, matches: 1, leaderboard: 2, season: 3, votes: 4, ai: 5 };
-        const viewIds = { players: 'playersView', matches: 'matchesView', leaderboard: 'leaderboardView', season: 'seasonView', votes: 'votesView', ai: 'aiView' };
+        const tabMap = { players: 0, matches: 1, fixtures: 2, leaderboard: 3, season: 4, votes: 5, ai: 6 };
+        const viewIds = { players: 'playersView', matches: 'matchesView', fixtures: 'fixturesView', leaderboard: 'leaderboardView', season: 'seasonView', votes: 'votesView', ai: 'aiView' };
 
         function switchTab(tab) {
             if (tab === currentTab) return;
@@ -1939,6 +1959,7 @@
             });
             if (tab === 'leaderboard') renderLeaderboard();
             if (tab === 'matches') renderMatches();
+            if (tab === 'fixtures') renderFixturesTab();
             if (tab === 'votes') renderVotes();
             if (tab === 'season') renderSeasonStats();
             inEl.classList.add('active');
@@ -2264,6 +2285,7 @@
             if (activeMatch >= matches.length) activeMatch = matches.length - 1;
             closeDeleteMatchModal();
             saveMatches(); renderMatches();
+            if (currentTab === 'fixtures') renderFixturesTab();
         }
         function setMatchMOTM(idx, name) {
             const oldMotm = matches[idx].motm;
@@ -3421,6 +3443,10 @@
             document.getElementById('resetAllDataBtn').style.display = userRole === 'coach' ? '' : 'none';
             document.getElementById('importMatchesBtn').style.display = userRole === 'coach' ? '' : 'none';
             document.getElementById('newSeasonBtn').style.display = userRole === 'coach' ? '' : 'none';
+            // Group labels only show when at least one button in that group is visible
+            document.getElementById('adminGroupPlayers').style.display = isEditable() ? '' : 'none';
+            document.getElementById('adminGroupMatches').style.display = userRole === 'coach' ? '' : 'none';
+            document.getElementById('adminGroupVotes').style.display = isEditable() ? '' : 'none';
             // Votes tab only visible to coaches
             document.getElementById('votesTab').style.display = userRole === 'coach' ? 'block' : 'none';
             // If a non-coach somehow ends up on votes tab, redirect to matches
@@ -3953,6 +3979,163 @@
             saveMatches(); renderMatches(); render();
         }
 
+        // ===== FIXTURES TAB =====
+        let fixturesParsed = [];
+        let fixturesBulkOpen = false;
+        function fixtureParseLine(line) {
+            line = line.trim();
+            if (!line || line.startsWith('#')) return null;
+            const parts = line.split(',').map(p => p.trim());
+            if (parts.length < 2) return { error: line, msg: 'Need at least: Date, Opponent' };
+            const date = batchParseDate(parts[0]);
+            const opp  = parts[1] || '';
+            const ha   = batchParseHA(parts[2]);
+            const comp = parts[3] || null;
+            if (!date) return { error: line, msg: `Can't read date "${parts[0]}" — use DD/MM/YY` };
+            if (!opp)  return { error: line, msg: 'Opponent name is empty' };
+            return { ok: true, date, opponent: opp, homeAway: ha, competition: comp };
+        }
+        function toggleFixturesBulk() {
+            fixturesBulkOpen = !fixturesBulkOpen;
+            fixturesParsed = [];
+            renderFixturesTab();
+            if (fixturesBulkOpen) setTimeout(() => { const t = document.getElementById('fixturesBulkText'); if (t) t.focus(); }, 50);
+        }
+        function renderFixturesBulkPreview(errors) {
+            errors = errors || [];
+            const preview = document.getElementById('fixturesBulkPreview');
+            const confirmBtn = document.getElementById('fixturesBulkConfirmBtn');
+            if (!preview || !confirmBtn) return;
+            let html = '';
+            errors.forEach(r => {
+                html += `<div class="batch-preview-row error">
+                    <span style="color:var(--danger);font-size:0.75rem">✕ ${esc(r.msg)}</span>
+                    <span style="color:rgba(255,255,255,0.3);font-size:0.72rem;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.error||'')}</span>
+                </div>`;
+            });
+            fixturesParsed.forEach(r => {
+                const haLabel   = r.homeAway === 'home' ? ' · 🏠' : r.homeAway === 'away' ? ' · ✈️' : '';
+                const compLabel = r.competition ? ` · ${esc(r.competition)}` : '';
+                html += `<div class="batch-preview-row ok">
+                    <span style="color:#fff;font-size:0.82rem">${esc(formatMatchDate(r.date))} &nbsp;vs ${esc(r.opponent)}${haLabel}${compLabel}</span>
+                </div>`;
+            });
+            preview.innerHTML = html || '';
+            const hasOk = fixturesParsed.length > 0;
+            confirmBtn.disabled = !hasOk;
+            confirmBtn.style.opacity = hasOk ? '1' : '0.4';
+            confirmBtn.textContent = hasOk ? `Add ${fixturesParsed.length} fixture${fixturesParsed.length > 1 ? 's' : ''}` : 'Add Fixtures';
+        }
+        function fixturesBulkParsePreview() {
+            const textEl = document.getElementById('fixturesBulkText');
+            if (!textEl) return;
+            const lines = textEl.value.split('\n').map(l => l.trim()).filter(l => l);
+            fixturesParsed = [];
+            const errors = [];
+            lines.forEach(line => {
+                const r = fixtureParseLine(line);
+                if (!r) return;
+                if (r.error) errors.push(r);
+                else fixturesParsed.push(r);
+            });
+            renderFixturesBulkPreview(errors);
+        }
+        function confirmAddFixtures() {
+            if (!fixturesParsed.length) return;
+            fixturesParsed.forEach(r => {
+                matches.push({
+                    events: [], motm: '', opponent: r.opponent, date: r.date,
+                    homeAway: r.homeAway, location: null, competition: r.competition,
+                    linesman: null, scoreSumas: 0, scoreOpp: 0, status: 'pending',
+                    poll: { opened: false, closed: false, votes: {}, voters: [], voterNames: [], voterChoices: {} }
+                });
+            });
+            sortMatchesByDate();
+            fixturesParsed = [];
+            fixturesBulkOpen = false;
+            saveMatches(); renderMatches(); render(); renderFixturesTab();
+        }
+        function jumpToMatch(i) {
+            selectMatch(i);
+            switchTab('matches');
+        }
+        function editFixture(i) {
+            selectMatch(i);
+            switchTab('matches');
+            matchEditOpen = true;
+            renderMatches();
+        }
+        function renderFixturesTab() {
+            const c = document.getElementById('fixturesContent');
+            if (!c) return;
+            const editable = isEditable();
+            let html = '';
+
+            if (editable) {
+                html += `<div style="margin-bottom:14px">
+                    <button class="match-btn" onclick="toggleFixturesBulk()">${fixturesBulkOpen ? '&#8722; Close' : '&#10133; Add Fixtures'}</button>
+                </div>`;
+                if (fixturesBulkOpen) {
+                    html += `<div style="margin-bottom:18px">
+                        <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:6px">
+                            Paste the whole season's fixture list — one per line: <span style="color:rgba(255,255,255,0.7);font-style:italic">Date, Opponent, H/A, Competition</span>
+                        </p>
+                        <p style="color:rgba(255,255,255,0.35);font-size:0.75rem;margin-bottom:8px">
+                            Date: DD/MM/YY &nbsp;·&nbsp; H/A: H or A &nbsp;·&nbsp; Last two optional
+                        </p>
+                        <textarea id="fixturesBulkText"
+                            placeholder="12/04/26, Woodley Utd, H, League&#10;19/04/26, Tilehurst, A, Cup&#10;26/04/26, Earley, H"
+                            style="width:100%;min-height:110px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);
+                                   border-radius:10px;color:#fff;font-size:0.85rem;line-height:1.6;padding:10px 12px;
+                                   resize:none;outline:none;font-family:monospace;box-sizing:border-box;overflow:hidden"
+                            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';fixturesBulkParsePreview()"></textarea>
+                        <div id="fixturesBulkPreview" style="margin-top:10px;max-height:220px;overflow-y:auto"></div>
+                        <div style="text-align:right;margin-top:10px">
+                            <button class="custom-modal-confirm" id="fixturesBulkConfirmBtn" onclick="confirmAddFixtures()" disabled style="opacity:0.4">Add Fixtures</button>
+                        </div>
+                    </div>`;
+                }
+            }
+
+            if (!matches.length) {
+                html += `<div class="empty-state"><p>No fixtures yet</p>
+                    <span>${editable ? 'Add your season\'s fixture list above' : 'No fixtures scheduled yet'}</span></div>`;
+            } else {
+                html += `<div style="display:flex;flex-direction:column;gap:8px">` + matches.map((m, i) => {
+                    const haLabel   = m.homeAway === 'home' ? '&#127968; H' : m.homeAway === 'away' ? '&#9992;&#65039; A' : '';
+                    const compLabel = m.competition ? esc(m.competition) : '';
+                    const subParts = [haLabel, compLabel].filter(Boolean).join(' &middot; ');
+                    let statusHtml;
+                    if (m.status === 'ended') {
+                        const score = getMatchScore(m);
+                        const resultColor = score > m.scoreOpp ? '#43e97b' : score < m.scoreOpp ? '#f5576c' : '#f9d423';
+                        statusHtml = `<span style="color:${resultColor};font-weight:700;font-size:0.95rem">${score}&ndash;${m.scoreOpp}</span>`;
+                    } else if (m.status === 'live' || m.status === 'ht') {
+                        statusHtml = `<span class="match-live-badge">&#9679; Live</span>`;
+                    } else {
+                        statusHtml = `<span style="color:rgba(255,255,255,0.35);font-size:0.75rem;font-weight:600">Upcoming</span>`;
+                    }
+                    return `<div onclick="jumpToMatch(${i})" style="display:flex;align-items:center;justify-content:space-between;gap:10px;
+                        padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer">
+                        <div style="min-width:0">
+                            <div style="color:#fff;font-weight:700;font-size:0.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                ${esc(formatMatchDate(m.date))} &nbsp;vs ${esc(m.opponent || 'TBC')}
+                            </div>
+                            ${subParts ? `<div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:2px">${subParts}</div>` : ''}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+                            ${statusHtml}
+                            ${editable ? `
+                                <button onclick="event.stopPropagation();editFixture(${i})" title="Edit" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.95rem;cursor:pointer;padding:2px">&#9999;&#65039;</button>
+                                <button onclick="event.stopPropagation();deleteMatch(${i})" title="Delete" style="background:none;border:none;color:rgba(245,87,108,0.7);font-size:0.95rem;cursor:pointer;padding:2px">&#128465;&#65039;</button>
+                            ` : ''}
+                        </div>
+                    </div>`;
+                }).join('') + `</div>`;
+            }
+            c.innerHTML = html;
+        }
+
         // ===== EXCEL IMPORT =====
 
         // Parse a Goals/Scorers cell: "Charlie 22 pen, Oliver assist: Tom, OG 10"
@@ -4383,6 +4566,7 @@
         // ── Navigation ──
         if (/show players|player[s]? tab|go to player/.test(lower)) { switchTab('players'); showVoiceResult('📋 Players', null); return; }
         if (/show matches|match(?:es)? tab|go to match/.test(lower)) { switchTab('matches'); showVoiceResult('📅 Matches', null); return; }
+        if (/show fixtures|fixtures? tab|go to fixtures/.test(lower)) { switchTab('fixtures'); showVoiceResult('📅 Fixtures', null); return; }
         if (/leaderboard/.test(lower)) { switchTab('leaderboard'); showVoiceResult('🏆 Leaderboard', null); return; }
         if (/season stats|season tab/.test(lower)) { switchTab('season'); showVoiceResult('📊 Season Stats', null); return; }
         if (/votes|voting/.test(lower)) { switchTab('votes'); showVoiceResult('🗳️ Votes', null); return; }

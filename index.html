@@ -1455,6 +1455,46 @@
         </div>
     </div>
 
+    <!-- Add Fixtures (bulk, no results yet — shows straight in the Matches tab) -->
+    <div class="custom-modal hidden" id="addFixturesModal">
+        <div class="custom-modal-box" style="max-width:480px;width:95%">
+            <h3>&#128197; Add Fixtures</h3>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:8px">
+                Add the whole season's fixture list at once — they'll show up in the Matches tab.
+            </p>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="file" id="fixturesExcelInput" accept=".xlsx,.xls,.csv" style="display:none"
+                    onchange="if(this.files[0])loadFixturesExcelAndImport(this.files[0]);this.value=''">
+                <button onclick="document.getElementById('fixturesExcelInput').click()"
+                    style="flex:1;padding:9px 14px;background:rgba(67,233,123,0.1);border:1px solid rgba(67,233,123,0.3);
+                           border-radius:10px;color:#43e97b;font-size:0.85rem;font-weight:600;cursor:pointer">
+                    📊 Upload Excel or CSV
+                </button>
+                <button onclick="downloadFixturesTemplate()"
+                    style="padding:9px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+                           border-radius:10px;color:rgba(255,255,255,0.4);font-size:0.8rem;cursor:pointer;white-space:nowrap">
+                    ⬇ Template
+                </button>
+            </div>
+            <div style="text-align:center;color:rgba(255,255,255,0.18);font-size:0.72rem;margin:0 0 8px">— or paste text below —</div>
+            <p style="color:rgba(255,255,255,0.35);font-size:0.75rem;margin-bottom:8px">
+                One fixture per line: <span style="color:rgba(255,255,255,0.55);font-style:italic">Date, Opponent, H/A, Competition</span>
+                &nbsp;(DD/MM/YY &nbsp;·&nbsp; H or A &nbsp;·&nbsp; last two optional)
+            </p>
+            <textarea id="fixturesText"
+                placeholder="12/04/26, Woodley Utd, H, League&#10;19/04/26, Tilehurst, A, Cup&#10;26/04/26, Earley, H"
+                style="width:100%;min-height:110px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);
+                       border-radius:10px;color:#fff;font-size:0.85rem;line-height:1.6;padding:10px 12px;
+                       resize:none;outline:none;font-family:monospace;box-sizing:border-box;overflow:hidden"
+                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';fixturesParsePreview()"></textarea>
+            <div id="fixturesPreview" style="margin-top:10px;max-height:220px;overflow-y:auto"></div>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeAddFixturesModal()">Cancel</button>
+                <button class="custom-modal-confirm" id="fixturesConfirmBtn" onclick="confirmAddFixtures()" disabled style="opacity:0.4">Add Fixtures</button>
+            </div>
+        </div>
+    </div>
+
     <div class="custom-modal hidden" id="deleteMatchModal">
         <div class="custom-modal-box">
             <h3 id="deleteMatchTitle">Delete Match?</h3>
@@ -1577,6 +1617,7 @@
             <button id="addPlayerBtn" onclick="showAddPlayerPrompt();toggleAdminMenu()">&#10133; Add Player</button>
 
             <div class="admin-menu-label" id="adminGroupMatches">Matches</div>
+            <button id="addFixturesBtn" onclick="showAddFixturesModal();toggleAdminMenu()">&#128197; Add Fixtures</button>
             <button id="importMatchesBtn" onclick="showBatchImportModal();toggleAdminMenu()">&#11014; Import Matches</button>
 
             <div class="admin-menu-label" id="adminGroupVotes">Votes</div>
@@ -1598,7 +1639,6 @@
         <div class="tabs" id="mainTabs">
             <button class="tab" onclick="switchTab('players')">Players</button>
             <button class="tab active matches-tab" onclick="switchTab('matches')">&#9917; Matches</button>
-            <button class="tab" onclick="switchTab('fixtures')">&#128197; Fixtures</button>
             <button class="tab" onclick="switchTab('leaderboard')">Leaderboard</button>
             <button class="tab" onclick="switchTab('season')">&#128200; Season</button>
             <button class="tab" id="votesTab" onclick="switchTab('votes')">&#128202; Votes</button>
@@ -1619,10 +1659,6 @@
 
         <div id="matchesView" class="view-panel active">
             <div id="matchContent"></div>
-        </div>
-
-        <div id="fixturesView" class="view-panel">
-            <div id="fixturesContent"></div>
         </div>
 
         <div id="votesView" class="view-panel"></div>
@@ -1789,7 +1825,6 @@
             sortMatchesByDate();
             if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
             try { if (currentTab === 'matches') renderMatches(); } catch(e) {}
-            try { if (currentTab === 'fixtures') renderFixturesTab(); } catch(e) {}
             try { if (currentTab === 'votes') renderVotes(); } catch(e) {}
             try { if (currentTab === 'season') renderSeasonStats(); } catch(e) {}
             // Resume live timer if match is ongoing
@@ -1942,8 +1977,8 @@
 
         // ===== TAB SWITCHING =====
         let currentTab = 'matches';
-        const tabMap = { players: 0, matches: 1, fixtures: 2, leaderboard: 3, season: 4, votes: 5, ai: 6 };
-        const viewIds = { players: 'playersView', matches: 'matchesView', fixtures: 'fixturesView', leaderboard: 'leaderboardView', season: 'seasonView', votes: 'votesView', ai: 'aiView' };
+        const tabMap = { players: 0, matches: 1, leaderboard: 2, season: 3, votes: 4, ai: 5 };
+        const viewIds = { players: 'playersView', matches: 'matchesView', leaderboard: 'leaderboardView', season: 'seasonView', votes: 'votesView', ai: 'aiView' };
 
         function switchTab(tab) {
             if (tab === currentTab) return;
@@ -1959,7 +1994,6 @@
             });
             if (tab === 'leaderboard') renderLeaderboard();
             if (tab === 'matches') renderMatches();
-            if (tab === 'fixtures') renderFixturesTab();
             if (tab === 'votes') renderVotes();
             if (tab === 'season') renderSeasonStats();
             inEl.classList.add('active');
@@ -2285,7 +2319,6 @@
             if (activeMatch >= matches.length) activeMatch = matches.length - 1;
             closeDeleteMatchModal();
             saveMatches(); renderMatches();
-            if (currentTab === 'fixtures') renderFixturesTab();
         }
         function setMatchMOTM(idx, name) {
             const oldMotm = matches[idx].motm;
@@ -3438,6 +3471,7 @@
         function applyReadOnly() {
             document.getElementById('overrideBtn').style.display = userRole === 'parent' ? 'none' : '';
             document.getElementById('addPlayerBtn').style.display = isEditable() ? '' : 'none';
+            document.getElementById('addFixturesBtn').style.display = isEditable() ? '' : 'none';
             document.getElementById('removeVoteBtn').style.display = isEditable() ? '' : 'none';
             document.getElementById('resetVotesBtn').style.display = isEditable() ? '' : 'none';
             document.getElementById('resetAllDataBtn').style.display = userRole === 'coach' ? '' : 'none';
@@ -3445,7 +3479,7 @@
             document.getElementById('newSeasonBtn').style.display = userRole === 'coach' ? '' : 'none';
             // Group labels only show when at least one button in that group is visible
             document.getElementById('adminGroupPlayers').style.display = isEditable() ? '' : 'none';
-            document.getElementById('adminGroupMatches').style.display = userRole === 'coach' ? '' : 'none';
+            document.getElementById('adminGroupMatches').style.display = (isEditable() || userRole === 'coach') ? '' : 'none';
             document.getElementById('adminGroupVotes').style.display = isEditable() ? '' : 'none';
             // Votes tab only visible to coaches
             document.getElementById('votesTab').style.display = userRole === 'coach' ? 'block' : 'none';
@@ -3979,9 +4013,22 @@
             saveMatches(); renderMatches(); render();
         }
 
-        // ===== FIXTURES TAB =====
+        // ===== ADD FIXTURES (bulk, shows straight in the Matches tab) =====
         let fixturesParsed = [];
-        let fixturesBulkOpen = false;
+        function showAddFixturesModal() {
+            document.getElementById('addFixturesModal').classList.remove('hidden');
+            document.getElementById('fixturesText').value = '';
+            document.getElementById('fixturesPreview').innerHTML = '';
+            document.getElementById('fixturesConfirmBtn').disabled = true;
+            document.getElementById('fixturesConfirmBtn').style.opacity = '0.4';
+            document.getElementById('fixturesConfirmBtn').textContent = 'Add Fixtures';
+            fixturesParsed = [];
+            setTimeout(() => document.getElementById('fixturesText').focus(), 100);
+        }
+        function closeAddFixturesModal() {
+            document.getElementById('addFixturesModal').classList.add('hidden');
+            fixturesParsed = [];
+        }
         function fixtureParseLine(line) {
             line = line.trim();
             if (!line || line.startsWith('#')) return null;
@@ -3995,17 +4042,10 @@
             if (!opp)  return { error: line, msg: 'Opponent name is empty' };
             return { ok: true, date, opponent: opp, homeAway: ha, competition: comp };
         }
-        function toggleFixturesBulk() {
-            fixturesBulkOpen = !fixturesBulkOpen;
-            fixturesParsed = [];
-            renderFixturesTab();
-            if (fixturesBulkOpen) setTimeout(() => { const t = document.getElementById('fixturesBulkText'); if (t) t.focus(); }, 50);
-        }
-        function renderFixturesBulkPreview(errors) {
+        function renderFixturesPreview(errors) {
             errors = errors || [];
-            const preview = document.getElementById('fixturesBulkPreview');
-            const confirmBtn = document.getElementById('fixturesBulkConfirmBtn');
-            if (!preview || !confirmBtn) return;
+            const preview = document.getElementById('fixturesPreview');
+            const confirmBtn = document.getElementById('fixturesConfirmBtn');
             let html = '';
             errors.forEach(r => {
                 html += `<div class="batch-preview-row error">
@@ -4026,10 +4066,9 @@
             confirmBtn.style.opacity = hasOk ? '1' : '0.4';
             confirmBtn.textContent = hasOk ? `Add ${fixturesParsed.length} fixture${fixturesParsed.length > 1 ? 's' : ''}` : 'Add Fixtures';
         }
-        function fixturesBulkParsePreview() {
-            const textEl = document.getElementById('fixturesBulkText');
-            if (!textEl) return;
-            const lines = textEl.value.split('\n').map(l => l.trim()).filter(l => l);
+        function fixturesParsePreview() {
+            const text = document.getElementById('fixturesText').value;
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l);
             fixturesParsed = [];
             const errors = [];
             lines.forEach(line => {
@@ -4038,7 +4077,7 @@
                 if (r.error) errors.push(r);
                 else fixturesParsed.push(r);
             });
-            renderFixturesBulkPreview(errors);
+            renderFixturesPreview(errors);
         }
         function confirmAddFixtures() {
             if (!fixturesParsed.length) return;
@@ -4051,88 +4090,92 @@
                 });
             });
             sortMatchesByDate();
-            fixturesParsed = [];
-            fixturesBulkOpen = false;
-            saveMatches(); renderMatches(); render(); renderFixturesTab();
+            activeMatch = matches.length - 1;
+            closeAddFixturesModal();
+            saveMatches(); renderMatches(); render();
         }
-        function jumpToMatch(i) {
-            selectMatch(i);
-            switchTab('matches');
-        }
-        function editFixture(i) {
-            selectMatch(i);
-            switchTab('matches');
-            matchEditOpen = true;
-            renderMatches();
-        }
-        function renderFixturesTab() {
-            const c = document.getElementById('fixturesContent');
-            if (!c) return;
-            const editable = isEditable();
-            let html = '';
 
-            if (editable) {
-                html += `<div style="margin-bottom:14px">
-                    <button class="match-btn" onclick="toggleFixturesBulk()">${fixturesBulkOpen ? '&#8722; Close' : '&#10133; Add Fixtures'}</button>
-                </div>`;
-                if (fixturesBulkOpen) {
-                    html += `<div style="margin-bottom:18px">
-                        <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:6px">
-                            Paste the whole season's fixture list — one per line: <span style="color:rgba(255,255,255,0.7);font-style:italic">Date, Opponent, H/A, Competition</span>
-                        </p>
-                        <p style="color:rgba(255,255,255,0.35);font-size:0.75rem;margin-bottom:8px">
-                            Date: DD/MM/YY &nbsp;·&nbsp; H/A: H or A &nbsp;·&nbsp; Last two optional
-                        </p>
-                        <textarea id="fixturesBulkText"
-                            placeholder="12/04/26, Woodley Utd, H, League&#10;19/04/26, Tilehurst, A, Cup&#10;26/04/26, Earley, H"
-                            style="width:100%;min-height:110px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);
-                                   border-radius:10px;color:#fff;font-size:0.85rem;line-height:1.6;padding:10px 12px;
-                                   resize:none;outline:none;font-family:monospace;box-sizing:border-box;overflow:hidden"
-                            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';fixturesBulkParsePreview()"></textarea>
-                        <div id="fixturesBulkPreview" style="margin-top:10px;max-height:220px;overflow-y:auto"></div>
-                        <div style="text-align:right;margin-top:10px">
-                            <button class="custom-modal-confirm" id="fixturesBulkConfirmBtn" onclick="confirmAddFixtures()" disabled style="opacity:0.4">Add Fixtures</button>
-                        </div>
-                    </div>`;
-                }
-            }
+        // Download a CSV template for the fixture list (no score needed)
+        function downloadFixturesTemplate() {
+            const header = 'Date,Opponent,H/A,Competition\n';
+            const example = '12/04/26,Woodley Utd,H,League\n19/04/26,Tilehurst,A,Cup\n26/04/26,Earley,H,\n';
+            const blob = new Blob([header + example], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'sumas-fixtures-template.csv';
+            a.click();
+        }
 
-            if (!matches.length) {
-                html += `<div class="empty-state"><p>No fixtures yet</p>
-                    <span>${editable ? 'Add your season\'s fixture list above' : 'No fixtures scheduled yet'}</span></div>`;
-            } else {
-                html += `<div style="display:flex;flex-direction:column;gap:8px">` + matches.map((m, i) => {
-                    const haLabel   = m.homeAway === 'home' ? '&#127968; H' : m.homeAway === 'away' ? '&#9992;&#65039; A' : '';
-                    const compLabel = m.competition ? esc(m.competition) : '';
-                    const subParts = [haLabel, compLabel].filter(Boolean).join(' &middot; ');
-                    let statusHtml;
-                    if (m.status === 'ended') {
-                        const score = getMatchScore(m);
-                        const resultColor = score > m.scoreOpp ? '#43e97b' : score < m.scoreOpp ? '#f5576c' : '#f9d423';
-                        statusHtml = `<span style="color:${resultColor};font-weight:700;font-size:0.95rem">${score}&ndash;${m.scoreOpp}</span>`;
-                    } else if (m.status === 'live' || m.status === 'ht') {
-                        statusHtml = `<span class="match-live-badge">&#9679; Live</span>`;
-                    } else {
-                        statusHtml = `<span style="color:rgba(255,255,255,0.35);font-size:0.75rem;font-weight:600">Upcoming</span>`;
+        // Lazy-load SheetJS (xlsx) then process the chosen fixtures file
+        function loadFixturesExcelAndImport(file) {
+            if (window.XLSX) { processFixturesExcelFile(file); return; }
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            script.onload  = () => processFixturesExcelFile(file);
+            script.onerror = () => alert('Could not load the Excel library. Please check your internet connection.');
+            document.head.appendChild(script);
+        }
+        function processFixturesExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type:'array', cellDates:true });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:'' });
+
+                    if (!rows.length) { alert('The file appears to be empty.'); return; }
+
+                    const headerRow = rows[0].map(h => String(h || '').toLowerCase().trim());
+                    const col = (...names) => { for (const n of names) { const i = headerRow.indexOf(n); if (i >= 0) return i; } return -1; };
+
+                    const dateCol = col('date');
+                    const oppCol  = col('opponent', 'opp', 'team');
+                    const haCol   = col('h/a', 'ha', 'home/away', 'venue');
+                    const compCol = col('competition', 'comp', 'league', 'cup');
+
+                    if (dateCol < 0 || oppCol < 0) {
+                        alert('Could not find required columns.\nExpected headers: Date, Opponent (H/A and Competition are optional).\nDownload the template to see the correct format.');
+                        return;
                     }
-                    return `<div onclick="jumpToMatch(${i})" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer">
-                        <div style="color:#fff;font-weight:700;font-size:0.9rem;line-height:1.35">
-                            ${esc(formatMatchDate(m.date))} &nbsp;vs ${esc(m.opponent || 'TBC')}
-                        </div>
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px">
-                            <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${subParts}</div>
-                            <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
-                                ${statusHtml}
-                                ${editable ? `
-                                    <button onclick="event.stopPropagation();editFixture(${i})" title="Edit" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.95rem;cursor:pointer;padding:2px">&#9999;&#65039;</button>
-                                    <button onclick="event.stopPropagation();deleteMatch(${i})" title="Delete" style="background:none;border:none;color:rgba(245,87,108,0.7);font-size:0.95rem;cursor:pointer;padding:2px">&#128465;&#65039;</button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('') + `</div>`;
-            }
-            c.innerHTML = html;
+
+                    fixturesParsed = [];
+                    const errors = [];
+
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        let dateRaw = row[dateCol];
+                        let date;
+                        if (dateRaw instanceof Date) {
+                            const y = dateRaw.getFullYear();
+                            const mo = String(dateRaw.getMonth() + 1).padStart(2,'0');
+                            const d  = String(dateRaw.getDate()).padStart(2,'0');
+                            date = `${y}-${mo}-${d}`;
+                        } else {
+                            date = batchParseDate(String(dateRaw || '').trim());
+                        }
+                        const opp = String(row[oppCol] || '').trim();
+                        if (!date && !opp) continue; // skip blank rows
+                        if (!date) { errors.push({ error: `Row ${i+1}`, msg: `Can't read date "${dateRaw}"` }); continue; }
+                        if (!opp)  { errors.push({ error: `Row ${i+1}`, msg: 'Opponent name is empty' }); continue; }
+
+                        const homeAway    = haCol   >= 0 ? batchParseHA(String(row[haCol] || '')) : null;
+                        const competition = compCol >= 0 ? (String(row[compCol] || '').trim() || null) : null;
+
+                        fixturesParsed.push({ ok:true, date, opponent:opp, homeAway, competition });
+                    }
+
+                    if (!fixturesParsed.length && !errors.length) {
+                        alert('No valid fixture rows found. Make sure the spreadsheet has a header row and at least one data row.');
+                        return;
+                    }
+                    renderFixturesPreview(errors);
+                } catch (err) {
+                    console.error(err);
+                    alert('Could not read the file. Make sure it is a valid .xlsx, .xls, or .csv file.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         // ===== EXCEL IMPORT =====
@@ -4565,7 +4608,6 @@
         // ── Navigation ──
         if (/show players|player[s]? tab|go to player/.test(lower)) { switchTab('players'); showVoiceResult('📋 Players', null); return; }
         if (/show matches|match(?:es)? tab|go to match/.test(lower)) { switchTab('matches'); showVoiceResult('📅 Matches', null); return; }
-        if (/show fixtures|fixtures? tab|go to fixtures/.test(lower)) { switchTab('fixtures'); showVoiceResult('📅 Fixtures', null); return; }
         if (/leaderboard/.test(lower)) { switchTab('leaderboard'); showVoiceResult('🏆 Leaderboard', null); return; }
         if (/season stats|season tab/.test(lower)) { switchTab('season'); showVoiceResult('📊 Season Stats', null); return; }
         if (/votes|voting/.test(lower)) { switchTab('votes'); showVoiceResult('🗳️ Votes', null); return; }

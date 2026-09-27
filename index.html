@@ -4115,20 +4115,19 @@
                     } else {
                         statusHtml = `<span style="color:rgba(255,255,255,0.35);font-size:0.75rem;font-weight:600">Upcoming</span>`;
                     }
-                    return `<div onclick="jumpToMatch(${i})" style="display:flex;align-items:center;justify-content:space-between;gap:10px;
-                        padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer">
-                        <div style="min-width:0">
-                            <div style="color:#fff;font-weight:700;font-size:0.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                                ${esc(formatMatchDate(m.date))} &nbsp;vs ${esc(m.opponent || 'TBC')}
-                            </div>
-                            ${subParts ? `<div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:2px">${subParts}</div>` : ''}
+                    return `<div onclick="jumpToMatch(${i})" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer">
+                        <div style="color:#fff;font-weight:700;font-size:0.9rem;line-height:1.35">
+                            ${esc(formatMatchDate(m.date))} &nbsp;vs ${esc(m.opponent || 'TBC')}
                         </div>
-                        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
-                            ${statusHtml}
-                            ${editable ? `
-                                <button onclick="event.stopPropagation();editFixture(${i})" title="Edit" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.95rem;cursor:pointer;padding:2px">&#9999;&#65039;</button>
-                                <button onclick="event.stopPropagation();deleteMatch(${i})" title="Delete" style="background:none;border:none;color:rgba(245,87,108,0.7);font-size:0.95rem;cursor:pointer;padding:2px">&#128465;&#65039;</button>
-                            ` : ''}
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px">
+                            <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${subParts}</div>
+                            <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+                                ${statusHtml}
+                                ${editable ? `
+                                    <button onclick="event.stopPropagation();editFixture(${i})" title="Edit" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.95rem;cursor:pointer;padding:2px">&#9999;&#65039;</button>
+                                    <button onclick="event.stopPropagation();deleteMatch(${i})" title="Delete" style="background:none;border:none;color:rgba(245,87,108,0.7);font-size:0.95rem;cursor:pointer;padding:2px">&#128465;&#65039;</button>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>`;
                 }).join('') + `</div>`;

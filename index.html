@@ -3632,23 +3632,40 @@
         // ===== PAST SEASONS =====
         function showPastSeasonsModal() {
             const list = document.getElementById('pastSeasonsList');
+            const editable = isEditable();
             if (!pastSeasons.length) {
                 list.innerHTML = `<p style="color:rgba(255,255,255,0.4);font-size:0.85rem;text-align:center;padding:20px 0">No past seasons yet</p>`;
             } else {
                 list.innerHTML = pastSeasons.map((s, i) => `
-                    <button onclick="openPastSeasonDetail(${i})" style="display:block;width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;
-                        border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);
-                        color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer">
-                        &#127942; ${esc(s.name)}
-                        <span style="display:block;color:rgba(255,255,255,0.4);font-size:0.75rem;font-weight:400;margin-top:2px">
-                            ${(s.matches||[]).filter(m => m.status === 'ended').length} matches played
-                        </span>
-                    </button>`).join('');
+                    <div style="display:flex;align-items:stretch;gap:6px;margin-bottom:8px">
+                        <button onclick="openPastSeasonDetail(${i})" style="flex:1;text-align:left;padding:12px 14px;
+                            border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);
+                            color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer">
+                            &#127942; ${esc(s.name)}
+                            <span style="display:block;color:rgba(255,255,255,0.4);font-size:0.75rem;font-weight:400;margin-top:2px">
+                                ${(s.matches||[]).filter(m => m.status === 'ended').length} matches played
+                            </span>
+                        </button>
+                        ${editable ? `<button onclick="renameSeason(${i})" title="Rename season" style="padding:0 14px;border-radius:10px;
+                            border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);
+                            cursor:pointer;font-size:0.95rem">&#9999;&#65039;</button>` : ''}
+                    </div>`).join('');
             }
             document.getElementById('pastSeasonsModal').classList.remove('hidden');
         }
         function closePastSeasonsModal() {
             document.getElementById('pastSeasonsModal').classList.add('hidden');
+        }
+        function renameSeason(i) {
+            const season = pastSeasons[i];
+            if (!season) return;
+            const newName = prompt('Rename season:', season.name);
+            if (newName === null) return;
+            const trimmed = newName.trim();
+            if (!trimmed) return;
+            season.name = trimmed;
+            saveSeasons();
+            showPastSeasonsModal();
         }
         function openPastSeasonDetail(i) {
             const season = pastSeasons[i];

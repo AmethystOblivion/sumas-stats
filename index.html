@@ -1577,6 +1577,22 @@
         </div>
     </div>
 
+    <!-- Add Player -->
+    <div class="custom-modal hidden" id="addPlayerModal">
+        <div class="custom-modal-box">
+            <h3>&#10133; Add Player</h3>
+            <input type="text" id="addPlayerNameInput" placeholder="Player name" autocomplete="off"
+                style="margin-bottom:10px" onkeydown="if(event.key==='Enter'){document.getElementById('addPlayerNumberInput').focus()}">
+            <br>
+            <input type="number" id="addPlayerNumberInput" placeholder="Shirt # (optional)" min="1" max="99" autocomplete="off"
+                onkeydown="if(event.key==='Enter'){confirmAddPlayer()}">
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeAddPlayerModal()">Cancel</button>
+                <button class="custom-modal-confirm" onclick="confirmAddPlayer()">Add</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Past Seasons list -->
     <div class="custom-modal hidden" id="pastSeasonsModal">
         <div class="custom-modal-box" style="max-width:420px;width:95%">
@@ -1878,6 +1894,8 @@
         };
         function getJerseyNumber(name) {
             const key = name.toLowerCase().trim();
+            const p = players.find(pl => pl.name.toLowerCase().trim() === key);
+            if (p && p.number) return p.number;
             for (const [k, v] of Object.entries(jerseyNumbers)) {
                 if (key === k || key.startsWith(k)) return v;
             }
@@ -3532,12 +3550,35 @@
             if (menu && !menu.contains(e.target) && e.target !== btn) menu.classList.add('hidden');
         });
         function showAddPlayerPrompt() {
-            const name = prompt('Enter player name:');
-            if (!name || !name.trim()) return;
-            const trimmed = name.trim();
+            document.getElementById('addPlayerNameInput').value = '';
+            document.getElementById('addPlayerNumberInput').value = '';
+            document.getElementById('addPlayerModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('addPlayerNameInput').focus(), 100);
+        }
+        function closeAddPlayerModal() {
+            document.getElementById('addPlayerModal').classList.add('hidden');
+        }
+        function confirmAddPlayer() {
+            const nameInput = document.getElementById('addPlayerNameInput');
+            const numberInput = document.getElementById('addPlayerNumberInput');
+            const trimmed = nameInput.value.trim();
+            if (!trimmed) { nameInput.focus(); return; }
             if (players.some(p => p.name.toLowerCase() === trimmed.toLowerCase())) { alert('Player already exists!'); return; }
-            players.push({ name: trimmed, goals: 0, assists: 0, motm: 0 });
+
+            let number = null;
+            const numRaw = numberInput.value.trim();
+            if (numRaw) {
+                number = parseInt(numRaw, 10);
+                if (isNaN(number) || number < 1 || number > 99) { alert('Shirt number must be between 1 and 99.'); numberInput.focus(); return; }
+                const taken = players.find(p => p.number === number);
+                if (taken && !confirm(`Shirt number ${number} is already worn by ${taken.name}. Add anyway?`)) { numberInput.focus(); return; }
+            }
+
+            const newPlayer = { name: trimmed, goals: 0, assists: 0, motm: 0 };
+            if (number) newPlayer.number = number;
+            players.push(newPlayer);
             save(); render();
+            closeAddPlayerModal();
         }
         function backToRoles() {
             sessionStorage.removeItem('sumasRole');

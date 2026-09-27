@@ -1468,7 +1468,14 @@
                 <button onclick="document.getElementById('fixturesExcelInput').click()"
                     style="flex:1;padding:9px 14px;background:rgba(67,233,123,0.1);border:1px solid rgba(67,233,123,0.3);
                            border-radius:10px;color:#43e97b;font-size:0.85rem;font-weight:600;cursor:pointer">
-                    📊 Upload Excel or CSV
+                    📊 Excel/CSV
+                </button>
+                <input type="file" id="fixturesPdfInput" accept=".pdf" style="display:none"
+                    onchange="if(this.files[0])loadFixturesPdfAndImport(this.files[0]);this.value=''">
+                <button onclick="document.getElementById('fixturesPdfInput').click()"
+                    style="flex:1;padding:9px 14px;background:rgba(245,87,108,0.1);border:1px solid rgba(245,87,108,0.3);
+                           border-radius:10px;color:#f5576c;font-size:0.85rem;font-weight:600;cursor:pointer">
+                    📄 PDF
                 </button>
                 <button onclick="downloadFixturesTemplate()"
                     style="padding:9px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
@@ -1476,6 +1483,9 @@
                     ⬇ Template
                 </button>
             </div>
+            <p style="color:rgba(255,255,255,0.35);font-size:0.72rem;margin-bottom:8px">
+                PDF can be the whole league fixture list — we'll automatically pick out only Wokingham Town Sumas matches and ignore everyone else's.
+            </p>
             <div style="text-align:center;color:rgba(255,255,255,0.18);font-size:0.72rem;margin:0 0 8px">— or paste text below —</div>
             <p style="color:rgba(255,255,255,0.35);font-size:0.75rem;margin-bottom:8px">
                 One fixture per line: <span style="color:rgba(255,255,255,0.55);font-style:italic">Date, Opponent, H/A, Competition</span>
@@ -4176,6 +4186,128 @@
                 }
             };
             reader.readAsArrayBuffer(file);
+        }
+
+        // ===== PDF IMPORT (fixture-list PDF — keeps only Wokingham Town Sumas matches) =====
+        const SUMAS_TEAM_RE = /wokingham\s*town\s*sumas|\bsumas\b/i;
+        const MONTH_MAP = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+
+        function parseFlexibleDate(text) {
+            // DD/MM/YY(YY), DD-MM-YY(YY), DD.MM.YY(YY)
+            let m = text.match(/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b/);
+            if (m) {
+                let [, d, mo, y] = m;
+                if (y.length === 2) y = '20' + y;
+                if (+mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31) return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+            }
+            // "12 Apr 2026" / "12th April 2026"
+            m = text.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?\s+(\d{2,4})\b/);
+            if (m) {
+                const mo = MONTH_MAP[m[2].slice(0,3).toLowerCase()];
+                if (mo) { let y = m[3]; if (y.length === 2) y = '20' + y; return `${y}-${String(mo).padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+            }
+            // "April 12, 2026" / "April 12 2026"
+            m = text.match(/\b([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{2,4})\b/);
+            if (m) {
+                const mo = MONTH_MAP[m[1].slice(0,3).toLowerCase()];
+                if (mo) { let y = m[3]; if (y.length === 2) y = '20' + y; return `${y}-${String(mo).padStart(2,'0')}-${m[2].padStart(2,'0')}`; }
+            }
+            return null;
+        }
+
+        function loadFixturesPdfAndImport(file) {
+            if (window.pdfjsLib) { processFixturesPdfFile(file); return; }
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            script.onload = () => {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                processFixturesPdfFile(file);
+            };
+            script.onerror = () => alert('Could not load the PDF library. Please check your internet connection.');
+            document.head.appendChild(script);
+        }
+
+        async function processFixturesPdfFile(file) {
+            try {
+                const buf = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+                let fullText = '';
+                for (let p = 1; p <= pdf.numPages; p++) {
+                    const page = await pdf.getPage(p);
+                    const content = await page.getTextContent();
+                    // Group text items into rows using their y-position, to roughly rebuild table rows
+                    let lastY = null, line = '';
+                    const lines = [];
+                    content.items.forEach(item => {
+                        const y = item.transform[5];
+                        if (lastY !== null && Math.abs(y - lastY) > 2.5) {
+                            lines.push(line.trim());
+                            line = '';
+                        }
+                        line += item.str + ' ';
+                        lastY = y;
+                    });
+                    if (line.trim()) lines.push(line.trim());
+                    fullText += lines.join('\n') + '\n';
+                }
+                parseFixturesFromPdfText(fullText);
+            } catch (err) {
+                console.error(err);
+                alert('Could not read the PDF. Make sure it is a text-based fixture list (not a scanned image).');
+            }
+        }
+
+        function parseFixturesFromPdfText(text) {
+            const lines = text.split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(l => l);
+            fixturesParsed = [];
+            const errors = [];
+            let sumasLinesFound = 0;
+
+            lines.forEach(line => {
+                if (!SUMAS_TEAM_RE.test(line)) return; // skip every other team's fixture — Sumas-only import
+                sumasLinesFound++;
+
+                const date = parseFlexibleDate(line);
+                if (!date) { errors.push({ error: line.slice(0, 60), msg: 'Found a Sumas line but could not read a date' }); return; }
+
+                let competition = null;
+                const compMatch = line.match(/\(([^)]{2,40})\)/);
+                if (compMatch) competition = compMatch[1].trim();
+
+                let clean = line
+                    .replace(/\(([^)]{2,40})\)/, '')
+                    .replace(/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/, '')
+                    .replace(/\b\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\.?\s+\d{2,4}\b/, '')
+                    .replace(/\b[A-Za-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{2,4}\b/, '')
+                    .replace(/\b\d{1,2}:\d{2}\s*(am|pm)?\b/i, '')
+                    .replace(/\s+/g, ' ').trim();
+
+                let sepMatch = clean.match(/^(.*?)\s+vs\.?\s+(.*)$/i) || clean.match(/^(.*?)\s+v\.?\s+(.*)$/i);
+                if (!sepMatch) sepMatch = clean.match(/^(.*?)\s+(?:-|–|@|at)\s+(.*)$/i);
+                if (!sepMatch) { errors.push({ error: line.slice(0, 60), msg: 'Could not split the line into two teams' }); return; }
+
+                let [, left, right] = sepMatch;
+                left = left.trim(); right = right.trim();
+                let opponent, homeAway;
+                if (SUMAS_TEAM_RE.test(left) && !SUMAS_TEAM_RE.test(right)) { homeAway = 'home'; opponent = right; }
+                else if (SUMAS_TEAM_RE.test(right) && !SUMAS_TEAM_RE.test(left)) { homeAway = 'away'; opponent = left; }
+                else { errors.push({ error: line.slice(0, 60), msg: 'Could not tell which side is Sumas' }); return; }
+
+                opponent = opponent.split(' ').slice(0, 6).join(' ').replace(/[,.;:]+$/, '').trim();
+                if (!opponent) { errors.push({ error: line.slice(0, 60), msg: 'Opponent name came out empty' }); return; }
+
+                fixturesParsed.push({ ok: true, date, opponent, homeAway, competition });
+            });
+
+            if (!sumasLinesFound) {
+                alert('No fixtures mentioning "Sumas" were found in this PDF. Make sure it\'s a text-based fixture list (not a scanned image), and that Wokingham Town Sumas is named in it.');
+                return;
+            }
+            if (!fixturesParsed.length && !errors.length) {
+                alert('Found Sumas mentions in the PDF but could not parse any fixtures from them. Try pasting them in manually below.');
+                return;
+            }
+            renderFixturesPreview(errors);
         }
 
         // ===== EXCEL IMPORT =====

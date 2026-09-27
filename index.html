@@ -2305,6 +2305,15 @@
         document.getElementById('newMatchCompetition').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewMatch(); });
 
         function selectMatch(idx) { activeMatch = idx; matchEditOpen = false; goalIsPenalty = false; goalIsOwnGoal = false; editingEventIdx = -1; reportEditOpen = false; reportOriginalText = ''; renderMatches(); }
+        // Used when picking a fixture from the Upcoming/Past Matches dropdown — closes the
+        // dropdown and scrolls back to the match screen instead of leaving it open below.
+        function selectMatchFromList(idx) {
+            historyExpanded = false;
+            upcomingExpanded = false;
+            selectMatch(idx);
+            const el = document.getElementById('matchContent');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
         function toggleHistory() {
             historyExpanded = !historyExpanded;
             const list = document.getElementById('matchHistoryList');
@@ -2980,7 +2989,7 @@
                     } else if (m2.status === 'live' || m2.status === 'ht') {
                         rightBadge = `<span class="match-live-badge" style="font-size:0.6rem;padding:2px 6px">Live</span>`;
                     }
-                    h += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">
+                    h += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatchFromList(${i})">
                         <span style="flex:1;text-align:left">${label}</span>
                         ${rightBadge}
                         ${d2 ? `<span style="opacity:0.45;font-size:0.75rem">${d2}</span>` : ''}

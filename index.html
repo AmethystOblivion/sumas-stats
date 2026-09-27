@@ -1320,7 +1320,7 @@
     <div class="role-overlay" id="roleOverlay">
         <div class="role-layout">
             <div class="role-image">
-                <img src="team.jpg?v=2" alt="SUMAS FC Team">
+                <img src="team.jpg?v=2" alt="SUMAS FC Team" onclick="showTeamPhotoModal()" style="cursor:pointer">
             </div>
             <div class="role-box">
                 <img src="https://img-res.pitchero.com/?url=images.pitchero.com%2Fui%2F4930224%2Fimage_682efeacf1032.jpg&h=276&w=491&t=fit&o=jpg" alt="SUMAS FC Badge" style="width:120px;border-radius:8px;margin-bottom:10px">
@@ -1343,6 +1343,17 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Team photo full view -->
+    <div class="custom-modal hidden" id="teamPhotoModal" onclick="closeTeamPhotoModal()" style="z-index:10001">
+        <div style="position:relative;max-width:95vw;max-height:90vh" onclick="event.stopPropagation()">
+            <img src="team.jpg?v=2" alt="SUMAS FC Team" style="max-width:95vw;max-height:90vh;display:block;
+                border-radius:12px;border:3px solid rgba(255,140,0,0.4);box-shadow:0 8px 40px rgba(0,0,0,0.6)">
+            <button onclick="closeTeamPhotoModal()" title="Close" style="position:absolute;top:-14px;right:-14px;
+                width:36px;height:36px;border-radius:50%;border:none;background:#ff8c00;color:#fff;font-size:1.2rem;
+                font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.4)">&times;</button>
         </div>
     </div>
 
@@ -3417,6 +3428,13 @@
 
         function isEditable() {
             return userRole === 'coach' || overrideActive;
+        }
+
+        function showTeamPhotoModal() {
+            document.getElementById('teamPhotoModal').classList.remove('hidden');
+        }
+        function closeTeamPhotoModal() {
+            document.getElementById('teamPhotoModal').classList.add('hidden');
         }
 
         function selectRole(role) {

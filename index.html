@@ -1598,6 +1598,7 @@
                 <div class="lb-section" id="psAssistsLeaderboard"></div>
                 <div class="lb-section" id="psMotmLeaderboard"></div>
                 <div class="lb-section" id="psPpotmLeaderboard"></div>
+                <div id="psMatchReports" style="margin-top:6px"></div>
             </div>
             <div class="custom-modal-btns">
                 <button class="custom-modal-cancel" onclick="closePastSeasonDetail()">Back</button>
@@ -3616,8 +3617,33 @@
             renderLeaderboard(season.players || [], season.matches || [], {
                 goals: 'psGoalsLeaderboard', assists: 'psAssistsLeaderboard', motm: 'psMotmLeaderboard', ppotm: 'psPpotmLeaderboard'
             });
+            renderPastSeasonMatches(season.matches || [], 'psMatchReports');
             document.getElementById('pastSeasonsModal').classList.add('hidden');
             document.getElementById('pastSeasonDetailModal').classList.remove('hidden');
+        }
+        // Read-only match results + reports for an archived season, so match reports
+        // written last season stay reachable after a new season starts.
+        function renderPastSeasonMatches(matchesArr, containerId) {
+            const c = document.getElementById(containerId);
+            if (!c) return;
+            const ended = (matchesArr || []).filter(m => m.status === 'ended');
+            if (!ended.length) { c.innerHTML = ''; return; }
+            c.innerHTML = `<div class="lb-header motm-h">Match Reports</div>` + ended.map(m => {
+                const score = getMatchScore(m);
+                const sOpp = m.scoreOpp || 0;
+                const resultColor = score > sOpp ? '#43e97b' : score < sOpp ? '#f5576c' : '#f9d423';
+                const dateStr = m.date ? formatMatchDate(m.date) : '';
+                const hasReport = m.reportPublished && m.report;
+                return `<div style="padding:12px 14px;margin-bottom:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04)">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                        <span style="color:#fff;font-weight:700;font-size:0.9rem">${dateStr ? esc(dateStr) + ' &middot; ' : ''}vs ${esc(m.opponent || 'TBC')}</span>
+                        <span style="color:${resultColor};font-weight:700;flex-shrink:0">${score}&ndash;${sOpp}</span>
+                    </div>
+                    ${hasReport
+                        ? `<div class="match-report-text" style="margin-top:8px">${esc(m.report)}</div>`
+                        : `<p style="font-size:0.8rem;color:rgba(255,255,255,0.25);font-style:italic;margin-top:6px">No report written.</p>`}
+                </div>`;
+            }).join('');
         }
         function closePastSeasonDetail() {
             document.getElementById('pastSeasonDetailModal').classList.add('hidden');

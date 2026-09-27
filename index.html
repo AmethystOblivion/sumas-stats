@@ -1519,6 +1519,50 @@
         </div>
     </div>
 
+    <!-- Past Seasons list -->
+    <div class="custom-modal hidden" id="pastSeasonsModal">
+        <div class="custom-modal-box" style="max-width:420px;width:95%">
+            <h3>&#128193; Past Seasons</h3>
+            <div id="pastSeasonsList" style="max-height:320px;overflow-y:auto;margin-bottom:12px"></div>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closePastSeasonsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Past Season detail (read-only stats) -->
+    <div class="custom-modal hidden" id="pastSeasonDetailModal">
+        <div class="custom-modal-box" style="max-width:520px;width:95%;max-height:85vh;overflow-y:auto">
+            <h3 id="pastSeasonDetailTitle">Season</h3>
+            <div id="psSeasonStats" style="text-align:left"></div>
+            <div style="text-align:left;margin-top:10px">
+                <div class="lb-section" id="psGoalsLeaderboard"></div>
+                <div class="lb-section" id="psAssistsLeaderboard"></div>
+                <div class="lb-section" id="psMotmLeaderboard"></div>
+                <div class="lb-section" id="psPpotmLeaderboard"></div>
+            </div>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closePastSeasonDetail()">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Season confirm -->
+    <div class="custom-modal hidden" id="newSeasonModal">
+        <div class="custom-modal-box">
+            <h3>&#127937; Start New Season?</h3>
+            <p style="color:rgba(255,255,255,0.8);font-size:0.85rem;margin-bottom:6px">
+                The current season's matches and stats will be archived under <strong id="newSeasonName">Season 1</strong> in Past Seasons.
+            </p>
+            <p style="color:rgba(255,255,255,0.6);font-size:0.8rem;margin-bottom:6px">Matches will be cleared and player goals/assists/C-POTM will reset to 0. The player roster stays.</p>
+            <p style="color:#f5576c;font-size:0.8rem;margin-bottom:16px">This cannot be undone.</p>
+            <div class="custom-modal-btns">
+                <button class="custom-modal-cancel" onclick="closeNewSeasonModal()">Cancel</button>
+                <button class="custom-modal-confirm" onclick="confirmNewSeason()">Start New Season</button>
+            </div>
+        </div>
+    </div>
+
     <header style="position:relative">
         <h1>SUMAS LIVE</h1>
         <p>Goals &middot; Assists &middot; C-POTM &middot; P-POTM</p>
@@ -1529,6 +1573,8 @@
             <button id="importMatchesBtn" onclick="showBatchImportModal();toggleAdminMenu()">&#11014; Import Matches</button>
             <button id="removeVoteBtn" onclick="showRemoveVoteModal()">&#10060; Remove Vote</button>
             <button id="resetVotesBtn" onclick="showResetVotesModal()">&#128260; Reset Votes</button>
+            <button id="pastSeasonsBtn" onclick="showPastSeasonsModal();toggleAdminMenu()">&#128193; Past Seasons</button>
+            <button id="newSeasonBtn" onclick="showNewSeasonModal();toggleAdminMenu()">&#127937; New Season</button>
             <button id="resetAllDataBtn" onclick="showResetAllDataModal()" style="color:#f5576c;border-color:rgba(245,87,108,0.4)">&#128465; Reset All Data</button>
             <button id="backToRolesBtn" onclick="backToRoles()">&#8592; Switch Role</button>
         </div>
@@ -1546,6 +1592,10 @@
 
         <div id="playersView" class="view-panel">
             <div id="playersTable"></div>
+            <div style="text-align:center;padding:20px 0 8px;font-size:1.2rem;font-weight:900;letter-spacing:3px;text-transform:uppercase">
+                <span style="color:#ff8c00;text-shadow:0 0 16px rgba(255,140,0,0.35)">WE ARE</span>
+                <span style="color:#3b82f6;text-shadow:0 0 16px rgba(59,130,246,0.35)"> SUMAS</span>
+            </div>
             <div class="empty-state" id="emptyState">
                 <p>No players added yet</p>
                 <span>Type a name above and click "Add Player" to get started</span>
@@ -1679,6 +1729,7 @@
 
         let players = [...defaultPlayers];
         let matches = [];
+        let pastSeasons = [];
         let activeMatch = -1;
         let historyExpanded = false;
         let votesHistoryExpanded = false;
@@ -1689,6 +1740,9 @@
         }
         function saveMatches() {
             db.collection('data').doc('matches').set({ list: JSON.stringify(matches) });
+        }
+        function saveSeasons() {
+            db.collection('data').doc('seasons').set({ list: JSON.stringify(pastSeasons) });
         }
 
         // Real-time listener for players
@@ -1722,6 +1776,27 @@
             const liveM = activeMatch >= 0 ? matches[activeMatch] : null;
             if (liveM && liveM.status === 'live' && !matchTimerInterval) startMatchTimerInterval();
         });
+
+        // Real-time listener for archived past seasons
+        let div1CelebrationChecked = false;
+        db.collection('data').doc('seasons').onSnapshot(doc => {
+            if (doc.exists) {
+                try {
+                    pastSeasons = JSON.parse(doc.data().list);
+                    if (!Array.isArray(pastSeasons)) pastSeasons = [];
+                } catch(e) { pastSeasons = []; }
+            }
+            if (!div1CelebrationChecked) {
+                div1CelebrationChecked = true;
+                maybeShowDiv1AgainCelebration();
+            }
+        });
+        function maybeShowDiv1AgainCelebration() {
+            if (pastSeasons.length > 0 && localStorage.getItem('sumasDiv1AgainSeen') !== 'true') {
+                localStorage.setItem('sumasDiv1AgainSeen', 'true');
+                setTimeout(() => showWinCelebration('DIV1 AGAIN'), 700);
+            }
+        }
 
         // ===== JERSEY =====
         const jerseyNumbers = {
@@ -1895,9 +1970,10 @@
         }
 
         // ===== RENDER LEADERBOARD =====
-        function computeStatsFromMatches() {
+        function computeStatsFromMatches(matchesArr) {
+            matchesArr = matchesArr || matches;
             const goals = {}, assists = {}, cpotm = {}, ppotm = {};
-            matches.forEach(m => {
+            matchesArr.forEach(m => {
                 // Goals and assists derived from match events
                 (m.events || []).forEach(e => {
                     if (e.type === 'goal' && !e.ownGoal) {
@@ -1923,10 +1999,11 @@
             });
             return { goals, assists, cpotm, ppotm };
         }
-        function renderSeasonStats() {
-            const c = document.getElementById('seasonView');
+        function renderSeasonStats(matchesArr, containerId) {
+            matchesArr = matchesArr || matches;
+            const c = document.getElementById(containerId || 'seasonView');
             if (!c) return;
-            const ended = matches.filter(m => m.status === 'ended');
+            const ended = matchesArr.filter(m => m.status === 'ended');
             const played = ended.length;
 
             if (played === 0) {
@@ -2002,17 +2079,21 @@
                 </div>`;
         }
 
-        function renderLeaderboard() {
-            const { goals, assists, cpotm, ppotm } = computeStatsFromMatches();
-            renderLB('goalsLeaderboard',   'Goals',   'goals-h',   goals);
-            renderLB('assistsLeaderboard', 'Assists', 'assists-h', assists);
-            renderLB('motmLeaderboard',    'C-POTM',  'motm-h',    cpotm);
-            renderPPOTM(ppotm);
+        function renderLeaderboard(playersArr, matchesArr, ids) {
+            playersArr = playersArr || players;
+            matchesArr = matchesArr || matches;
+            ids = ids || { goals: 'goalsLeaderboard', assists: 'assistsLeaderboard', motm: 'motmLeaderboard', ppotm: 'ppotmLeaderboard' };
+            const { goals, assists, cpotm, ppotm } = computeStatsFromMatches(matchesArr);
+            renderLB(ids.goals,   'Goals',   'goals-h',   goals,  playersArr);
+            renderLB(ids.assists, 'Assists', 'assists-h', assists, playersArr);
+            renderLB(ids.motm,    'C-POTM',  'motm-h',    cpotm,  playersArr);
+            renderPPOTM(ppotm, playersArr, ids.ppotm);
         }
-        function renderPPOTM(wins) {
-            const c = document.getElementById('ppotmLeaderboard');
+        function renderPPOTM(wins, playersArr, cid) {
+            playersArr = playersArr || players;
+            const c = document.getElementById(cid || 'ppotmLeaderboard');
             if (!c) return;
-            const sorted = [...players].sort((a, b) => (wins[b.name]||0) - (wins[a.name]||0));
+            const sorted = [...playersArr].sort((a, b) => (wins[b.name]||0) - (wins[a.name]||0));
             if (!sorted.length) { c.innerHTML = '<div class="lb-header motm-h">P-POTM</div><div style="color:rgba(255,255,255,0.3);font-size:0.85rem;padding:12px">No closed polls yet</div>'; return; }
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
             c.innerHTML = `<div class="lb-header motm-h">P-POTM</div><table class="lb-table">
@@ -2025,8 +2106,9 @@
                     <td class="lb-val motm">${wins[p.name]||0}</td>
                 </tr>`).join('')}</table>`;
         }
-        function renderLB(cid, title, hc, statsMap) {
-            const sorted = [...players].sort((a, b) => (statsMap[b.name]||0) - (statsMap[a.name]||0));
+        function renderLB(cid, title, hc, statsMap, playersArr) {
+            playersArr = playersArr || players;
+            const sorted = [...playersArr].sort((a, b) => (statsMap[b.name]||0) - (statsMap[a.name]||0));
             const c = document.getElementById(cid);
             if (!sorted.length) { c.innerHTML = ''; return; }
             const rc = i => i===0?'gold':i===1?'silver':i===2?'bronze':'other';
@@ -3224,7 +3306,7 @@
         });
 
         // ===== PARENT PASSWORD =====
-        const PARENT_PASS = 'SUMAS@WTFC';
+        const PARENT_PASS = 'DIV1AGN';
         function parentPassGoBack() {
             document.getElementById('parentPassOverlay').classList.add('hidden');
             document.getElementById('roleOverlay').classList.remove('hidden');
@@ -3338,6 +3420,7 @@
             document.getElementById('resetVotesBtn').style.display = isEditable() ? '' : 'none';
             document.getElementById('resetAllDataBtn').style.display = userRole === 'coach' ? '' : 'none';
             document.getElementById('importMatchesBtn').style.display = userRole === 'coach' ? '' : 'none';
+            document.getElementById('newSeasonBtn').style.display = userRole === 'coach' ? '' : 'none';
             // Votes tab only visible to coaches
             document.getElementById('votesTab').style.display = userRole === 'coach' ? 'block' : 'none';
             // If a non-coach somehow ends up on votes tab, redirect to matches
@@ -3362,6 +3445,73 @@
             render();
             renderMatches();
             if (currentTab === 'votes') renderVotes();
+        }
+
+        // ===== PAST SEASONS =====
+        function showPastSeasonsModal() {
+            const list = document.getElementById('pastSeasonsList');
+            if (!pastSeasons.length) {
+                list.innerHTML = `<p style="color:rgba(255,255,255,0.4);font-size:0.85rem;text-align:center;padding:20px 0">No past seasons yet</p>`;
+            } else {
+                list.innerHTML = pastSeasons.map((s, i) => `
+                    <button onclick="openPastSeasonDetail(${i})" style="display:block;width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;
+                        border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);
+                        color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer">
+                        &#127942; ${esc(s.name)}
+                        <span style="display:block;color:rgba(255,255,255,0.4);font-size:0.75rem;font-weight:400;margin-top:2px">
+                            ${(s.matches||[]).filter(m => m.status === 'ended').length} matches played
+                        </span>
+                    </button>`).join('');
+            }
+            document.getElementById('pastSeasonsModal').classList.remove('hidden');
+        }
+        function closePastSeasonsModal() {
+            document.getElementById('pastSeasonsModal').classList.add('hidden');
+        }
+        function openPastSeasonDetail(i) {
+            const season = pastSeasons[i];
+            if (!season) return;
+            document.getElementById('pastSeasonDetailTitle').textContent = season.name;
+            renderSeasonStats(season.matches || [], 'psSeasonStats');
+            renderLeaderboard(season.players || [], season.matches || [], {
+                goals: 'psGoalsLeaderboard', assists: 'psAssistsLeaderboard', motm: 'psMotmLeaderboard', ppotm: 'psPpotmLeaderboard'
+            });
+            document.getElementById('pastSeasonsModal').classList.add('hidden');
+            document.getElementById('pastSeasonDetailModal').classList.remove('hidden');
+        }
+        function closePastSeasonDetail() {
+            document.getElementById('pastSeasonDetailModal').classList.add('hidden');
+            document.getElementById('pastSeasonsModal').classList.remove('hidden');
+        }
+
+        // ===== NEW SEASON =====
+        function showNewSeasonModal() {
+            document.getElementById('newSeasonName').textContent = `Season ${pastSeasons.length + 1}`;
+            document.getElementById('newSeasonModal').classList.remove('hidden');
+        }
+        function closeNewSeasonModal() {
+            document.getElementById('newSeasonModal').classList.add('hidden');
+        }
+        function confirmNewSeason() {
+            pastSeasons.push({
+                name: `Season ${pastSeasons.length + 1}`,
+                players: JSON.parse(JSON.stringify(players)),
+                matches: JSON.parse(JSON.stringify(matches)),
+                archivedAt: new Date().toISOString()
+            });
+            saveSeasons();
+
+            matches = [];
+            activeMatch = -1;
+            players = players.map(p => ({ ...p, goals: 0, assists: 0, motm: 0 }));
+            save();
+            saveMatches();
+
+            closeNewSeasonModal();
+            render();
+            renderMatches();
+            if (currentTab === 'leaderboard') renderLeaderboard();
+            if (currentTab === 'season') renderSeasonStats();
         }
 
         // ===== RESET VOTES MODAL =====
@@ -4017,9 +4167,11 @@
         }
 
         // ===== WIN CELEBRATION =====
-        function showWinCelebration() {
+        function showWinCelebration(message) {
             const overlay = document.getElementById('winCelebrationOverlay');
             if (!overlay) return;
+            const textEl = document.getElementById('winCelebrationText');
+            if (textEl) textEl.textContent = message || 'GO SUMAS!';
             overlay.style.display = 'block';
             overlay.style.opacity = '1';
 
@@ -4337,7 +4489,7 @@
     <div id="winCelebrationOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;cursor:pointer">
         <canvas id="fireworksCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%"></canvas>
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;user-select:none">
-            <div style="font-size:clamp(2.5rem,8vw,4.5rem);font-weight:900;letter-spacing:5px;color:#ff8c00;animation:goSumasPulse 0.9s ease-in-out infinite;white-space:nowrap">GO SUMAS!</div>
+            <div id="winCelebrationText" style="font-size:clamp(2.5rem,8vw,4.5rem);font-weight:900;letter-spacing:5px;color:#ff8c00;animation:goSumasPulse 0.9s ease-in-out infinite;white-space:nowrap">GO SUMAS!</div>
             <div style="margin-top:12px;font-size:0.9rem;color:rgba(255,255,255,0.4);letter-spacing:2px">TAP TO DISMISS</div>
         </div>
     </div>

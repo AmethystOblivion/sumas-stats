@@ -4263,40 +4263,79 @@
             const errors = [];
             let sumasLinesFound = 0;
 
+            // Bracket-style schedule PDFs (e.g. GotSport) print one date heading above a
+            // whole table of fixtures, rather than a date on every row — so we carry the
+            // most recently seen heading date/competition forward onto each fixture row.
+            let currentDate = null;
+            let currentCompetition = null;
+
             lines.forEach(line => {
-                if (!SUMAS_TEAM_RE.test(line)) return; // skip every other team's fixture — Sumas-only import
+                if (/home\s*team|away\s*team/i.test(line)) return; // table header row, not data
+
+                if (!SUMAS_TEAM_RE.test(line)) {
+                    const headingDate = parseFlexibleDate(line);
+                    if (headingDate) { currentDate = headingDate; return; }
+                    if (/^(bracket|pool|group|division)\b/i.test(line)) currentCompetition = line;
+                    return; // not a fixture row — some other team's match, or page text
+                }
+
                 sumasLinesFound++;
+                const date = parseFlexibleDate(line) || currentDate;
+                if (!date) { errors.push({ error: line.slice(0, 60), msg: 'Found a Sumas line but no date (check it sits under a date heading)' }); return; }
 
-                const date = parseFlexibleDate(line);
-                if (!date) { errors.push({ error: line.slice(0, 60), msg: 'Found a Sumas line but could not read a date' }); return; }
-
-                let competition = null;
+                let competition = currentCompetition;
                 const compMatch = line.match(/\(([^)]{2,40})\)/);
                 if (compMatch) competition = compMatch[1].trim();
 
-                let clean = line
-                    .replace(/\(([^)]{2,40})\)/, '')
-                    .replace(/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/, '')
-                    .replace(/\b\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\.?\s+\d{2,4}\b/, '')
-                    .replace(/\b[A-Za-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{2,4}\b/, '')
-                    .replace(/\b\d{1,2}:\d{2}\s*(am|pm)?\b/i, '')
-                    .replace(/\s+/g, ' ').trim();
-
-                let sepMatch = clean.match(/^(.*?)\s+vs\.?\s+(.*)$/i) || clean.match(/^(.*?)\s+v\.?\s+(.*)$/i);
-                if (!sepMatch) sepMatch = clean.match(/^(.*?)\s+(?:-|–|@|at)\s+(.*)$/i);
-                if (!sepMatch) { errors.push({ error: line.slice(0, 60), msg: 'Could not split the line into two teams' }); return; }
-
-                let [, left, right] = sepMatch;
-                left = left.trim(); right = right.trim();
                 let opponent, homeAway;
-                if (SUMAS_TEAM_RE.test(left) && !SUMAS_TEAM_RE.test(right)) { homeAway = 'home'; opponent = right; }
-                else if (SUMAS_TEAM_RE.test(right) && !SUMAS_TEAM_RE.test(left)) { homeAway = 'away'; opponent = left; }
-                else { errors.push({ error: line.slice(0, 60), msg: 'Could not tell which side is Sumas' }); return; }
 
-                opponent = opponent.split(' ').slice(0, 6).join(' ').replace(/[,.;:]+$/, '').trim();
+                // Strategy 1: table row with a Results column — "12  Home Team  3 - 1  Away Team  Venue"
+                // or "12  Home Team  -  Away Team" when the result isn't in yet.
+                let left, right, matchedTable = false;
+                const scoreMatch = line.match(/\b(\d+)\s*-\s*(\d+)\b/);
+                if (scoreMatch) {
+                    left = line.slice(0, scoreMatch.index);
+                    right = line.slice(scoreMatch.index + scoreMatch[0].length);
+                    matchedTable = true;
+                } else {
+                    const dashMatch = line.match(/(^|\s)-(\s|$)/);
+                    if (dashMatch) {
+                        left = line.slice(0, dashMatch.index);
+                        right = line.slice(dashMatch.index + dashMatch[0].length);
+                        matchedTable = true;
+                    }
+                }
+                if (matchedTable) {
+                    left = left.replace(/^\s*#?\d+\s*/, '').replace(/^\d{1,2}:\d{2}\s*(am|pm)?\s*/i, '').trim();
+                    right = right.trim();
+                    if (SUMAS_TEAM_RE.test(left) && !SUMAS_TEAM_RE.test(right)) { homeAway = 'home'; opponent = right; }
+                    else if (SUMAS_TEAM_RE.test(right) && !SUMAS_TEAM_RE.test(left)) { homeAway = 'away'; opponent = left; }
+                }
+
+                // Strategy 2: prose-style "Team A vs Team B" fixture lists
+                if (!opponent) {
+                    let clean = line
+                        .replace(/\(([^)]{2,40})\)/, '')
+                        .replace(/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/, '')
+                        .replace(/\b\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\.?\s+\d{2,4}\b/, '')
+                        .replace(/\b[A-Za-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{2,4}\b/, '')
+                        .replace(/\b\d{1,2}:\d{2}\s*(am|pm)?\b/i, '')
+                        .replace(/\s+/g, ' ').trim();
+                    let sepMatch = clean.match(/^(.*?)\s+vs\.?\s+(.*)$/i) || clean.match(/^(.*?)\s+v\.?\s+(.*)$/i);
+                    if (!sepMatch) sepMatch = clean.match(/^(.*?)\s+(?:-|–|@|at)\s+(.*)$/i);
+                    if (sepMatch) {
+                        let [, l2, r2] = sepMatch;
+                        l2 = l2.trim(); r2 = r2.trim();
+                        if (SUMAS_TEAM_RE.test(l2) && !SUMAS_TEAM_RE.test(r2)) { homeAway = 'home'; opponent = r2; }
+                        else if (SUMAS_TEAM_RE.test(r2) && !SUMAS_TEAM_RE.test(l2)) { homeAway = 'away'; opponent = l2; }
+                    }
+                }
+
+                if (!opponent) { errors.push({ error: line.slice(0, 60), msg: 'Could not work out the opponent / home-away split' }); return; }
+                opponent = opponent.replace(/\s+/g, ' ').replace(/[,.;:]+$/, '').trim();
                 if (!opponent) { errors.push({ error: line.slice(0, 60), msg: 'Opponent name came out empty' }); return; }
 
-                fixturesParsed.push({ ok: true, date, opponent, homeAway, competition });
+                fixturesParsed.push({ ok: true, date, opponent, homeAway, competition: competition || null });
             });
 
             if (!sumasLinesFound) {

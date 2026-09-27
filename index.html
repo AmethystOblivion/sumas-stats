@@ -801,6 +801,7 @@
         }
         .match-ctrl-btn.start { background: #43e97b; color: #0a2e1a; }
         .match-ctrl-btn.start:hover { background: #5ffb91; }
+        .match-ctrl-btn.disabled, .match-ctrl-btn.disabled:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.35); cursor: not-allowed; }
         .match-ctrl-btn.end { background: #f5576c; color: #fff; }
         .match-ctrl-btn.end:hover { background: #ff7087; }
         .match-ctrl-btn.ht { background: #f9d423; color: #2a1a00; }
@@ -3019,6 +3020,10 @@
                 const m = matches[activeMatch];
                 const score = getMatchScore(m);
                 const assistCount = m.events.filter(e => e.type === 'assist').reduce((s, e) => s + e.count, 0);
+                // The only pending fixture that's allowed to be kicked off is the soonest one —
+                // stops a coach accidentally starting a match further down the fixture list.
+                const nextPendingIdx = matches.findIndex(m2 => !m2.status || m2.status === 'pending');
+                const isNextPending = activeMatch === nextPendingIdx;
 
                 // Score Banner - SUMAS score auto-calculated from goals
                 const sSumas = score;
@@ -3257,11 +3262,18 @@
                         ${m.status === 'live' && m.htReached ? `<div style="margin-top:4px"><span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;opacity:0.4">2nd half</span> <span class="match-2nd-timer" id="match2ndHalfTimerDisplay">${formatSecondHalfTime(m)}</span></div>` : ''}
                     </div>` : ''}
                     <div class="match-status-bar" style="margin-top:8px">
-                        ${userRole === 'coach' && (!m.status || m.status === 'pending') ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; Kick-off</button>` : ''}
+                        ${userRole === 'coach' && (!m.status || m.status === 'pending') ? (
+                            isNextPending
+                                ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; Kick-off</button>`
+                                : `<button class="match-ctrl-btn start disabled" disabled title="Play the next fixture first">&#9654; Kick-off</button>`
+                        ) : ''}
                         ${userRole === 'coach' && m.status === 'live' && !m.htReached ? `<button class="match-ctrl-btn ht" onclick="setMatchStatus(${activeMatch},'ht')">HT</button>` : ''}
                         ${userRole === 'coach' && m.status === 'ht' ? `<button class="match-ctrl-btn start" onclick="setMatchStatus(${activeMatch},'live')">&#9654; 2nd Half</button>` : ''}
                         ${userRole === 'coach' && m.status === 'live' && m.htReached ? `<button class="match-ctrl-btn end" onclick="setMatchStatus(${activeMatch},'ended')">&#9632; FT</button>` : ''}
                     </div>
+                    ${userRole === 'coach' && (!m.status || m.status === 'pending') && !isNextPending && nextPendingIdx >= 0 ? `<div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:6px">
+                        Next up: vs ${esc(matches[nextPendingIdx].opponent || 'TBC')}${matches[nextPendingIdx].date ? ' &middot; ' + formatMatchDate(matches[nextPendingIdx].date) : ''}
+                    </div>` : ''}
                 </div>`;
 
                 // Add Goal form (coach only, live match only)

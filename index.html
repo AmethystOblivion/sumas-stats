@@ -643,6 +643,8 @@
             background: linear-gradient(135deg, #ff8c00, #e85d04);
             color: #fff; padding: 1px 5px; border-radius: 4px;
         }
+        .match-mini-tab.latest.badge-next::before { content: 'NEXT'; }
+        .match-mini-tab.latest.badge-live::before { content: 'LIVE'; }
         .match-mini-tab.latest.active {
             background: linear-gradient(135deg, rgba(255,140,0,0.25), rgba(255,140,0,0.1));
             box-shadow: 0 0 20px rgba(255,140,0,0.3);
@@ -1797,7 +1799,9 @@
         let pastSeasons = [];
         let activeMatch = -1;
         let historyExpanded = false;
+        let upcomingExpanded = false;
         let votesHistoryExpanded = false;
+        let votesUpcomingExpanded = false;
         let firebaseReady = false;
 
         function save() {
@@ -1833,7 +1837,7 @@
                 } catch(e) { matches = []; }
             }
             sortMatchesByDate();
-            if (activeMatch < 0 && matches.length > 0) activeMatch = matches.length - 1;
+            if (activeMatch < 0 && matches.length > 0) activeMatch = pickFeaturedMatchIndex();
             try { if (currentTab === 'matches') renderMatches(); } catch(e) {}
             try { if (currentTab === 'votes') renderVotes(); } catch(e) {}
             try { if (currentTab === 'season') renderSeasonStats(); } catch(e) {}
@@ -2308,12 +2312,39 @@
             if (list) list.style.display = historyExpanded ? 'flex' : 'none';
             if (chevron) chevron.textContent = historyExpanded ? '▲' : '▼';
         }
+        function toggleUpcoming() {
+            upcomingExpanded = !upcomingExpanded;
+            const list = document.getElementById('matchUpcomingList');
+            const chevron = document.getElementById('matchUpcomingChevron');
+            if (list) list.style.display = upcomingExpanded ? 'flex' : 'none';
+            if (chevron) chevron.textContent = upcomingExpanded ? '▲' : '▼';
+        }
+        // Picks the match that should be featured up top: an in-progress game first,
+        // otherwise the soonest not-yet-played fixture, otherwise the most recent result.
+        function pickFeaturedMatchIndex() {
+            if (!matches.length) return -1;
+            const liveIdx = matches.findIndex(m => m.status === 'live' || m.status === 'ht');
+            if (liveIdx >= 0) return liveIdx;
+            const pendingIdx = matches.findIndex(m => !m.status || m.status === 'pending');
+            if (pendingIdx >= 0) return pendingIdx;
+            for (let i = matches.length - 1; i >= 0; i--) {
+                if (matches[i].status === 'ended') return i;
+            }
+            return matches.length - 1;
+        }
         function toggleVotesHistory() {
             votesHistoryExpanded = !votesHistoryExpanded;
             const list = document.getElementById('votesHistoryList');
             const chevron = document.getElementById('votesHistoryChevron');
             if (list) list.style.display = votesHistoryExpanded ? 'block' : 'none';
             if (chevron) chevron.textContent = votesHistoryExpanded ? '▲' : '▼';
+        }
+        function toggleVotesUpcoming() {
+            votesUpcomingExpanded = !votesUpcomingExpanded;
+            const list = document.getElementById('votesUpcomingList');
+            const chevron = document.getElementById('votesUpcomingChevron');
+            if (list) list.style.display = votesUpcomingExpanded ? 'block' : 'none';
+            if (chevron) chevron.textContent = votesUpcomingExpanded ? '▲' : '▼';
         }
 
         let pendingDeleteIdx = -1;
@@ -2912,47 +2943,65 @@
                 return;
             }
 
-            // Clamp activeMatch to valid range
-            if (activeMatch < 0 || activeMatch >= matches.length) activeMatch = matches.length - 1;
+            // Clamp activeMatch to valid range, defaulting to the most relevant match
+            if (activeMatch < 0 || activeMatch >= matches.length) activeMatch = pickFeaturedMatchIndex();
 
-            // Mini tabs - latest match stands out, older ones are history
-            const latestIdx = matches.length - 1;
+            // Mini tabs - the most relevant match (live, else soonest upcoming, else most recent
+            // result) stands out; everything else splits into Upcoming / Past Matches by status,
+            // not by array position, so bulk-imported future fixtures never show up as "past".
+            const featuredIdx = pickFeaturedMatchIndex();
             let html = '';
 
-            // History section sits outside the flex tab row to avoid Safari layout glitches
-            if (matches.length > 1) {
-                const historyCount = latestIdx;
-                const hasActiveHistory = activeMatch < latestIdx;
-                html += `<div class="match-history-section">
-                    <button class="match-history-toggle ${hasActiveHistory ? 'has-active' : ''}" onclick="toggleHistory()">
-                        <span>Past Matches</span>
-                        <span class="match-history-count">${historyCount}</span>
-                        <span id="matchHistoryChevron" class="match-history-chevron">${historyExpanded ? '▲' : '▼'}</span>
+            const upcomingIndices = [];
+            const pastIndices = [];
+            matches.forEach((m, i) => {
+                if (i === featuredIdx) return;
+                if (m.status === 'ended') pastIndices.push(i); else upcomingIndices.push(i);
+            });
+
+            const renderMatchGroup = (indices, title, listId, chevronId, expanded, toggleFn) => {
+                let h = `<div class="match-history-section">
+                    <button class="match-history-toggle ${indices.includes(activeMatch) ? 'has-active' : ''}" onclick="${toggleFn}()">
+                        <span>${title}</span>
+                        <span class="match-history-count">${indices.length}</span>
+                        <span id="${chevronId}" class="match-history-chevron">${expanded ? '▲' : '▼'}</span>
                     </button>
-                    <div id="matchHistoryList" class="match-history-list" style="display:${historyExpanded ? 'flex' : 'none'}">`;
-                for (let i = 0; i < latestIdx; i++) {
+                    <div id="${listId}" class="match-history-list" style="display:${expanded ? 'flex' : 'none'}">`;
+                indices.forEach(i => {
                     const m2 = matches[i];
                     const label = m2.opponent ? `vs ${esc(m2.opponent)}` : `Match ${i + 1}`;
-                    const score2 = getMatchScore(m2);
-                    const sOpp2 = m2.scoreOpp || 0;
-                    const miniScore = `${score2}-${sOpp2}`;
                     const d2 = m2.date ? formatMatchDate(m2.date) : '';
-                    const resultColor = score2 > sOpp2 ? '#43e97b' : score2 < sOpp2 ? '#f5576c' : '#f9d423';
-                    html += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">
+                    let rightBadge = '';
+                    if (m2.status === 'ended') {
+                        const score2 = getMatchScore(m2);
+                        const sOpp2 = m2.scoreOpp || 0;
+                        const resultColor = score2 > sOpp2 ? '#43e97b' : score2 < sOpp2 ? '#f5576c' : '#f9d423';
+                        rightBadge = `<span style="color:${resultColor};font-weight:700;font-size:0.8rem">${score2}-${sOpp2}</span>`;
+                    } else if (m2.status === 'live' || m2.status === 'ht') {
+                        rightBadge = `<span class="match-live-badge" style="font-size:0.6rem;padding:2px 6px">Live</span>`;
+                    }
+                    h += `<button class="match-mini-tab history ${i === activeMatch ? 'active' : ''}" onclick="selectMatch(${i})">
                         <span style="flex:1;text-align:left">${label}</span>
-                        <span style="color:${resultColor};font-weight:700;font-size:0.8rem">${miniScore}</span>
+                        ${rightBadge}
                         ${d2 ? `<span style="opacity:0.45;font-size:0.75rem">${d2}</span>` : ''}
                     </button>`;
-                }
-                html += `</div></div>`;
-            }
+                });
+                h += `</div></div>`;
+                return h;
+            };
 
-            // Latest match tab row
-            const latestM = matches[latestIdx];
-            const latestLabel = latestM.opponent ? `vs ${esc(latestM.opponent)}` : `Match ${latestIdx + 1}`;
-            const latestDateStr = latestM.date ? ' · ' + formatMatchDate(latestM.date) : '';
+            if (upcomingIndices.length) html += renderMatchGroup(upcomingIndices, 'Upcoming', 'matchUpcomingList', 'matchUpcomingChevron', upcomingExpanded, 'toggleUpcoming');
+            if (pastIndices.length) html += renderMatchGroup(pastIndices, 'Past Matches', 'matchHistoryList', 'matchHistoryChevron', historyExpanded, 'toggleHistory');
+
+            // Featured tab row
+            const featuredM = matches[featuredIdx];
+            const featuredLabel = featuredM.opponent ? `vs ${esc(featuredM.opponent)}` : `Match ${featuredIdx + 1}`;
+            const featuredDateStr = featuredM.date ? ' · ' + formatMatchDate(featuredM.date) : '';
+            const isLive = featuredM.status === 'live' || featuredM.status === 'ht';
+            const isUpcoming = !featuredM.status || featuredM.status === 'pending';
+            const badgeClass = isLive ? 'badge-live' : isUpcoming ? 'badge-next' : '';
             html += `<div class="match-mini-tabs">`;
-            html += `<button class="match-mini-tab latest ${latestIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${latestIdx})">${latestLabel}${latestDateStr}${latestM.status === 'live' ? ' <span class="match-live-badge" style="font-size:0.5rem;padding:2px 6px">Live</span>' : ''}</button>`;
+            html += `<button class="match-mini-tab latest ${badgeClass} ${featuredIdx === activeMatch ? 'active' : ''}" onclick="selectMatch(${featuredIdx})">${featuredLabel}${featuredDateStr}${isLive ? ' <span class="match-live-badge" style="font-size:0.5rem;padding:2px 6px">Live</span>' : ''}</button>`;
             if (editable) html += `<button class="match-add-btn" onclick="addMatch()">+ New</button>`;
             html += `<a href="https://system.gotsport.com/splash/25643/events/50579/schedules?team=3738001" target="_blank" rel="noopener" class="table-link-btn" style="margin-left:auto">Table</a>`;
             html += `</div>`;
@@ -3715,26 +3764,42 @@
                 </div>`;
             }
 
-            const latestIdx = matches.length - 1;
+            const featuredIdx = pickFeaturedMatchIndex();
             let html = '<div class="votes-list">';
 
-            // Collapsible past matches section
-            if (matches.length > 1) {
+            const upcomingIndices = [];
+            const pastIndices = [];
+            matches.forEach((m, i) => {
+                if (i === featuredIdx) return;
+                if (m.status === 'ended') pastIndices.push(i); else upcomingIndices.push(i);
+            });
+
+            if (upcomingIndices.length) {
                 html += `<div class="match-history-section" style="margin-bottom:12px">
-                    <button class="match-history-toggle" onclick="toggleVotesHistory()">
-                        <span>Past Matches</span>
-                        <span class="match-history-count">${latestIdx}</span>
-                        <span id="votesHistoryChevron" class="match-history-chevron">${votesHistoryExpanded ? '▲' : '▼'}</span>
+                    <button class="match-history-toggle" onclick="toggleVotesUpcoming()">
+                        <span>Upcoming</span>
+                        <span class="match-history-count">${upcomingIndices.length}</span>
+                        <span id="votesUpcomingChevron" class="match-history-chevron">${votesUpcomingExpanded ? '▲' : '▼'}</span>
                     </button>
-                    <div id="votesHistoryList" style="display:${votesHistoryExpanded ? 'block' : 'none'};margin-top:8px">`;
-                for (let i = 0; i < latestIdx; i++) {
-                    html += buildVoteCard(matches[i], i);
-                }
+                    <div id="votesUpcomingList" style="display:${votesUpcomingExpanded ? 'block' : 'none'};margin-top:8px">`;
+                upcomingIndices.forEach(i => { html += buildVoteCard(matches[i], i); });
                 html += `</div></div>`;
             }
 
-            // Latest match always visible
-            html += buildVoteCard(matches[latestIdx], latestIdx);
+            if (pastIndices.length) {
+                html += `<div class="match-history-section" style="margin-bottom:12px">
+                    <button class="match-history-toggle" onclick="toggleVotesHistory()">
+                        <span>Past Matches</span>
+                        <span class="match-history-count">${pastIndices.length}</span>
+                        <span id="votesHistoryChevron" class="match-history-chevron">${votesHistoryExpanded ? '▲' : '▼'}</span>
+                    </button>
+                    <div id="votesHistoryList" style="display:${votesHistoryExpanded ? 'block' : 'none'};margin-top:8px">`;
+                pastIndices.forEach(i => { html += buildVoteCard(matches[i], i); });
+                html += `</div></div>`;
+            }
+
+            // Featured match always visible
+            html += buildVoteCard(matches[featuredIdx], featuredIdx);
             html += '</div>';
             container.innerHTML = html;
         }
@@ -4018,7 +4083,7 @@
             if (Object.keys(delta).length) save();
 
             sortMatchesByDate();
-            activeMatch = matches.length - 1;
+            activeMatch = pickFeaturedMatchIndex();
             closeBatchImportModal();
             saveMatches(); renderMatches(); render();
         }
@@ -4100,7 +4165,7 @@
                 });
             });
             sortMatchesByDate();
-            activeMatch = matches.length - 1;
+            activeMatch = pickFeaturedMatchIndex();
             closeAddFixturesModal();
             saveMatches(); renderMatches(); render();
         }
